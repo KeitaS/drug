@@ -5,12 +5,15 @@ from ribo import run
 
 # cobra
 from cobra.test import create_test_model
-from multi_knockdown import flux_check
+from multi_knockdown import multi_knockdown
 from cobra.io import read_sbml_model
 import re
 
 # drugbank
 from drug2bnum import drug2bnum
+
+# etc
+from collections import defaultdict
 
 def checkinCOBRA(genes, model):
     """
@@ -88,7 +91,9 @@ def crModel(drugs, step_int=100, model_c="model/model.xml", model_r="model/ribo_
     # check phase
     drug_data = drug2bnum(drug_data)
     dataset_r = makeRiboData(model_r)
-    cobra_target = [] # cobraをターゲットにする薬剤のリスト
+    
+    # 12/31変更
+    cobra_target = defaultdict(lambda: 0.0) # cobraをターゲットにする遺伝子とfold_changeのdict
     ribo_target = [] # riboをターゲットにする薬剤のリスト
     # リボソームは単一薬剤のみなので、ターゲットになっていたらfragをTrueにする
     ribo_data = {"flag": False, "a_ex": 0, "dataset": {}}
@@ -107,7 +112,9 @@ def crModel(drugs, step_int=100, model_c="model/model.xml", model_r="model/ribo_
             drugs[drug]["cobra"], another = checkinCOBRA(drugs[drug]["all"], model_c)
             if drugs[drug]["cobra"]:
                 print " >>> %s has metabolic target" % drug
-                cobra_target.append(drug)
+                for gene in drugs[drug]["cobra"]:
+                    if not gene in cobra_target:
+                       cobra_target[gene] += drugs[drug]["a_ex"]
 
             # riboモデル内の判定
             # riboはシングルのみ(複数の場合もデフォルトで固定)
@@ -137,11 +144,10 @@ def crModel(drugs, step_int=100, model_c="model/model.xml", model_r="model/ribo_
             Lambda_0 = model_c.solution.f # growth rate of wt
             count += 1
         else: # COBRAをターゲットにしている薬剤の分繰り返す
-            for target in cobra_target: 
-                fold_change = 1.0 / (drugs[target]["a_ex"] + 1.0)
-                result_c = flux_check(model_c, drugs[target]["cobra"],
-                                      wt_flux=flux, fold_change=fold_change)
-                flux = result_c[0].values()[0].copy() # 変化後のfluxに変更
+            cobra_target = {gene: 1.0 / (cobra_target[gene] + 1.0) 
+                            for gene in cobra_target.keys()}
+            result_c = multi_knockdown(model_c, cobra_target,
+                                       wt_flux=flux)
             Lambda_0 = result_c[1].values()[0] # growth rate of knockdown
 
         # 終了判定
