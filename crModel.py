@@ -54,10 +54,10 @@ def makeRiboData(model="model/ribo_data.txt"):
                         key = val
                         ribodata[key] = {"data": {}}
                     else:
-                        if label[index] == "name": 
-                            ribodata[key][label[index]] = val
-                        elif label[index] == "b-number":
+                        if label[index] == "b-number":
                             val = re.split(";", val)
+                            ribodata[key][label[index]] = val
+                        elif label[index] != "data": 
                             ribodata[key][label[index]] = val
                         else:
                             ribodata[key]["data"][label[index]] = float(val)
@@ -86,7 +86,7 @@ def crModel(drugs, step_int=100, model_c="model/model.xml", model_r="model/ribo_
     wt_flux = model_c.solution.x_dict.copy()
     wt_model = model_c.copy()
     drugs = {drug:{"a_ex": drugs[drug]} for drug in drugs.keys()} # drug名をkeyにしたdictになる
-    ribo_bnum = ["b3342"] # riboをターゲットとしているbnumber, ここを増やしていく.
+    ribo_bnum = ["b3230", "b3319", "b3342", "b3296", "b3298", "P61177", "b3307", "P60725", "b3316", "b3313"] # riboをターゲットとしているbnumber, ここを増やしていく.
 
     # check phase
     drug_data = drug2bnum(drug_data)
@@ -121,7 +121,7 @@ def crModel(drugs, step_int=100, model_c="model/model.xml", model_r="model/ribo_
             for gene in another:
                 if gene in ribo_bnum: # ribo遺伝子が含まれている場合
                     ribo_data["flag"] = True
-                    ribo_data["a_ex"] += drugs[drug]["a_ex"]
+                    ribo_data["a_ex"] += drugs[drug]["a_ex"] * 0.369 # riboのDose調節
                     if dataset_r.get(drug): # 薬剤のriboデータがある場合
                         # ribo_target.append(drug)
                         # drugs[drug]["ribo"] = True
@@ -183,18 +183,22 @@ if __name__ == "__main__":
     # growth, (cobra, ribo) = crModel({"DB01034": 10.0, "DB01082": 10.0})
     # print growth
     result = []
+    Lambda_0 = 0
     
-    for dose in np.linspace(0, 0.6, 201): 
-        growth, (cobra, ribo) = crModel({"DB01082": dose})
+    for dose in np.linspace(0, 2., 201): 
+        growth, (cobra, ribo) = crModel({"DB01332": dose})
         result.append([dose, growth])
+        Lambda_0 = cobra
+        print Lambda_0
 
     result = np.array(result)
     plt.plot(result.T[0], result.T[1], "og")
-    # plt.ylim(0, 1.1)
+    plt.xlabel(r"Dose")
+    plt.ylabel(r"Growth Rate $\lambda/\lambda_{0}$")
 
-    plt.savefig("result/ribo.png", dpi=200)
+    plt.savefig("result/cobra.png", dpi=200)
     
-    with open("result/ribo.csv", "w") as wf:
+    with open("result/cobra.csv", "w") as wf:
         for i in result:
             wf.write("%e, %e\n" % (i[0], i[1]))
 
