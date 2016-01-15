@@ -50,15 +50,16 @@ def upid2bnum(data):
     return data
             
 
-def association(fname="model/Redirecting.txt"):
+def association(fname="model/ecoli.txt"):
     """
     UniPlotIdとb-numberの対応表をdict型にするモジュール
     """
     ass_dict = {}
     with open(fname, "r") as fopen:
         for line in fopen.readlines():
-            line = re.split(",", line.strip())
-            ass_dict[line[0]] = line[1]
+            if re.match("^b[0-9]*", line):
+                line = re.split("[;\s\t]*", line.strip())
+                ass_dict[line[3]] = line[0]
 
     return ass_dict
 
