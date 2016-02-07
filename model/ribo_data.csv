@@ -1,0 +1,6 @@
+# DrugBank id,name,b-number,Lambda_0_a,IC50,IC50_a
+DB01082,streptmycin,b3342,0.31,0.41,0.189
+DB01172,kanamycin,b3342;P24093,0.169,0.246,0.05
+DB00759,tetracycline,b3341;b3316;b3314;b3306;b3307,5.24,0.5,0.229
+DB00446,chloramphenicol,b3313;P24093,1.83,2.85,2.49
+
