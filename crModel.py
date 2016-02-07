@@ -36,7 +36,7 @@ def checkinCOBRA(genes, model):
     return result_true, result_false
 
 
-def makeRiboData(model="model/ribo_data.txt"):
+def makeRiboData(model="model/ribo_data.csv"):
     """
     drug idから初期値等のデータを抽出
     return ... {drug_id:{"data":{"Lambda_0_a":, "IC50":, "IC50_a":,}, drug name, b-number}}
@@ -46,7 +46,8 @@ def makeRiboData(model="model/ribo_data.txt"):
         for line in fopen.readlines():
             if re.match("#", line):
                 line = line.strip("# ")
-                label = re.split(",", line.strip())
+                label = re.split(",", line.strip()) # label
+
             else:
                 line = re.split(",", line.strip())
                 for index, val in enumerate(line):
@@ -57,8 +58,10 @@ def makeRiboData(model="model/ribo_data.txt"):
                         if label[index] == "b-number":
                             val = re.split(";", val)
                             ribodata[key][label[index]] = val
+                        
                         elif label[index] != "data": 
                             ribodata[key][label[index]] = val
+                        
                         else:
                             ribodata[key]["data"][label[index]] = float(val)
     
@@ -66,7 +69,7 @@ def makeRiboData(model="model/ribo_data.txt"):
 
 
 
-def crModel(drugs, step_int=100, model_c="model/model.xml", model_r="model/ribo_data.txt", drug_data="model/approved_target_ids_all.csv"):
+def crModel(drugs, step_int=100, model_c="model/model.xml", model_r="model/ribo_data.csv", drug_data="model/approved_target_ids_all.csv"):
     """
     12/21
     cobraとriboの複合モデル
@@ -78,6 +81,13 @@ def crModel(drugs, step_int=100, model_c="model/model.xml", model_r="model/ribo_
     model_c: COBRA model
     model_r: riboModel data
     drug_data: drug data was downloaded from DrugBank. 
+
+    riboのDose調整にはstreptmycin
+
+    ToDo:
+        riboのDose調整を全薬剤で適応
+        riboのinputを詳細化
+        riboからcobraのフィードバック
     """
 
     # load phase
@@ -90,11 +100,11 @@ def crModel(drugs, step_int=100, model_c="model/model.xml", model_r="model/ribo_
 
     # check phase
     drug_data = drug2bnum(drug_data)
-    dataset_r = makeRiboData(model_r)
+    dataset_r = makeRiboData(model_r) # {drug_id:{"data":{"Lambda_0_a":, "IC50":, "IC50_a":,}, drug name, b-number}}
     
-    # 12/31変更
     cobra_target = defaultdict(lambda: 0.0) # cobraをターゲットにする遺伝子とfold_changeのdict
     ribo_target = [] # riboをターゲットにする薬剤のリスト
+
     # リボソームは単一薬剤のみなので、ターゲットになっていたらfragをTrueにする
     ribo_data = {"flag": False, "a_ex": 0, "dataset": {}}
     
@@ -123,8 +133,6 @@ def crModel(drugs, step_int=100, model_c="model/model.xml", model_r="model/ribo_
                     ribo_data["flag"] = True
                     ribo_data["a_ex"] += drugs[drug]["a_ex"] * 0.369 # riboのDose調節
                     if dataset_r.get(drug): # 薬剤のriboデータがある場合
-                        # ribo_target.append(drug)
-                        # drugs[drug]["ribo"] = True
                         ribo_data["dataset"] = dataset_r[drug]["data"]
                         print " >>> %s has ribosome target" % drug
 
@@ -157,6 +165,7 @@ def crModel(drugs, step_int=100, model_c="model/model.xml", model_r="model/ribo_
         ribo_data["dataset"]["Lambda_0"] = Lambda_0
 
         # ribo
+        # singleのみ
         if ribo_data["flag"]:
             result_ribo = run(ribo_data["a_ex"], ribo_data["dataset"], step=step_int)
             ribo_data["dataset"] = result_ribo["dataset"]
@@ -180,13 +189,12 @@ def crModel(drugs, step_int=100, model_c="model/model.xml", model_r="model/ribo_
 if __name__ == "__main__":
     import numpy as np
     import matplotlib.pylab as plt
-    # growth, (cobra, ribo) = crModel({"DB01034": 10.0, "DB01082": 10.0})
-    # print growth
+
     result = []
     Lambda_0 = 0
     
-    for dose in np.linspace(0, 2., 201): 
-        growth, (cobra, ribo) = crModel({"DB01332": dose})
+    for dose in np.linspace(0, 1., 201): 
+        growth, (cobra, ribo) = crModel({"DB01332": dose, "DB01082": dose})
         result.append([dose, growth])
         Lambda_0 = cobra
         print Lambda_0
