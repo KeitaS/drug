@@ -12,7 +12,7 @@ def change_flux(cobra_model, gene_list=None,
                 disable_orphans=False, wt_flux=None,
                 fold_change=None):
     """
-    #delete_model_genesを改変したもの。
+    delete_model_genesを改変したもの。
     model内のfluxを確認して、割合で変化を持たせる。
     cobra_model: モデルを入れる(ex:test.create_test_model())
     gene_list: gene名をリストで渡す(ex:["b1234"])。引数が無ければすべてのgeneでsingleの行われる。doubleにしたい場合は[[リスト],[リスト]]。
