@@ -1,15 +1,14 @@
 #coding:utf-8
 
 import numpy as np
+import matplotlib.pylab as plt
 from ecell4 import *
 util.decorator.SEAMLESS_RATELAW_SUPPORT = True
-
 
 
 def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambda_0=1.35, Lambda_0_a=0.31, IC50=0.41, IC50_a=0.189):
     """
     リボソームモデルを構成するモジュール
-
     r_max: µM
     r_min: µM
     K_D: none
@@ -21,6 +20,13 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
     Lambda_0_a: default drug = streptmycin
     IC50: default medium = Gly_RDM, default drug = streptmycin
     IC50_a: default drug = streptmycin
+
+    薬剤によって変更する必要がある値:
+    Lambda_0_a, IC50, IC50_a
+
+    培地によって変更する値(COBRAの結果):
+    Lambda_0
+
     """
 
     Delta_r = r_max - r_min # µM
@@ -41,6 +47,32 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
         r_b > ~r_b | r_b * Lambda
 
     return get_model()
+
+def run_test2(a_ex, step=10., legend=[], inpData={}, y0={"a": .0, "r_u": 30.0, "r_b": .0}):
+    dataset = {"Lambda_0": 1.35, "Lambda_0_a": 0.31, "IC50": 0.41, "IC50_a": 0.189, "K_t": 6.1 * 10 ** -2, "r_min": 19.3}
+    
+    dataset.update(inpData)
+    model = createModel(**dataset)
+    y0["a_ex"] = a_ex
+
+    if not legend:
+        legend = y0.keys()
+
+    runsim = run_simulation(step, solver="ode", y0=y0,
+                            return_type="observer", model=model,
+                            species_list=legend)
+    data = runsim.data()
+    return data, legend
+
+def makeGraph(data, legend=[]):
+    for i in range(len(data[0]) - 1):
+        if legend[i]:
+            plt.plot(data.T[0], data.T[i+1], label=legend[i])
+        else:
+            plt.plot(data.T[0], data.T[i+1])
+    # plt.savefig("result/test.png", dpi=200)
+    plt.legend(loc="upper right")
+    plt.show()
     
 
 def run_test(dataset={}, y0={"a": .0, "r_u": 30.0, "r_b": .0}, step=[0, 1], stepInt=200):
@@ -90,11 +122,12 @@ def run(a_ex, dataset={}, y0={"a": .0, "r_u": 30.0, "r_b": .0}, step=100):
 
     default_data = {"Lambda_0": 1.35, "Lambda_0_a": 0.31, "IC50": 0.41, "IC50_a": 0.189, "K_t": 6.1 * 10 ** -2, "r_min": 19.3}
 
-    for variable in default_data.keys():
-        if not dataset.get(variable):
-            dataset[variable] = default_data[variable]
+    #for variable in default_data.keys():
+    #    if not dataset.get(variable):
+    #        dataset[variable] = default_data[variable]
+    default_data.update(dataset)
 
-    model = createModel(**dataset)
+    model = createModel(**default_data)
     
     result = {}
 
@@ -112,9 +145,9 @@ def run(a_ex, dataset={}, y0={"a": .0, "r_u": 30.0, "r_b": .0}, step=100):
     result["result"] = Lambda # Lambdaの結果を返すように
     return result
 
-
 if __name__ == "__main__":
     dataset = {"Lambda_0": 0.982371812727}
-    result = run(5.0, dataset=dataset) 
-    print result
+    legend = ["r_u", "r_b", "a_ex", "a"]
+    result, legend = run_test2(0.5, inpData=dataset, legend=legend) 
+    makeGraph(np.array(result), legend)
 
