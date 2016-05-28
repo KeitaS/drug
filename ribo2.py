@@ -35,9 +35,9 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
     """
 
     Delta_r = r_max - r_min # µM
-    K_off = K_on * K_D
-    P_in = Delta_r * Lambda_0_a / 2.0 / IC50_a 
-    P_out = (Lambda_0_a / 2) ** 2.0 / K_t / K_D
+    K_off = K_on * K_D # riboと薬剤との結合
+    P_in = Delta_r * Lambda_0_a / 2.0 / IC50_a # 薬剤の流入
+    P_out = (Lambda_0_a / 2) ** 2.0 / K_t / K_D # 薬剤の流出
 
     with reaction_rules():
         ## expression
@@ -51,10 +51,10 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
         a > ~a | a * Lambda
         
         # ribo and subunit
-        r30_u + r50_u > r_u | Ka * r30_u * r50_u
-        r_u > r30_u + r50_u | Kd * r_u 
-        ~r30_u > r30_u | sup # production
-        ~r50_u > r50_u | sup # production
+        r30_u + r50_u > r_u | Ka * r30_u * r50_u # bonding
+        r_u > r30_u + r50_u | Kd * r_u # dissociation
+        ~r30_u > r30_u | SUP # production
+        ~r50_u > r50_u | SUP # production
         r_u > ~r_u | r_u * Lambda # diffusion
         r30_u > ~r30_u | r30_u * Lambda # diffusion
         r50_u > ~r50_u | r50_u * Lambda # diffusion
@@ -102,10 +102,19 @@ if __name__ == "__main__":
     makeGraph(np.array(result), savename, legend)
     """
     count = 0
-    for i in np.linspace(0, 1, 101):
+    for i in np.linspace(0, 0.2, 101):
         legend = ["r_u", "r_b", "a_ex", "a"]
         dataset = {"Ka": i, "Lambda_0": 0.982371812727}
-        savename = "ribo2_%d.png" % (count)
+        # dataset = {"Ka": i, "Kd": 0.03, "Lambda_0": 0.982371812727}
+        for j in range(3):
+            if count < 10:
+                num = "00" + str(count)
+            elif count < 100:
+                num = "0" + str(count)
+            else:
+                num = str(count)
+        savename = "ribo2_%s.png" % (num)
+        # savename = "ribo3_%s.png" % (num)
         result, legend = run(.0, inpData=dataset, legend=legend)
         makeGraph(np.array(result), savename, legend)
         print "Ka: %f finish." % (i)
