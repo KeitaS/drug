@@ -66,7 +66,7 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
 
     return get_model()
 
-def run(a_ex, step=10., legend=[], inpData={}, y0={"r30_u":60., "r50_u":60., "r_u": 30.0, "a": .0, "r_b": .0}):
+def run(a_ex, step=10., legend=[], inpData={}, y0={"r30_u":30., "r50_u":30., "r_u": 30.0, "a": .0, "r_b": .0}):
     dataset = {"Lambda_0": 1.35, "Lambda_0_a": 0.31, "IC50": 0.41, "IC50_a": 0.189, "K_t": 6.1 * 10 ** -2, "r_min": 19.3}
     
     dataset.update(inpData)
@@ -95,15 +95,16 @@ def makeGraph(data, savename, legend=[]):
 
 if __name__ == "__main__":
     """
-    savename = "ribo2_1.png"
-    dataset = {"Lambda_0": 0.982371812727}
-    legend = ["r_u", "r_b", "a_ex", "a"]
+    savename = "ribo2_2.png"
+    dataset = {"Ka": 0.018, "Kd":.0, "Lambda_0": 0.982371812727}
+    legend = ["r_u", "r_b", "a_ex", "a", "r30_u"]
     result, legend = run(.0, inpData=dataset, legend=legend)
     makeGraph(np.array(result), savename, legend)
+
     """
     count = 0
-    for i in np.linspace(0, 0.2, 101):
-        legend = ["r_u", "r_b", "a_ex", "a"]
+    for i in np.linspace(0, 1, 101):
+        legend = ["r_u", "r_b", "a_ex", "a", "r30_u"]
         dataset = {"Ka": i, "Lambda_0": 0.982371812727}
         # dataset = {"Ka": i, "Kd": 0.03, "Lambda_0": 0.982371812727}
         for j in range(3):
