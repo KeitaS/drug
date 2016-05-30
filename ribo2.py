@@ -94,14 +94,62 @@ def makeGraph(data, savename, legend=[]):
     plt.close()
 
 if __name__ == "__main__":
+
+    ## ribo1の結果により近いKaを探す 
+    import ribo as ribo1
+    # run ribo1
+    dataset = {"Lambda_0": 0.982371812727}
+    legend = ["r_u"]
+    result1, legend = ribo1.run_test2(.0, inpData=dataset, legend=legend) # original ribo.py output
+    # makeGraph(np.array(result1), "original.png", legend)
+    
+    # run ribo2
+    count = 0
+    diffPoint = 0
+    Ka = 0
+    data = []
     """
+    for i in np.linspace(10**4, 10**5, 10):
+        print "check Ka: %d." % (i)
+        diff = 0
+        legend = ["r_u"]
+        dataset = {"Ka": i, "Lambda_0": 0.982371812727}
+        result2, legend = run(.0, inpData=dataset, legend=legend)
+    
+        for j in range(len(result2)):
+            diff += abs(result1[j][1] - result2[j][1])
+        if count == 0 or diffPoint > diff:
+            Ka = i
+            diffPoint = diff
+            data = result2
+        count += 1
+    """
+
+    i = 6 * 10**4
+    legend = ["r_u"]
+    dataset = {"Ka": i, "Lambda_0": 0.982371812727}
+    result2, legend = run(.0, inpData=dataset, legend=legend)
+    for j in range(len(result2)):
+        diffPoint += abs(result1[j][1] - result2[j][1])
+    Ka = i
+    data = result2
+    print diffPoint 
+    
+    
+    # make Graph
+    savename = "20160530/Ka_%d.png" % (Ka)
+    makeGraph(np.array(data), savename, legend)
+
+
+
+    """
+    ## Kaの値を変更して、それぞれをグラフ化する
     savename = "ribo2_2.png"
     dataset = {"Ka": 0.018, "Kd":.0, "Lambda_0": 0.982371812727}
     legend = ["r_u", "r_b", "a_ex", "a", "r30_u"]
     result, legend = run(.0, inpData=dataset, legend=legend)
     makeGraph(np.array(result), savename, legend)
 
-    """
     count = 0
     for i in np.linspace(0, 1000, 101):
         legend = ["r_u", "r_b", "a_ex", "a", "r30_u"]
@@ -120,3 +168,4 @@ if __name__ == "__main__":
         makeGraph(np.array(result), savename, legend)
         print "Ka: %f finish." % (i)
         count += 1
+    """
