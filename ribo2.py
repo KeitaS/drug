@@ -32,6 +32,11 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
 
     培地によって変更する値(COBRAの結果):
     Lambda_0
+
+    
+    Consideration:
+    薬剤固有の値はIC50_a, IC50, Lambda_0_a
+    複数入ってきた時の対応はどうするか
     """
 
     Delta_r = r_max - r_min # µM
@@ -40,17 +45,28 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
     P_out = (Lambda_0_a / 2) ** 2.0 / K_t / K_D # 薬剤の流出
 
     with reaction_rules():
-        ## expression
+        ### expression
         Lambda = (r_u - r_min) * K_t
         SUP = Lambda * (r_max - Lambda * Delta_r * (1 / Lambda_0 - 1/K_t / Delta_r)) # subunit production expression
 
-        ## reaction
-        # a
-        ~a_ex > a | P_in * a_ex
-        a > ~a_ex | P_out * a
-        a > ~a | a * Lambda
+        ### reaction
+        ## drug
+        # a1(r30)
+        ~a1_ex > a1 | P_in * a1_ex
+        a1 > ~a1_ex | P_out * a1
+        a1 > ~a1 | a1 * Lambda
         
-        # ribo and subunit
+        # a2(r50)
+        ~a2_ex > a2 | P_in * a2_ex
+        a2 > ~a2_ex | P_out * a2
+        a2 > ~a2 | a2 * Lambda
+
+        # a3(r)
+        ~a3_ex > a3 | P_in * a3_ex
+        a3 > ~a3_ex | P_out * a3
+        a3 > ~a3 | a3 * Lambda
+
+        ## ribo and subunit
         r30_u + r50_u > r_u | Ka * r30_u * r50_u # bonding
         r_u > r30_u + r50_u | Kd * r_u # dissociation
         ~r30_u > r30_u | SUP # production
@@ -59,9 +75,20 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
         r30_u > ~r30_u | r30_u * Lambda # diffusion
         r50_u > ~r50_u | r50_u * Lambda # diffusion
 
-        # bond drug
-        a + r_u > r_b | K_on * a * (r_u - r_min)
-        r_b > a + r_u | K_off * r_b
+        ## bond drug
+        # r30
+        a1 + r30_u > r30_b | K_on * a1 * (r_u - r_min)
+        r30_b > a1 + r30_u | K_off * r30_b
+        r30_b > ~r30_b | r30_b * Lambda
+
+        # r50
+        a2 + r50_u > r50_b | K_on * a2 * (r50_u - r_min)
+        r50_b > a2 + r50_u | K_off * r50_b
+        r50_b > ~r50_b | r50_b * Lambda
+        
+        # r
+        a3 + r_u > r_b | K_on * a3 * (r_u - r_min)
+        r_b > a3 + r_u | K_off * r_b
         r_b > ~r_b | r_b * Lambda
 
     return get_model()
@@ -108,6 +135,7 @@ if __name__ == "__main__":
     diffPoint = 0
     Ka = 0
     data = []
+
     """
     for i in np.linspace(10**4, 10**5, 10):
         print "check Ka: %d." % (i)
@@ -137,7 +165,7 @@ if __name__ == "__main__":
     
     
     # make Graph
-    savename = "20160530/Ka_%d.png" % (Ka)
+    savename = "20160601/Ka_%d.png" % (Ka)
     makeGraph(np.array(data), savename, legend)
 
 
