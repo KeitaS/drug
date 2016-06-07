@@ -39,7 +39,6 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
     P_in = Delta_r * Lambda_0_a / 2.0 / IC50_a # 薬剤の流入
     P_out = (Lambda_0_a / 2) ** 2.0 / K_t / K_D # 薬剤の流出
     r_u_0 = Lambda_0 / K_t + r_min
-    p = 1.
     Ka = (Lambda_0 + Kd) / (p * p * r_u_0)
     print Ka
 
@@ -94,7 +93,7 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
 
     return get_model()
 
-def run(a_ex, step=10., legend=[], inpData={}, y0={"r30_u":.0, "r50_u":.0, "r_u": 30., "a": .0, "r_b": .0}):
+def run(a_ex, step=10., legend=[], inpData={}, y0={"r30_u":30., "r50_u":30., "r_u": 30., "a": .0, "r_b": .0}):
     dataset = {"Lambda_0": 1.35, "Lambda_0_a": 0.31, "IC50": 0.41, "IC50_a": 0.189, "K_t": 6.1 * 10 ** -2, "r_min": 19.3}
     
     dataset.update(inpData)
@@ -124,11 +123,18 @@ def makeGraph(data, savename, legend=[]):
 if __name__ == "__main__":
     # savename = "20160607/result.png"
     count = 0
+    r_min = 19.3
+    K_t = 6.1 * 10 ** -2 
     for i in np.linspace(0, 2, 11):
-        savename = "20160607/result%d.png" % (count)
+        num = str(count)
+        if count < 10:
+            num = "0" + num
+        savename = "20160607/3/result%s.png" % (num)
         dataset = {"Lambda_0": 0.982371812727, "Kd": i}
-        legend = ["r_u", "r30_u"]
+        legend = ["r_u"]
         result, legend = run(.0, inpData=dataset, legend=legend)
+        result = map(lambda n: [n[0], (n[1] - r_min) * K_t], result)
+        legend = ["Lambda"]
         makeGraph(np.array(result), savename, legend)
         count += 1
     
