@@ -37,6 +37,7 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
 
     with reaction_rules():
         Lambda = (r_u - r_min) * K_t
+
         ~a_ex > a | P_in * a_ex
         a > ~a_ex | P_out * a
         a + r_u > r_b | K_on * a * (r_u - r_min)
@@ -50,7 +51,7 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
 
 def run_test2(a_ex, step=10., legend=[], inpData={}, y0={"a": .0, "r_u": 30.0, "r_b": .0}):
     dataset = {"Lambda_0": 1.35, "Lambda_0_a": 0.31, "IC50": 0.41, "IC50_a": 0.189, "K_t": 6.1 * 10 ** -2, "r_min": 19.3}
-    
+
     dataset.update(inpData)
     model = createModel(**dataset)
     y0["a_ex"] = a_ex
@@ -64,16 +65,27 @@ def run_test2(a_ex, step=10., legend=[], inpData={}, y0={"a": .0, "r_u": 30.0, "
     data = runsim.data()
     return data, legend
 
-def makeGraph(data, legend=[]):
+
+def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel=""):
     for i in range(len(data[0]) - 1):
         if legend[i]:
             plt.plot(data.T[0], data.T[i+1], label=legend[i])
         else:
             plt.plot(data.T[0], data.T[i+1])
-    # plt.savefig("result/test.png", dpi=200)
+    if title: # titleがあったらつける
+        plt.title(title)
+
+    if xlabel: # xlabelがあったらつける
+        plt.xlabel(xlabel)
+
+    if ylabel: # ylabelがあったらつける
+        plt.ylabel(ylabel)
+
     plt.legend(loc="upper right")
-    plt.show()
-    
+    # plt.show()
+    plt.savefig("result/%s" % (savename), dpi=200)
+    plt.close()
+
 
 def run_test(dataset={}, y0={"a": .0, "r_u": 30.0, "r_b": .0}, step=[0, 1], stepInt=200):
     """
@@ -146,8 +158,43 @@ def run(a_ex, dataset={}, y0={"a": .0, "r_u": 30.0, "r_b": .0}, step=100):
     return result
 
 if __name__ == "__main__":
-    dataset = {"Lambda_0": 0.982371812727}
-    legend = ["r_u", "r_b", "a_ex", "a"]
-    result, legend = run_test2(0.5, inpData=dataset, legend=legend) 
-    makeGraph(np.array(result), legend)
+    r_min = 19.3
+    K_t = 6.1 * 10 ** -2
+
+    ## drug data
+    drug = ["streptmycin", "kanamycin", "tetracycline", "chloramphenicol"]
+    Lambda_0 =  [1.35, 0.85, 0.40] # 1/h (1.35, 0.85, 0.40)
+    Lambda_0_a = {"streptmycin": 0.31, "kanamycin": 0.169, "tetracycline": 5.24, "chloramphenicol": 1.83} # 1/h 
+    IC50 = {"streptmycin": [0.41, 0.28, 0.196], "kanamycin": [0.246, 0.096, 0.065], "tetracycline": [0.5, 0.6, 1.45], "chloramphenicol": [2.85, 2.65, 5.7]} # µg/ml 
+    IC50_a = {"streptmycin": 0.189, "kanamycin": 0.05, "tetracycline": 0.229, "chloramphenicol": 2.49} # µg/ml
+    A_ex = {"streptmycin": 0.6, "kanamycin": 0.5, "tetracycline":2, "chloramphenicol": 20}
+
+    xlabel = "Extracellular antibiotic concentration $a_{ex}$ ($\mu$M)"
+    ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
+
+    for name in drug:
+        print "%s simulation >>>" % (name)
+        data = []
+        for i in range(3):
+            print "medium %d >>" % (i)
+            dataset = {"Lambda_0": Lambda_0[i],
+                       "Lambda_0_a": Lambda_0_a[name],
+                       "IC50": IC50[name][i],
+                       "IC50_a":IC50_a[name]}
+            legend = ["r_u"]
+            count = 0
+            for j in np.linspace(0, A_ex[name], 51):
+                print count
+                result, legend = run_test2(j, inpData=dataset, legend=legend)
+                
+                if i == 0:
+                    result = [j, (result[-1][1] - r_min) * K_t / Lambda_0[i]]
+                    data.append(result)
+                else:
+                    data[count].append((result[-1][1] - r_min) * K_t / Lambda_0[i])
+                count += 1
+
+        savename = "20160607/4/%s.png" % (name) 
+        legend = ["$Gly$", "$Gly_{CAA}$", "$Gly_{RDM}$"]
+        makeGraph(np.array(data), savename, legend, name, xlabel, ylabel)
 
