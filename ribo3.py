@@ -5,30 +5,33 @@ import matplotlib.pylab as plt
 from ecell4 import *
 util.decorator.SEAMLESS_RATELAW_SUPPORT = True
 
-def a1_reaction(P_in, P_out, K_on, K_off, Lambda, a1_ex=0, a1=0):
-    ~a1_ex > a1 | P_in * a1_ex
-    a1 > ~a1_ex | P_out * a1
-    a1 > ~a1 | a1 * Lambda
-    a1 + r30_u > r30_b | K_on * a1 * (r_u - r_min)
-    r30_b > a1 + r30_u | K_off * r30_b
+@reaction_rules
+def r30_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda):
+    ~a_ex > a | P_in * a_ex
+    a > ~a_ex | P_out * a
+    a > ~a | a * Lambda
+    a + r30_u > r30_b | K_on * a * (r_u - r_min)
+    r30_b > a + r30_u | K_off * r30_b
 
-def a2_reaction(P_in, P_out, K_on, K_off, Lambda, a2_ex=0, a2=0):
-    ~a2_ex > a2 | P_in * a2_ex
-    a2 > ~a2_ex | P_out * a2
-    a2 > ~a2 | a2 * Lambda
-    a2 + r30_u > r30_b | K_on * a2 * (r_u - r_min)
-    r30_b > a2 + r30_u | K_off * r30_b
+@reaction_rules
+def r50_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda):
+    ~a_ex > a | P_in * a_ex
+    a > ~a_ex | P_out * a
+    a > ~a | a * Lambda
+    a + r50_u > r50_b | K_on * a * (r_u - r_min)
+    r50_b > a + r50_u | K_off * r50_b
 
-def a3_reaction(P_in, P_out, K_on, K_off, Lambda, a3_ex=0, a3=0):
-    ~a3_ex > a3 | P_in * a3_ex
-    a3 > ~a3_ex | P_out * a3
-    a3 > ~a3 | a3 * Lambda
-    a3 + r_u > r_b | K_on * a3 * (r_u - r_min)
-    r_b > a3 + r_u | K_off * r_b
-    r_b > a3 + r30_u + r50_u | Kd * r_u # r_bの解離
+@reaction_rules
+def ribo_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda):
+    ~a_ex > a | P_in * a_ex
+    a > ~a_ex | P_out * a
+    a > ~a | a * Lambda
+    a + r_u > r_b | K_on * a * (r_u - r_min)
+    r_b > a + r_u | K_off * r_b
+    r_b > a + r30_u + r50_u | Kd * r_u # r_bの解離
 
 
-def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambda_0=1.35, Lambda_0_a=0.31, IC50=0.41, IC50_a=0.189, Kd=100., p=1.):
+def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambda_0=1.35, Lambda_0_a=0.31, IC50=0.41, IC50_a=0.189, Kd=100., p=1., target=[]):
     """
     リボソームモデルを構成するモジュール
     r_max: µM
@@ -70,15 +73,19 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
 
         ### reaction
         ## drug
-        # ここを繰り返したい
-        # a1
-        a1_reaction(P_in, P_out, K_on, K_off, Lambda, a1_ex, a1)
-
-        # a2
-        a2_reaction(P_in, P_out, K_on, K_off, Lambda, a2_ex, a2)
-
-        # a3
-        a3_reaction(P_in, P_out, K_on, K_off, Lambda, a3_ex, a3)
+        if target[0] == "30s":
+            r30_binding_reaction(P_in, P_out, K_on, K_off, Lambda, a1_ex, a1)
+        elif target[0] == "50s":
+            r50_binding_reaction(P_in, P_out, K_on, K_off, Lambda, a1_ex, a1)
+        elif target[0] == "ribo":
+            ribo_reaction(P_in, P_out, K_on, K_off, Lambda, a1_ex, a1)
+        
+        if target[1] == "30s":
+            r30_binding_reaction(P_in, P_out, K_on, K_off, Lambda, a2_ex, a2)
+        elif target[1] == "50s":
+            r50_binding_reaction(P_in, P_out, K_on, K_off, Lambda, a2_ex, a2)
+        elif target[1] == "ribo":
+            ribo_reaction(P_in, P_out, K_on, K_off, Lambda, a2_ex, a2)
 
         ## ribo and subunit
         # production
@@ -101,15 +108,54 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
 
     return get_model()
 
-def run(a1_ex=.0, a2_ex=.0, a3_ex=.0, step=10., legend=[], inpData={}, y0={"r30_u":30., "r50_u":30., "r_u":30., "r_b": .0}):
-    dataset = {"Lambda_0": 1.35, "Lambda_0_a": 0.31, "IC50": 0.41, "IC50_a": 0.189, "K_t": 6.1 * 10 ** -2, "r_min": 19.3}
-    
-    dataset.update(inpData)
-    model = createModel(**dataset)
-    y0["a1_ex"] = a1_ex # target S30
-    y0["a2_ex"] = a2_ex # target S50
-    y0["a3_ex"] = a3_ex # target ribo
 
+def checkRiboDrug(drugNames=[]):
+    """
+    薬剤の標的を返す関数
+    """
+    targets = []
+    for drugName in drugNames:
+        if drugName == "Kanamycin":
+            targets.append("30s")
+
+    return targets
+
+
+def run(drugs=[], step=10., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30., "r_u": 30., "r_b": .0}):
+    """
+    ribosomeモデル実行関数
+
+    drugs: [["drug_name": dose]]
+    step: 
+    legend: 
+    inpData: 
+    y0:
+
+    ToDo:
+    今後、drugの種類を判定する関数をつくり、この関数に導入する。
+    """
+
+    dataset = {"Lambda_0": 1.35, "Lambda_0_a": 0.31, "IC50": 0.41, "IC50_a": 0.189, "K_t": 6.1 * 10 ** -2, "r_min": 19.3}
+    dNames = [] # drugの名前
+    dDose = [] # drugのdose
+    dTargets = [] # drugのターゲット
+    
+    dataset.update(inpData) # inpDataの内容をdatasetに入れる
+    if drugs:
+        for drug in drugs:
+            dNames.append(drug[0])
+            dDose.append(drug[1])
+        dTargets = checkRiboDrug(dNames)
+        
+    dataset["target"] = dTargets # 標的リストをdatasetに入れる
+
+    model = createModel(**dataset) # モデルを作成
+    
+    # y0に薬剤のDoseを入れる
+    for index, dClass in enumerate(dNames):
+        y0["a%d_ex" % (index + 1)] = dDose[index] # y0にdrugのdoseを入れる
+
+    # legend
     if not legend: 
         legend = y0.keys()
 
@@ -168,6 +214,8 @@ if __name__ == "__main__":
     dataset = {"Kd": Kd, "Lambda_0": Lambda_0[0], "Lambda_0_a": Lambda_0_a[name], "IC50": IC50[name][0], "IC50_a": IC50_a[name], "p": p}
     legend = ["r_u"]
     data = []
+
+    result.legend = run(drugs={"r30": IC50[name][0], "r30"}
 
     for i in np.linspace(0, a_ex[name], 51):
         result, legend = run(a3_ex=i, inpData=dataset, legend=legend)
