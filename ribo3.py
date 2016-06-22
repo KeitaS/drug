@@ -74,17 +74,23 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
         ### reaction
         ## drug
         if target[0] == "30s":
+            print "drug1 targets 30s ribosomal subunit >>"
             r30_binding_reaction(a1_ex, a1, P_in, P_out, K_on, K_off, Lambda)
         elif target[0] == "50s":
+            print "drug1 targets 50s ribosomal subunit >>"
             r50_binding_reaction(a1_ex, a1, P_in, P_out, K_on, K_off, Lambda)
         elif target[0] == "ribo":
+            print "drug1 targets ribosome >>"
             ribo_binding_reaction(a1_ex, a1, P_in, P_out, K_on, K_off, Lambda)
         
         if target[1] == "30s":
+            print "drug2 targets 30s ribosomal subunit >>"
             r30_binding_reaction(a2_ex, a2, P_in, P_out, K_on, K_off, Lambda)
         elif target[1] == "50s":
+            print "drug2 targets 50s ribosomal subunit >>"
             r50_binding_reaction(a2_ex, a2, P_in, P_out, K_on, K_off, Lambda)
         elif target[1] == "ribo":
+            print "drug2 targets ribosome >>"
             ribo_binding_reaction(a2_ex, a2, P_in, P_out, K_on, K_off, Lambda)
 
         ## ribo and subunit
@@ -218,7 +224,7 @@ if __name__ == "__main__":
     dataset = {"Kd": Kd, "Lambda_0": Lambda_0[0], "Lambda_0_a": Lambda_0_a[name], "IC50": IC50[name][0], "IC50_a": IC50_a[name], "p": p}
     legend = ["r_u"]
     
-    drugs = [["30s", IC50[name][0]], ["30s", IC50[name][0]]]
+    drugs = [["ribo", IC50[name][0]], ["ribo", IC50[name][0]]]
 
     result, legend = run(drugs, inpData=dataset, legend=legend)
     savename = "20160620/%s_%s.png" % (drugs[0][0], drugs[1][0])
