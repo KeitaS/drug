@@ -222,6 +222,11 @@ if __name__ == "__main__":
     legend = ["r_u"]
     N_IC50 = {"30s": 0, "50s": 0, "ribo": 0}
 
+    # 保存用ディレクトリの作成
+    import os
+    os.makedirs("images/result")
+    del(os)
+
     # single drug
     drugs = [{"name": name, "type": "ribo", "dose": .0, "Lambda_0_a": Lambda_0_a[name], "IC50": IC50[name][0], "IC50_a": IC50_a[name]}]
     drug_types = ["30s", "50s", "ribo"]
