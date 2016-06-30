@@ -210,11 +210,7 @@ if __name__ == "__main__":
     Lambda_0_a = {"Streptmycin": 0.31, "Kanamycin": 0.169, "Tetracycline": 5.24, "Chloramphenicol": 1.83} # 1/h
     IC50 = {"Streptmycin": [0.41, 0.28, 0.196], "Kanamycin": [0.246, 0.096, 0.065], "Tetracycline": [0.5, 0.6, 1.45], "Chloramphenicol": [2.85, 2.65, 5.7]} # µg/ml
     IC50_a = {"Streptmycin": 0.189, "Kanamycin": 0.05, "Tetracycline": 0.229, "Chloramphenicol": 2.49} # µg/ml
-    a_ex = {"Streptmycin": 0.6, "Kanamycin": 0.5, "Tetracycline":2, "Chloramphenicol": 20} #
-
-    # xlabel = "Extracellular antibiotic concentration $a_{ex}$ ($\mu$M)"
-    # ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
-
+    a_ex = {"Streptmycin": 0.6, "Kanamycin": 0.5, "Tetracycline":2, "Chloramphenicol": 20}
 
     ## Kanamycinで比較
     name = "Kanamycin"
@@ -224,7 +220,8 @@ if __name__ == "__main__":
 
     # 保存用ディレクトリの作成
     import os
-    os.makedirs("images/result")
+    if not os.path.exists("images/result"):
+        os.makedirs("images/result")
     del(os)
 
     # single drug
@@ -258,8 +255,10 @@ if __name__ == "__main__":
     title = "Single Drug Reaction"
     makeGraph(np.array(single_result), savename, drug_types, title, xlabel, ylabel)
 
-    # N_IC50 = {'30s': 0.46022981067251706, '50s': 0.4602298106387082, 'ribo': 0.5049873319281516}
+    # singleを実行して得られたIC50
+    N_IC50 = {'30s': 0.46022981067251706, '50s': 0.4602298106387082, 'ribo': 0.5049873319281516}
     print N_IC50
+
 
     # double drug
     drugs = [{"name": name, "type": "ribo", "dose": IC50[name][0], "Lambda_0_a": Lambda_0_a[name], "IC50": IC50[name][0], "IC50_a": IC50_a[name]},
@@ -297,3 +296,46 @@ if __name__ == "__main__":
     ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
 
     makeGraph(np.array(double_result), savename, legend_a, title, xlabel, ylabel)
+
+
+    ## heat map
+    import seaborn as sns
+    import pandas as pd
+
+    drugs = [{"name": name, "type": "ribo", "dose": IC50[name][0], "Lambda_0_a": Lambda_0_a[name], "IC50": IC50[name][0], "IC50_a": IC50_a[name]},
+             {"name": name, "type": "ribo", "dose": IC50[name][0], "Lambda_0_a": Lambda_0_a[name], "IC50": IC50[name][0], "IC50_a": IC50_a[name]}]
+
+    type_list = [["30s", "30s"], ["30s", "50s"], ["30s", "ribo"],["ribo", "ribo"]]
+
+    for num in range(len(type_list)):
+        types = type_list[num]
+        drugs[0]["type"] = types[0] # drugにtypeを入力
+        drugs[1]["type"] = types[1]
+        X = np.linspace(0, N_IC50[types[0]], 5) # 1個目の薬剤
+        Y = np.linspace(0, N_IC50[types[1]], 5) # 2個目の薬剤
+        doses = [[x, y] for x in X for y in Y] # dose listの作成
+        X = [round(x[0], 4) for x in doses]
+        Y = [round(y[1], 4) for y in doses]
+        print X
+        print Y
+        heatmap_result = []
+
+        for dose in doses:
+            drugs[0]["dose"] = dose[0]
+            drugs[1]["dose"] = dose[1]
+            result, legend = run(drugs, inpData=dataset, legend=legend)
+            result = (result[-1][1] - r_min) * K_t / Lambda_0[0] # 結果をgrowthに書き換え
+            heatmap_result.append(result)
+
+        data = pd.DataFrame([X, Y, heatmap_result]).T
+        data.columns = ["drug1", "drug2", "growth"]
+        data_pivot = pd.pivot_table(data=data, values="growth", columns="drug1", index="drug2", aggfunc=np.mean)
+        pltnum = 220 + num + 1
+        plt.subplot(pltnum)
+        sns.heatmap(data_pivot)
+        plt.xlabel(types[0])
+        plt.ylabel(types[1])
+        # plt.xticks(np.linspace(0, 10, 3))
+        # plt.yticks(np.linspace(0, 10, 3))
+    plt.savefig("images/result/heatmap.png", dpi=200)
+    plt.close()
