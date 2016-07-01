@@ -178,7 +178,7 @@ def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel=""):
     グラフ作成用モジュール
     """
     for i in range(len(data[0]) - 1):
-        if legend[i]:
+        if len(legend) > i:
             plt.plot(data.T[0], data.T[i+1], label=legend[i])
         else:
             plt.plot(data.T[0], data.T[i+1])
@@ -192,9 +192,10 @@ def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel=""):
     if ylabel: # ylabelがあったらつける
         plt.ylabel(ylabel)
 
-    plt.legend(loc="upper right")
+    if legend:
+        plt.legend(loc="upper right")
     # plt.show()
-    plt.savefig("result/%s" % (savename), dpi=200)
+    plt.savefig(savename, dpi=200)
     plt.close()
 
 
