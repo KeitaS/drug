@@ -28,10 +28,10 @@ def ribo_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda):
     a > ~a | a * Lambda
     a + r_u > r_b | K_on * a * (r_u - r_min)
     r_b > a + r_u | K_off * r_b
-    r_b > a + r30_u + r50_u | Kd * r_u # r_bの解離
+    r_b > a + r30_u + r50_u | Kd * r_b # r_bの解離
 
 
-def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambda_0=1.35, Kd=100., p=1., target=[]):
+def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambda_0=1.35, Kd=5., p=1.):
     """
     リボソームモデルを構成するモジュール
     r_max: µM
@@ -58,6 +58,7 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=
     薬剤固有の値はIC50_a, IC50, Lambda_0_a
     複数入ってきた時の対応はどうするか
     """
+    print Kd
 
     Delta_r = r_max - r_min # µM
     K_off = K_on * K_D # riboと薬剤との結合
@@ -137,7 +138,7 @@ def checkRiboDrug(drugNames=[]):
     return targets
 
 
-def run(drugs=[], step=10., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30., "r_u": 30., "r_b": .0}):
+def run(drugs=[], step=5., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30., "r_u": 30., "r_b": .0}):
     """
     ribosomeモデル実行関数
 
@@ -202,8 +203,9 @@ def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel=""):
 if __name__ == "__main__":
     r_min = 19.3
     K_t = 6.1 * 10 ** -2
-    Kd = 5.
+    Kd = 1.
     p = 0.1
+    savedir = "images/result2"
 
     ## drug data
     drug = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
@@ -220,13 +222,12 @@ if __name__ == "__main__":
 
     # 保存用ディレクトリの作成
     import os
-    if not os.path.exists("images/result"):
-        os.makedirs("images/result")
+    if not os.path.exists(savedir):
+        os.makedirs(savedir)
     del(os)
 
     # 以前のモデルと今回のモデルの比較
     ## ribo3
-    """
     drugs = [{"name": name, "type": "ribo", "dose": .0, "Lambda_0_a": Lambda_0_a[name], "IC50": IC50[name][0], "IC50_a": IC50_a[name]}]
     drug_types = ["30s", "50s", "ribo"]
     single_result = [] # 単剤用の結果の格納場所
@@ -237,7 +238,7 @@ if __name__ == "__main__":
         # doseを振り、モデルを実行
         for count, dose in enumerate(np.linspace(0, a_ex[name], 51)):
             drugs[0]["dose"] = dose
-            result, legend = run(drugs, inpData=dataset, legend=legend)
+            result, legend = run(drugs, step=100, inpData=dataset, legend=legend)
             result = (result[-1][1] - r_min) * K_t / Lambda_0[0] # 結果をgrowthに書き換え
             if num == 0:
                 single_result.append([dose, result])
@@ -255,15 +256,14 @@ if __name__ == "__main__":
     print single_result
 
     ## make Graph
-    legend = ["30s", "50s", "ribo", "before"]
-    savename = "images/result/ribo_ribo3.png"
+    legend = ["30s", "50s", "ribo", "previous"]
+    savename = "%s/ribo_ribo3_Kd%d.png" % (savedir, Kd)
     xlabel = "Extracellular Antibiotic Concentration $a_{ex}$ ($\mu$M)"
     ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
     title = "Single Drug Reaction"
     makeGraph(np.array(single_result), savename, legend, title, xlabel, ylabel)
-    """
 
-
+    
     # nature2006のモデルとの比較
     import matplotlib.pylab as plt
     dataset = {"Kd": Kd, "Lambda_0": Lambda_0[0], "p": p}
@@ -320,5 +320,5 @@ if __name__ == "__main__":
         plt.ylim(0, 1.1)
         plt.title("%s & %s" % (name1[:3], name2[:3]))
     plt.tight_layout()
-    plt.savefig("images/result/double_bar.png", bbox_inches="tight", pad_inches=0.3, dpi=200)
+    plt.savefig("%s/double_bar.png" % (savedir), bbox_inches="tight", pad_inches=0.3, dpi=200)
     plt.close()

@@ -28,7 +28,7 @@ def ribo_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda):
     a > ~a | a * Lambda
     a + r_u > r_b | K_on * a * (r_u - r_min)
     r_b > a + r_u | K_off * r_b
-    r_b > a + r30_u + r50_u | Kd * r_u # r_bの解離
+    r_b > a + r30_u + r50_u | Kd * r_b # r_bの解離
 
 
 def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambda_0=1.35, Kd=100., p=1., target=[]):
@@ -202,8 +202,9 @@ def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel=""):
 if __name__ == "__main__":
     r_min = 19.3
     K_t = 6.1 * 10 ** -2
-    Kd = 5.
+    Kd = 1.
     p = 0.1
+    savedir = "images/result2"
 
     ## drug data
     drug = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
@@ -221,8 +222,8 @@ if __name__ == "__main__":
 
     # 保存用ディレクトリの作成
     import os
-    if not os.path.exists("images/result"):
-        os.makedirs("images/result")
+    if not os.path.exists(savedir):
+        os.makedirs(savedir)
     del(os)
 
     # single drug
@@ -250,7 +251,7 @@ if __name__ == "__main__":
             count += 1
 
     #make Graph
-    savename = "images/result/single.png"
+    savename = "%s/single.png" % (savedir)
     xlabel = "Extracellular Antibiotic Concentration $a_{ex}$ ($\mu$M)"
     ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
     title = "Single Drug Reaction"
@@ -291,7 +292,7 @@ if __name__ == "__main__":
             count += 1
 
     ## Make Graph
-    savename = "images/result/double.png"
+    savename = "%s/double.png" % (savedir)
     title = "Double Drug Reaction"
     xlabel = "Ratio of Dose in Comparison with Nomalized IC50 (%)"
     ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
@@ -338,5 +339,5 @@ if __name__ == "__main__":
         plt.ylabel(types[1])
         # plt.xticks(np.linspace(0, 10, 3))
         # plt.yticks(np.linspace(0, 10, 3))
-    plt.savefig("images/result/heatmap.png", dpi=200)
+    plt.savefig("%s/heatmap.png" % (savedir), dpi=200)
     plt.close()
