@@ -58,7 +58,6 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=
     薬剤固有の値はIC50_a, IC50, Lambda_0_a
     複数入ってきた時の対応はどうするか
     """
-    print Kd
 
     Delta_r = r_max - r_min # µM
     K_off = K_on * K_D # riboと薬剤との結合
@@ -122,20 +121,24 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=
     return get_model()
 
 
-def checkRiboDrug(drugNames=[]):
+def makeDrugDatas(drugName, medium):
     """
-    薬剤の標的を返す関数
+    薬剤データを作成して返す関数
+    drugName : 投与する薬剤の名前
+    medium : 培地の番号(0: ,
+                      1: ,
+                      2: ,
+                     )
     """
-    targets = []
-    for drugName in drugNames:
-        if drugName == "30s":
-            targets.append("30s")
-        elif drugName == "50s":
-            targets.append("50s")
-        elif drugName == "ribo":
-            targets.append("ribo")
+    dNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
+    Lambda_0_a = {"Streptmycin": 0.31, "Kanamycin": 0.169, "Tetracycline": 5.24, "Chloramphenicol": 1.83} # 1/h
+    IC50 = {"Streptmycin": [0.41, 0.28, 0.196], "Kanamycin": [0.246, 0.096, 0.065], "Tetracycline": [0.5, 0.6, 1.45], "Chloramphenicol": [2.85, 2.65, 5.7]} # µg/ml
+    IC50_a = {"Streptmycin": 0.189, "Kanamycin": 0.05, "Tetracycline": 0.229, "Chloramphenicol": 2.49} # µg/ml
+    types = {"Streptmycin": "30s", "Kanamycin": "30s", "Tetracycline": "30s", "Chloramphenicol": "50s"}
 
-    return targets
+    drugData = {"name": drugName, "type": types[drugName], "dose": .0, "Lambda_0_a": Lambda_0_a[drugName], "IC50": IC50[drugName][medium], "IC50_a": IC50_a[drugName]}
+
+    return drugData
 
 
 def run(drugs=[], step=5., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30., "r_u": 30., "r_b": .0}):
@@ -174,15 +177,26 @@ def run(drugs=[], step=5., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30.
     return data, legend
 
 
-def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel=""):
+def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel="", type="single"):
     """
     グラフ作成用モジュール
     """
-    for i in range(len(data[0]) - 1):
-        if len(legend) > i:
-            plt.plot(data.T[0], data.T[i+1], label=legend[i])
+    if type == "single":
+        for i in range(len(data[0]) - 1):
+            if len(legend) > i:
+                plt.plot(data.T[0], data.T[i+1], label=legend[i])
+            else:
+                plt.plot(data.T[0], data.T[i+1])
+    else if type == "multi":
+        if len(data[0]) / 2 is not int:
+            print "Input data length is not even number!"
+            break
         else:
-            plt.plot(data.T[0], data.T[i+1])
+            for i in range(len(data[0] / 2)):
+                if len(legend) > i:
+                    plt.plot(data.T[i * 2], data.T[i * 2 + 1], label=legend[i])
+                else:
+                    plt.plot(data.T[i * 2], data.T[i * 2 + 1])
 
     if title: # titleがあったらつける
         plt.title(title)
@@ -200,15 +214,17 @@ def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel=""):
     plt.close()
 
 
+
 if __name__ == "__main__":
+    # 初期値
     r_min = 19.3
     K_t = 6.1 * 10 ** -2
     Kd = 1.
     p = 0.1
-    savedir = "images/result2"
+    savedir = "images/result3"
 
     ## drug data
-    drug = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
+    dNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
     Lambda_0 =  [1.35, 0.85, 0.40] # 1/h (1.35, 0.85, 0.40)
     Lambda_0_a = {"Streptmycin": 0.31, "Kanamycin": 0.169, "Tetracycline": 5.24, "Chloramphenicol": 1.83} # 1/h
     IC50 = {"Streptmycin": [0.41, 0.28, 0.196], "Kanamycin": [0.246, 0.096, 0.065], "Tetracycline": [0.5, 0.6, 1.45], "Chloramphenicol": [2.85, 2.65, 5.7]} # µg/ml
@@ -226,6 +242,7 @@ if __name__ == "__main__":
         os.makedirs(savedir)
     del(os)
 
+    """
     # 以前のモデルと今回のモデルの比較
     ## ribo3
     drugs = [{"name": name, "type": "ribo", "dose": .0, "Lambda_0_a": Lambda_0_a[name], "IC50": IC50[name][0], "IC50_a": IC50_a[name]}]
@@ -263,7 +280,7 @@ if __name__ == "__main__":
     title = "Single Drug Reaction"
     makeGraph(np.array(single_result), savename, legend, title, xlabel, ylabel)
 
-    
+
     # nature2006のモデルとの比較
     import matplotlib.pylab as plt
     dataset = {"Kd": Kd, "Lambda_0": Lambda_0[0], "p": p}
@@ -322,3 +339,73 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig("%s/double_bar.png" % (savedir), bbox_inches="tight", pad_inches=0.3, dpi=200)
     plt.close()
+
+    """
+
+    # 追加データ：4つの薬剤のヒートマップ
+    ##　IC50の取得
+    ## single reaction
+    from collections import defaultdict
+    newIC50 = {}
+    single_result = defaultdict(list)
+    for index, dName in enumerate(dNames):
+        drugs = [makeDrugDatas(dName, 0)]
+        for dose in np.linspace(.0, a_ex[dName], 50): # 50にする
+            drugs[0]["dose"] = dose
+            result, legend = run(drugs, inpData=dataset, legend=legend)
+            result = (result[-1][1] - r_min) * K_t / Lambda_0[0] # 結果をgrowthに書き換え
+            if not newIC50.get(dName):
+                newIC50[dName] = result
+            else:
+                if abs(0.5 - newIC50[dName]) > abs(0.5 - result): # IC50をnomalize
+                    newIC50[dName] = result
+            single_result[dName].append([round(dose, 4), round(result, 4)])
+
+    ## データの整形
+
+    ## makeGraph
+    savename = "%s/single.png" % (savedir)
+    xlabel = "Extracellular Antibiotic Concentration $a_{ex}$ ($\mu$M)"
+    ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
+    title = "Single Drug Reaction"
+    makeGraph(np.array(data), savename, dNames, title, xlabel, ylabel)
+    # newIC50 = {'Kanamycin': 0.51518844357742, 'Streptmycin': 0.5309367761076496, 'Chloramphenicol': 0.507814113568461, 'Tetracycline': 0.5031649281352736}
+
+"""
+    ## ヒートマップの作成
+    import seaborn as sns
+    import pandas as pd
+    import itertools as itr
+
+    drugList = list(itr.combinations(dNames, 2)) # drugListの組み合わせを作成
+
+    for index, drugComb in enumerate(drugList):
+        drugs = [makeDrugDatas(drugComb[0], 0), makeDrugDatas(drugComb[1], 0)]
+
+        X = np.linspace(0, newIC50[drugComb[0]], 5) # 1個目の薬剤のdose
+        Y = np.linspace(0, newIC50[drugComb[1]], 5) # 2個目の薬剤のdose
+        doses = [[x, y] for x in X for y in Y] # dose listの作成
+        X = [round(x[0], 4) for x in doses]
+        Y = [round(y[1], 4) for y in doses]
+        heatmap_result = []
+
+        for dose in doses:
+            drugs[0]["dose"] = dose[0]
+            drugs[1]["dose"] = dose[1]
+            result, legend = run(drugs, inpData=dataset, legend=legend)
+            result = (result[-1][1] - r_min) * K_t / Lambda_0[0] # 結果をgrowthに書き換え
+            heatmap_result.append(result)
+
+        data = pd.DataFrame([X, Y, heatmap_result]).T
+        data.columns = [drugs[0]["name"], drugs[1]["name"], "growth"]
+        data_pivot = pd.pivot_table(data=data, values="growth", columns=drugs[1]["name"], index=drugs[0]["name"], aggfunc=np.mean)
+        pltnum = 230 + index + 1
+        plt.subplot(pltnum)
+        sns.heatmap(data_pivot)
+        plt.xlabel(drugs[0]["name"])
+        plt.ylabel(drugs[1]["name"])
+        # plt.xticks(np.linspace(0, 10, 3))
+        # plt.yticks(np.linspace(0, 10, 3))
+    plt.savefig("%s/heatmap.png" % (savedir), dpi=200)
+    plt.close()
+    """
