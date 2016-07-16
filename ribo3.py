@@ -233,10 +233,9 @@ if __name__ == "__main__":
     for num in range(len(drug_types)):
         drug_type = drug_types[num]
         drugs[0]["type"] = drug_type
-        count = 0
 
         # doseを振り、モデルを実行
-        for dose in np.linspace(0, a_ex[name], 51):
+        for count, dose in enumerate(np.linspace(0, a_ex[name], 51)):
             drugs[0]["dose"] = dose
             result, legend = run(drugs, inpData=dataset, legend=legend)
             result = (result[-1][1] - r_min) * K_t / Lambda_0[0] # 結果をgrowthに書き換え
@@ -245,10 +244,13 @@ if __name__ == "__main__":
             else:
                 single_result[count].append(result)
 
-            if abs(0.5 - N_IC50[drug_type]) > abs(0.5 - result): # IC50をnomalize
-                N_IC50[drug_type] = result
+            if not N_IC50.get(drug_type):
+                N_IC50[drug_type] = [dose, result]
 
-            count += 1
+            if abs(0.5 - N_IC50[drug_type][1]) > abs(0.5 - result): # IC50をnomalize
+                N_IC50[drug_type] = [dose, result]
+
+    N_IC50 = {key: value[0] for key, value in N_IC50.items()}
 
     #make Graph
     savename = "%s/single.png" % (savedir)
@@ -258,7 +260,7 @@ if __name__ == "__main__":
     makeGraph(np.array(single_result), savename, drug_types, title, xlabel, ylabel)
 
     # singleを実行して得られたIC50
-    N_IC50 = {'30s': 0.46022981067251706, '50s': 0.4602298106387082, 'ribo': 0.5049873319281516}
+    # N_IC50 = {'30s': 0.28000000000000003, '50s': 0.28000000000000003, 'ribo': 0.25}
     print N_IC50
 
 
@@ -318,8 +320,7 @@ if __name__ == "__main__":
         doses = [[x, y] for x in X for y in Y] # dose listの作成
         X = [round(x[0], 4) for x in doses]
         Y = [round(y[1], 4) for y in doses]
-        print X
-        print Y
+
         heatmap_result = []
 
         for dose in doses:

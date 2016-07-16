@@ -181,18 +181,19 @@ def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel="", type="s
     """
     グラフ作成用モジュール
     """
+    import sys
     if type == "single":
         for i in range(len(data[0]) - 1):
             if len(legend) > i:
                 plt.plot(data.T[0], data.T[i+1], label=legend[i])
             else:
                 plt.plot(data.T[0], data.T[i+1])
-    else if type == "multi":
-        if len(data[0]) / 2 is not int:
-            print "Input data length is not even number!"
-            break
+    elif type == "multi":
+        if len(data[0]) % 2. > 0:
+            sys.stderr.write("Error: Input data length is not Even.")
+
         else:
-            for i in range(len(data[0] / 2)):
+            for i in range(len(data[0]) / 2):
                 if len(legend) > i:
                     plt.plot(data.T[i * 2], data.T[i * 2 + 1], label=legend[i])
                 else:
@@ -346,32 +347,44 @@ if __name__ == "__main__":
     ##　IC50の取得
     ## single reaction
     from collections import defaultdict
-    newIC50 = {}
-    single_result = defaultdict(list)
+    newIC50 = {} # {drugName: [dose, result], ...}
+    single_result = defaultdict(list) # {drugName: [[dose, result], [dose, result] ... ]}
     for index, dName in enumerate(dNames):
         drugs = [makeDrugDatas(dName, 0)]
-        for dose in np.linspace(.0, a_ex[dName], 50): # 50にする
+        for dose in np.linspace(.0, a_ex[dName], 51): # 本来はここをそれぞれのa_exにする。
             drugs[0]["dose"] = dose
             result, legend = run(drugs, inpData=dataset, legend=legend)
             result = (result[-1][1] - r_min) * K_t / Lambda_0[0] # 結果をgrowthに書き換え
             if not newIC50.get(dName):
-                newIC50[dName] = result
+                newIC50[dName] = [dose, result]
             else:
-                if abs(0.5 - newIC50[dName]) > abs(0.5 - result): # IC50をnomalize
-                    newIC50[dName] = result
+                if abs(0.5 - newIC50[dName][1]) > abs(0.5 - result): # IC50をnomalize
+                    newIC50[dName] = [dose, result]
             single_result[dName].append([round(dose, 4), round(result, 4)])
 
+    newIC50 = {key: value[0] for key, value in newIC50.items()} # {drugName: dose, ...}
+
     ## データの整形
+    data = []
+    for index, dName in enumerate(dNames):
+        for i, (x, y) in enumerate(single_result[dName]):
+            if index == 0:
+                data.append([x, y])
+            else:
+                data[i].append(y)
 
     ## makeGraph
     savename = "%s/single.png" % (savedir)
     xlabel = "Extracellular Antibiotic Concentration $a_{ex}$ ($\mu$M)"
     ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
     title = "Single Drug Reaction"
-    makeGraph(np.array(data), savename, dNames, title, xlabel, ylabel)
-    # newIC50 = {'Kanamycin': 0.51518844357742, 'Streptmycin': 0.5309367761076496, 'Chloramphenicol': 0.507814113568461, 'Tetracycline': 0.5031649281352736}
+    outputType = "single"
+    makeGraph(np.array(data), savename, dNames, title, xlabel, ylabel, outputType)
 
-"""
+    print newIC50
+    # newIC50 = {'Kanamycin': 0.30612244897959179, 'Streptmycin': 0.59999999999999998, 'Chloramphenicol': 20.0, 'Tetracycline': 2.0}
+
+    """
     ## ヒートマップの作成
     import seaborn as sns
     import pandas as pd
