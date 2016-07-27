@@ -31,7 +31,7 @@ def ribo_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda):
     r_b > a + r30_u + r50_u | Kd * r_b # r_bの解離
 
 
-def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambda_0=1.35, Kd=100., p=1., target=[]):
+def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambda_0=1.35, Kd=1., p=1.):
     """
     リボソームモデルを構成するモジュール
     r_max: µM
@@ -64,11 +64,6 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=
     r_u_0 = Lambda_0 / K_t + r_min
     Ka = (Lambda_0 + Kd) / (p * p * r_u_0)
 
-    # P_in, P_outをdrugのデータに入れる
-    for drug in drugs: # drug dataに基づく情報を用いた
-        drug["P_in"] = Delta_r * drug["Lambda_0_a"] / 2.0 / drug["IC50_a"] # 薬剤の流入
-        drug["P_out"] = (drug["Lambda_0_a"] / 2) ** 2.0 / K_t / K_D # 薬剤の流出
-
 
     with reaction_rules():
         ### expression
@@ -80,24 +75,24 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=
         if len(drugs) > 0:
             if drugs[0]["type"] == "30s":
                 # print "drug1 targets 30s ribosomal subunit >>"
-                r30_binding_reaction(a1_ex, a1, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
+                r30_binding_reaction(a1_ex, a1, drug[0]["P_in"], drug[0]["P_out"], K_on, K_off, Lambda)
             elif drugs[0]["type"] == "50s":
                 # print "drug1 targets 50s ribosomal subunit >>"
-                r50_binding_reaction(a1_ex, a1, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
+                r50_binding_reaction(a1_ex, a1, drug[0]["P_in"], drug[0]["P_out"], K_on, K_off, Lambda)
             elif drugs[0]["type"] == "ribo":
                 # print "drug1 targets ribosome >>"
-                ribo_binding_reaction(a1_ex, a1, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
+                ribo_binding_reaction(a1_ex, a1, drug[0]["P_in"], drug[0]["P_out"], K_on, K_off, Lambda)
 
         if len(drugs) > 1:
             if drugs[1]["type"] == "30s":
                 # print "drug2 targets 30s ribosomal subunit >>"
-                r30_binding_reaction(a2_ex, a2, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
+                r30_binding_reaction(a2_ex, a2, drug[0]["P_in"], drug[0]["P_out"], K_on, K_off, Lambda)
             elif drugs[1]["type"] == "50s":
                 # print "drug2 targets 50s ribosomal subunit >>"
-                r50_binding_reaction(a2_ex, a2, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
+                r50_binding_reaction(a2_ex, a2, drug[0]["P_in"], drug[0]["P_out"], K_on, K_off, Lambda)
             elif drugs[1]["type"] == "ribo":
                 # print "drug2 targets ribosome >>"
-                ribo_binding_reaction(a2_ex, a2, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
+                ribo_binding_reaction(a2_ex, a2, drug[0]["P_in"], drug[0]["P_out"], K_on, K_off, Lambda)
 
         ## ribo and subunit
         # production
@@ -121,23 +116,27 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=
     return get_model()
 
 
-def checkRiboDrug(drugNames=[]):
+def makeDrugDatas(drugName, medium):
     """
-    薬剤の標的を返す関数
+    薬剤データを作成して返す関数
+    drugName : 投与する薬剤の名前
+    medium : 培地の番号(0: ,
+                      1: ,
+                      2: ,
+                     )
     """
-    targets = []
-    for drugName in drugNames:
-        if drugName == "30s":
-            targets.append("30s")
-        elif drugName == "50s":
-            targets.append("50s")
-        elif drugName == "ribo":
-            targets.append("ribo")
+    dNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
+    Lambda_0_a = {"Streptmycin": 0.31, "Kanamycin": 0.169, "Tetracycline": 5.24, "Chloramphenicol": 1.83} # 1/h
+    IC50 = {"Streptmycin": [0.41, 0.28, 0.196], "Kanamycin": [0.246, 0.096, 0.065], "Tetracycline": [0.5, 0.6, 1.45], "Chloramphenicol": [2.85, 2.65, 5.7]} # µg/ml
+    IC50_a = {"Streptmycin": 0.189, "Kanamycin": 0.05, "Tetracycline": 0.229, "Chloramphenicol": 2.49} # µg/ml
+    types = {"Streptmycin": "30s", "Kanamycin": "30s", "Tetracycline": "30s", "Chloramphenicol": "50s"}
 
-    return targets
+    drugData = {"name": drugName, "type": types[drugName], "dose": .0, "Lambda_0_a": Lambda_0_a[drugName], "IC50": IC50[drugName][medium], "IC50_a": IC50_a[drugName]}
+
+    return drugData
 
 
-def run(drugs=[], step=10., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30., "r_u": 30., "r_b": .0}):
+def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30., "r_u": 30., "r_b": .0}):
     """
     ribosomeモデル実行関数
 
@@ -146,14 +145,16 @@ def run(drugs=[], step=10., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30
     legend:
     inpData:
     y0:
-
-    ToDo:
-    今後、drugの種類を判定する関数をつくり、この関数に導入する。
     """
 
-    dataset = {"Lambda_0": 1.35, "K_t": 6.1 * 10 ** -2, "r_min": 19.3}
-
+    dataset = {"r_max": 65.8, "r_min": 19.3, "K_D": 1.0, "K_t": 6.1*10**-2, "K_on": 3.0, "Lambda_0": 1.35, "Kd": 1., "p": 1.} # 基本のデータセット
     dataset.update(inpData) # inpDataの内容をdatasetに入れる
+
+    # P_in, P_outをdrugのデータに入れる
+    for drug in drugs: # drug dataに基づく情報を用いた
+        drug["P_in"] = (dataset["r_max"] - dataset["r_min"]) * drug["Lambda_0_a"] / 2.0 / drug["IC50_a"] # 薬剤の流入
+        drug["P_out"] = (drug["Lambda_0_a"] / 2) ** 2.0 / dataset["K_t"] / dataset["K_D"] # 薬剤の流出
+
     if drugs:
         dataset["drugs"] = drugs
         # y0に薬剤のdoseを入れる
@@ -173,15 +174,27 @@ def run(drugs=[], step=10., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30
     return data, legend
 
 
-def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel=""):
+def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel="", type="single"):
     """
     グラフ作成用モジュール
     """
-    for i in range(len(data[0]) - 1):
-        if len(legend) > i:
-            plt.plot(data.T[0], data.T[i+1], label=legend[i])
+    import sys
+    if type == "single":
+        for i in range(len(data[0]) - 1):
+            if len(legend) > i:
+                plt.plot(data.T[0], data.T[i+1], label=legend[i])
+            else:
+                plt.plot(data.T[0], data.T[i+1])
+    elif type == "multi":
+        if len(data[0]) % 2. > 0:
+            sys.stderr.write("Error: Input data length is not Even.")
+
         else:
-            plt.plot(data.T[0], data.T[i+1])
+            for i in range(len(data[0]) / 2):
+                if len(legend) > i:
+                    plt.plot(data.T[i * 2], data.T[i * 2 + 1], label=legend[i])
+                else:
+                    plt.plot(data.T[i * 2], data.T[i * 2 + 1])
 
     if title: # titleがあったらつける
         plt.title(title)
@@ -199,12 +212,26 @@ def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel=""):
     plt.close()
 
 
+def makedir(dirname):
+    import os
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    del(os)
+
+
 if __name__ == "__main__":
+    """
+    作れるもの
+    ・カナマイシンのデータを用いた"30s", "50s", "ribo"の3タイプのgrowth rate
+        - N_IC50も取得できる
+    ・2剤を同じdoseずつで組み合わせたgrowth rate。N_IC50を使う。
+    ・2剤をそれぞれdoseを割り振って組み合わせたHeatmap。
+    """
     r_min = 19.3
     K_t = 6.1 * 10 ** -2
     Kd = 1.
     p = 0.1
-    savedir = "images/result2"
+    savedir = "images/result3"
 
     ## drug data
     drug = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
@@ -218,22 +245,20 @@ if __name__ == "__main__":
     name = "Kanamycin"
     dataset = {"Kd": Kd, "Lambda_0": Lambda_0[0], "p": p}
     legend = ["r_u"]
-    N_IC50 = {"30s": 0, "50s": 0, "ribo": 0}
-
+    N_IC50 = {}
     # 保存用ディレクトリの作成
     import os
     if not os.path.exists(savedir):
         os.makedirs(savedir)
     del(os)
 
-    # single drug
+    # single drug   IC50を求めるために使用
+    """
     drugs = [{"name": name, "type": "ribo", "dose": .0, "Lambda_0_a": Lambda_0_a[name], "IC50": IC50[name][0], "IC50_a": IC50_a[name]}]
     drug_types = ["30s", "50s", "ribo"]
     single_result = [] # 単剤用の結果の格納場所
-    for num in range(len(drug_types)):
-        drug_type = drug_types[num]
+    for num, drug_type in enumerate(drug_types):
         drugs[0]["type"] = drug_type
-
         # doseを振り、モデルを実行
         for count, dose in enumerate(np.linspace(0, a_ex[name], 51)):
             drugs[0]["dose"] = dose
@@ -258,11 +283,10 @@ if __name__ == "__main__":
     ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
     title = "Single Drug Reaction"
     makeGraph(np.array(single_result), savename, drug_types, title, xlabel, ylabel)
-
+    """
     # singleを実行して得られたIC50
-    # N_IC50 = {'30s': 0.28000000000000003, '50s': 0.28000000000000003, 'ribo': 0.25}
-    print N_IC50
-
+    N_IC50 = {'30s': 0.27000000000000002, '50s': 0.27000000000000002, 'ribo': 0.23999999999999999}
+    # print N_IC50
 
     # double drug
     drugs = [{"name": name, "type": "ribo", "dose": IC50[name][0], "Lambda_0_a": Lambda_0_a[name], "IC50": IC50[name][0], "IC50_a": IC50_a[name]},

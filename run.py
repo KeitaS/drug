@@ -31,7 +31,7 @@ def ribo_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda):
     r_b > a + r30_u + r50_u | Kd * r_b # r_bの解離
 
 
-def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambda_0=1.35, Kd=5., p=1.):
+def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambda_0=1.35, Kd=1., p=1.):
     """
     リボソームモデルを構成するモジュール
     r_max: µM
@@ -64,11 +64,6 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=
     r_u_0 = Lambda_0 / K_t + r_min
     Ka = (Lambda_0 + Kd) / (p * p * r_u_0)
 
-    # P_in, P_outをdrugのデータに入れる
-    for drug in drugs: # drug dataに基づく情報を用いた
-        drug["P_in"] = Delta_r * drug["Lambda_0_a"] / 2.0 / drug["IC50_a"] # 薬剤の流入
-        drug["P_out"] = (drug["Lambda_0_a"] / 2) ** 2.0 / K_t / K_D # 薬剤の流出
-
 
     with reaction_rules():
         ### expression
@@ -80,24 +75,24 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=
         if len(drugs) > 0:
             if drugs[0]["type"] == "30s":
                 # print "drug1 targets 30s ribosomal subunit >>"
-                r30_binding_reaction(a1_ex, a1, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
+                r30_binding_reaction(a1_ex, a1, drug[0]["P_in"], drug[0]["P_out"], K_on, K_off, Lambda)
             elif drugs[0]["type"] == "50s":
                 # print "drug1 targets 50s ribosomal subunit >>"
-                r50_binding_reaction(a1_ex, a1, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
+                r50_binding_reaction(a1_ex, a1, drug[0]["P_in"], drug[0]["P_out"], K_on, K_off, Lambda)
             elif drugs[0]["type"] == "ribo":
                 # print "drug1 targets ribosome >>"
-                ribo_binding_reaction(a1_ex, a1, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
+                ribo_binding_reaction(a1_ex, a1, drug[0]["P_in"], drug[0]["P_out"], K_on, K_off, Lambda)
 
         if len(drugs) > 1:
             if drugs[1]["type"] == "30s":
                 # print "drug2 targets 30s ribosomal subunit >>"
-                r30_binding_reaction(a2_ex, a2, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
+                r30_binding_reaction(a2_ex, a2, drug[0]["P_in"], drug[0]["P_out"], K_on, K_off, Lambda)
             elif drugs[1]["type"] == "50s":
                 # print "drug2 targets 50s ribosomal subunit >>"
-                r50_binding_reaction(a2_ex, a2, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
+                r50_binding_reaction(a2_ex, a2, drug[0]["P_in"], drug[0]["P_out"], K_on, K_off, Lambda)
             elif drugs[1]["type"] == "ribo":
                 # print "drug2 targets ribosome >>"
-                ribo_binding_reaction(a2_ex, a2, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
+                ribo_binding_reaction(a2_ex, a2, drug[0]["P_in"], drug[0]["P_out"], K_on, K_off, Lambda)
 
         ## ribo and subunit
         # production
@@ -141,7 +136,7 @@ def makeDrugDatas(drugName, medium):
     return drugData
 
 
-def run(drugs=[], step=5., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30., "r_u": 30., "r_b": .0}):
+def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30., "r_u": 30., "r_b": .0}):
     """
     ribosomeモデル実行関数
 
@@ -150,14 +145,16 @@ def run(drugs=[], step=5., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30.
     legend:
     inpData:
     y0:
-
-    ToDo:
-    今後、drugの種類を判定する関数をつくり、この関数に導入する。
     """
 
-    dataset = {"Lambda_0": 1.35, "K_t": 6.1 * 10 ** -2, "r_min": 19.3}
-
+    dataset = {"r_max": 65.8, "r_min": 19.3, "K_D": 1.0, "K_t": 6.1*10**-2, "K_on": 3.0, "Lambda_0": 1.35, "Kd": 1., "p": 1.} # 基本のデータセット
     dataset.update(inpData) # inpDataの内容をdatasetに入れる
+
+    # P_in, P_outをdrugのデータに入れる
+    for drug in drugs: # drug dataに基づく情報を用いた
+        drug["P_in"] = (dataset["r_max"] - dataset["r_min"]) * drug["Lambda_0_a"] / 2.0 / drug["IC50_a"] # 薬剤の流入
+        drug["P_out"] = (drug["Lambda_0_a"] / 2) ** 2.0 / dataset["K_t"] / dataset["K_D"] # 薬剤の流出
+
     if drugs:
         dataset["drugs"] = drugs
         # y0に薬剤のdoseを入れる
@@ -215,14 +212,27 @@ def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel="", type="s
     plt.close()
 
 
+def makedir(dirname):
+    import os
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    del(os)
 
 if __name__ == "__main__":
+    # 0 : 以前のモデルとの比較
+    # 1 :
+    # 2
+
+    # 保存用ディレクトリの作成
+    savedir = "./images/result3"
+    makedir(savedir)
+
+
     # 初期値
-    r_min = 19.3
-    K_t = 6.1 * 10 ** -2
-    Kd = 1.
-    p = 0.1
-    savedir = "images/result3"
+    r_min = 19.3 # Lambdaの計算で使用
+    K_t = 6.1 * 10 ** -2 # Lambdaの計算で使用
+    Kd = 1. # r30とr50の解離率
+    p = 0.1 # r30とr50の比率
 
     ## drug data
     dNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
@@ -232,25 +242,20 @@ if __name__ == "__main__":
     IC50_a = {"Streptmycin": 0.189, "Kanamycin": 0.05, "Tetracycline": 0.229, "Chloramphenicol": 2.49} # µg/ml
     a_ex = {"Streptmycin": 0.6, "Kanamycin": 0.5, "Tetracycline":2, "Chloramphenicol": 20}
 
-    ## Kanamycinで比較
+
+    # 1. 以前のモデルと今回のモデルの比較
+    """
+    ## ribo3
+    ### Kanamycinで比較
     name = "Kanamycin"
     dataset = {"Kd": Kd, "Lambda_0": Lambda_0[0], "p": p}
     legend = ["r_u"]
+    savename = savedir + "/ribo_ribo3.png"
 
-    # 保存用ディレクトリの作成
-    import os
-    if not os.path.exists(savedir):
-        os.makedirs(savedir)
-    del(os)
-
-    """
-    # 以前のモデルと今回のモデルの比較
-    ## ribo3
-    drugs = [{"name": name, "type": "ribo", "dose": .0, "Lambda_0_a": Lambda_0_a[name], "IC50": IC50[name][0], "IC50_a": IC50_a[name]}]
+    drugs = [makeDrugDatas(name, 0)]
     drug_types = ["30s", "50s", "ribo"]
     single_result = [] # 単剤用の結果の格納場所
-    for num in range(len(drug_types)):
-        drug_type = drug_types[num]
+    for num, drug_type in enumerate(drug_types):
         drugs[0]["type"] = drug_type
 
         # doseを振り、モデルを実行
@@ -263,7 +268,6 @@ if __name__ == "__main__":
             else:
                 single_result[count].append(result)
 
-
     ## ribo.py
     from ribo import run as run1
     dataset = {"Lambda_0": Lambda_0[0], "Lambda_0_a": Lambda_0_a[name], "IC50": IC50[name][0], "IC50_a":IC50_a[name]}
@@ -271,19 +275,17 @@ if __name__ == "__main__":
         result = run1(dose, dataset=dataset)
         single_result[index].append(result["growth"] / Lambda_0[0])
 
-    print single_result
-
     ## make Graph
     legend = ["30s", "50s", "ribo", "previous"]
-    savename = "%s/ribo_ribo3_Kd%d.png" % (savedir, Kd)
     xlabel = "Extracellular Antibiotic Concentration $a_{ex}$ ($\mu$M)"
     ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
     title = "Single Drug Reaction"
     makeGraph(np.array(single_result), savename, legend, title, xlabel, ylabel)
+    """
 
-
-    # nature2006のモデルとの比較
-    import matplotlib.pylab as plt
+    # 2. nature2006のモデルとの比較
+    """
+    savename = savedir + "/double_bar.png"
     dataset = {"Kd": Kd, "Lambda_0": Lambda_0[0], "p": p}
 
     ## Chloramphenicol 分子量: 323.132 g/mol, Dose: 1 µg/ml
@@ -294,7 +296,6 @@ if __name__ == "__main__":
                  "Chloramphenicol": {"dose": Chloramphenicol, "type": "50s"},
                  "Tetracycline": {"dose": Tetracycline, "type": "30s"}
                 }
-    print drug_data
 
     drug_comb = [["Chloramphenicol", "Tetracycline"],
                  ["Chloramphenicol", "Streptmycin"],
@@ -338,87 +339,107 @@ if __name__ == "__main__":
         plt.ylim(0, 1.1)
         plt.title("%s & %s" % (name1[:3], name2[:3]))
     plt.tight_layout()
-    plt.savefig("%s/double_bar.png" % (savedir), bbox_inches="tight", pad_inches=0.3, dpi=200)
+    plt.savefig(savename, bbox_inches="tight", pad_inches=0.3, dpi=200)
     plt.close()
-
     """
 
-    # 追加データ：4つの薬剤のヒートマップ
+    # 3. 追加データ：4つの薬剤のヒートマップ
     ##　IC50の取得
-    ## single reaction
+    """
     from collections import defaultdict
+    dataset = {"Kd": Kd, "Lambda_0": Lambda_0[0], "p": p}
+    legend = ["r_u"]
+
     newIC50 = {} # {drugName: [dose, result], ...}
     single_result = defaultdict(list) # {drugName: [[dose, result], [dose, result] ... ]}
     for index, dName in enumerate(dNames):
         drugs = [makeDrugDatas(dName, 0)]
-        for dose in np.linspace(.0, a_ex[dName], 51): # 本来はここをそれぞれのa_exにする。
+        # doseを振り、モデルを実行
+        print dName
+        for dose in np.linspace(.0, a_ex[dName], 201): # 本来はここをそれぞれのa_exにする。
             drugs[0]["dose"] = dose
-            result, legend = run(drugs, inpData=dataset, legend=legend)
+            result, legend = run(drugs, step=100, inpData=dataset, legend=legend)
             result = (result[-1][1] - r_min) * K_t / Lambda_0[0] # 結果をgrowthに書き換え
             if not newIC50.get(dName):
                 newIC50[dName] = [dose, result]
             else:
                 if abs(0.5 - newIC50[dName][1]) > abs(0.5 - result): # IC50をnomalize
                     newIC50[dName] = [dose, result]
-            single_result[dName].append([round(dose, 4), round(result, 4)])
-
-    newIC50 = {key: value[0] for key, value in newIC50.items()} # {drugName: dose, ...}
+            single_result[dName].append([dose, result])
 
     ## データの整形
+    ### result data
     data = []
     for index, dName in enumerate(dNames):
         for i, (x, y) in enumerate(single_result[dName]):
             if index == 0:
                 data.append([x, y])
             else:
+                data[i].append(x)
                 data[i].append(y)
 
+    ### newIC50
+    newIC50 = {key: value[0] for key, value in newIC50.items()} # {drugName: dose, ...}
+    print newIC50
+
     ## makeGraph
-    savename = "%s/single.png" % (savedir)
     xlabel = "Extracellular Antibiotic Concentration $a_{ex}$ ($\mu$M)"
     ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
     title = "Single Drug Reaction"
-    outputType = "single"
+    outputType = "multi"
     makeGraph(np.array(data), savename, dNames, title, xlabel, ylabel, outputType)
-
-    print newIC50
-    # newIC50 = {'Kanamycin': 0.30612244897959179, 'Streptmycin': 0.59999999999999998, 'Chloramphenicol': 20.0, 'Tetracycline': 2.0}
-
     """
+
     ## ヒートマップの作成
+
     import seaborn as sns
     import pandas as pd
     import itertools as itr
 
+    newIC50 = {'Kanamycin': 0.27250000000000002, 'Streptmycin': 0.58799999999999997, 'Chloramphenicol': 3.8000000000000003, 'Tetracycline': 0.70000000000000007}
+
+    dataset = {"Kd": Kd, "Lambda_0": Lambda_0[0], "p": p}
+    legend = ["r_u"]
+    savename = savedir + "/drugheatmap.png"
+
+    # for drug in dNames:
+    #     print drug
+    #     drugs = [makeDrugDatas(drug, 0)]
+    #     drugs[0]["dose"] = newIC50[drug]
+    #     result, legend = run(drugs, inpData=dataset, legend=legend)
+    #     result = (result[-1][1] - r_min) * K_t / Lambda_0[0] # 結果をgrowthに書き換え
+    #     print result
+
+
     drugList = list(itr.combinations(dNames, 2)) # drugListの組み合わせを作成
+    drugList = [["Kanamycin", "Streptmycin"], ["Streptmycin", "Kanamycin"]]
 
-    for index, drugComb in enumerate(drugList):
-        drugs = [makeDrugDatas(drugComb[0], 0), makeDrugDatas(drugComb[1], 0)]
+    for index, drug in enumerate(drugList):
+        drugs = [makeDrugDatas(drug[0], 0), makeDrugDatas(drug[1], 0)]
 
-        X = np.linspace(0, newIC50[drugComb[0]], 5) # 1個目の薬剤のdose
-        Y = np.linspace(0, newIC50[drugComb[1]], 5) # 2個目の薬剤のdose
-        doses = [[x, y] for x in X for y in Y] # dose listの作成
-        X = [round(x[0], 4) for x in doses]
-        Y = [round(y[1], 4) for y in doses]
+        X = np.linspace(0, newIC50[drug[0]], 5) # 1個目の薬剤のdose
+        Y = np.linspace(0, newIC50[drug[1]], 5) # 2個目の薬剤のdose
+        doses = [[round(x, 4), round(y, 4)] for x in X for y in Y] # dose listの作成
+        X = [x[0] for x in doses]
+        Y = [y[1] for y in doses]
         heatmap_result = []
 
         for dose in doses:
+            print dose
             drugs[0]["dose"] = dose[0]
             drugs[1]["dose"] = dose[1]
             result, legend = run(drugs, inpData=dataset, legend=legend)
             result = (result[-1][1] - r_min) * K_t / Lambda_0[0] # 結果をgrowthに書き換え
             heatmap_result.append(result)
 
-        data = pd.DataFrame([X, Y, heatmap_result]).T
-        data.columns = [drugs[0]["name"], drugs[1]["name"], "growth"]
-        data_pivot = pd.pivot_table(data=data, values="growth", columns=drugs[1]["name"], index=drugs[0]["name"], aggfunc=np.mean)
-        pltnum = 230 + index + 1
-        plt.subplot(pltnum)
-        sns.heatmap(data_pivot)
-        plt.xlabel(drugs[0]["name"])
-        plt.ylabel(drugs[1]["name"])
-        # plt.xticks(np.linspace(0, 10, 3))
-        # plt.yticks(np.linspace(0, 10, 3))
-    plt.savefig("%s/heatmap.png" % (savedir), dpi=200)
-    plt.close()
-    """
+    #     data = pd.DataFrame([X, Y, heatmap_result]).T
+    #     data.columns = [drugs[0]["name"], drugs[1]["name"], "growth"]
+    #     print data
+    #     data_pivot = pd.pivot_table(data=data, values="growth", columns=drugs[1]["name"], index=drugs[0]["name"], aggfunc=np.mean)
+    #     pltnum = 230 + index + 1
+    #     plt.subplot(pltnum)
+    #     sns.heatmap(data_pivot)
+    #     plt.xlabel(drug[0])
+    #     plt.ylabel(drug[1])
+    # plt.savefig(savename, dpi=200)
+    # plt.close()
