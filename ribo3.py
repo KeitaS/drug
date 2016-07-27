@@ -86,13 +86,13 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=
         if len(drugs) > 1:
             if drugs[1]["type"] == "30s":
                 # print "drug2 targets 30s ribosomal subunit >>"
-                r30_binding_reaction(a2_ex, a2, drug[0]["P_in"], drug[0]["P_out"], K_on, K_off, Lambda)
+                r30_binding_reaction(a2_ex, a2, drug[1]["P_in"], drug[1]["P_out"], K_on, K_off, Lambda)
             elif drugs[1]["type"] == "50s":
                 # print "drug2 targets 50s ribosomal subunit >>"
-                r50_binding_reaction(a2_ex, a2, drug[0]["P_in"], drug[0]["P_out"], K_on, K_off, Lambda)
+                r50_binding_reaction(a2_ex, a2, drug[1]["P_in"], drug[1]["P_out"], K_on, K_off, Lambda)
             elif drugs[1]["type"] == "ribo":
                 # print "drug2 targets ribosome >>"
-                ribo_binding_reaction(a2_ex, a2, drug[0]["P_in"], drug[0]["P_out"], K_on, K_off, Lambda)
+                ribo_binding_reaction(a2_ex, a2, drug[1]["P_in"], drug[1]["P_out"], K_on, K_off, Lambda)
 
         ## ribo and subunit
         # production
