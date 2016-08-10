@@ -73,7 +73,7 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1., K_t=6.1*10**-2, K_on=3
     Delta_r = r_max - r_min # µM
     K_off = K_on * K_D # riboと薬剤との結合
     r_u_0 = Lambda_0 / K_t + r_min # 定常の時にこの値になる。
-    Ka = (Kd / K_t + r_u) * Lambda / ((p * r_u) ** 2) #
+    Ka = (Kd / K_t + r_u_0) * Lambda_0 / ((p * r_u_0) ** 2) #
 
     with reaction_rules():
         ### expression
@@ -171,8 +171,8 @@ def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30
     model = createModel(**dataset) # モデルを作成
 
     # reactionの確認
-    for i, rr in enumerate(model.reaction_rules()):
-        print("{:d}: {:s}".format(i, rr.as_string()))
+    # for i, rr in enumerate(model.reaction_rules()):
+    #     print("{:d}: {:s}".format(i, rr.as_string()))
 
     # legend
     if not legend:
@@ -230,17 +230,16 @@ def makedir(dirname):
     del(os)
 
 if __name__ == "__main__":
-    # 0 : 以前のモデルとの比較
+    # 0 : 単剤
 
     # 保存用ディレクトリの作成
-    savedir = "./images/result5"
+    savedir = "./images/result1"
     makedir(savedir)
 
     # 初期値
     r_min = 19.3 # Lambdaの計算で使用
     K_t = 6.1 * 10 ** -2 # Lambdaの計算で使用
-    Kd = 6. # r30とr50の解離率
-    p = .1 # r30とr50の比率
+    # (result[-1][1] - r_min) * K_t / Lambda_0[0] # growth_rate / Lambda_0
 
     ## drug data
     dNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
@@ -249,4 +248,119 @@ if __name__ == "__main__":
     IC50 = {"Streptmycin": [0.41, 0.28, 0.196], "Kanamycin": [0.246, 0.096, 0.065], "Tetracycline": [0.5, 0.6, 1.45], "Chloramphenicol": [2.85, 2.65, 5.7]} # µg/ml
     IC50_a = {"Streptmycin": 0.189, "Kanamycin": 0.05, "Tetracycline": 0.229, "Chloramphenicol": 2.49} # µg/ml
     a_ex = {"Streptmycin": 0.6, "Kanamycin": 0.5, "Tetracycline":2, "Chloramphenicol": 20}
-    dataset = {"Kd": Kd, "Lambda_0": Lambda_0[0], "p": p}
+    dataset = {"Lambda_0": Lambda_0[0]}
+
+    # 0 : 単剤の出力
+    plt.figure(figsize=(10, 8))
+    for index, dName in enumerate(dNames):
+        drugs = [makeDrugDatas(dName, 0)] # 薬剤データの作成
+        data = []
+        for dose in np.linspace(0, a_ex[dName] * 3, 201):
+            drugs[0]["dose"] = dose
+            result, legend = run(drugs, step=100, legend=["r_u"])
+            result = (result[-1][1] - r_min) * K_t / Lambda_0[0]
+            data.append([dose, result])
+
+        title = "%s Reaction" % (dName)
+        xlabel = "Extracellular Antibiotic Concentration $a_{ex}$ ($\mu$M)"
+        ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
+
+        plt.subplot(220 + index + 1)
+        data = np.array(data)
+        plt.plot(data.T[0], data.T[1])
+        plt.title(title)
+        plt.axis(fontsize=8)
+        plt.xlim(0, a_ex[dName] * 3)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+    savename = "%s/single.png" % (savedir)
+    plt.tight_layout()
+    plt.savefig(savename, dpi=200)
+    plt.close()
+
+    # 1 : 2分法でIC50を計算し、ダブルノックダウンを出力
+    ## 2分法でIC50を計算
+    """
+    newIC50 = {}
+    for dName in dNames:
+        drugs = [makeDrugDatas(dName, 0)] # 薬剤データの作成
+        dose_max = a_ex[dName] * 3.
+        dose_min = 0.
+        result = 1.
+        dose = 0
+        while abs(0.5 - abs(result)) > 0.01:
+            dose = (dose_max + dose_min) / 2. # maxとminの中間を取る
+            drugs[0]["dose"] = dose
+            result, legend = run(drugs, step=100, legend=["r_u"])
+            result = (result[-1][1] - r_min) * K_t / Lambda_0[0]
+            if result < 0.5:
+                dose_max = dose # 0.5より小さい時は
+            else:
+                dose_min = dose
+        newIC50[dName] = dose
+
+    newIC50 = {'Kanamycin': 0.67584228515625, 'Streptmycin': 1.458984375, 'Chloramphenicol': 10.3125, 'Tetracycline': 2.0625}
+
+    ## ダブルノックダウン
+    import itertools as itr
+    drug_comb = list(itr.combinations(dNames, 2))
+    data = []
+    legendList = []
+    for index, dList in enumerate(drug_comb):
+        drugs = [makeDrugDatas(dList[0], 0), makeDrugDatas(dList[1], 0)]
+        legendList.append("%s & %s" % (dList[0][:3], dList[1][:3]))
+        for num, i in enumerate(np.linspace(0, 100, 101)):
+            drugs[0]["dose"] = newIC50[dList[0]] * i / 100
+            drugs[1]["dose"] = newIC50[dList[1]] * i / 100
+            result, legend = run(drugs, step=100, legend=["r_u"])
+            result = (result[-1][1] - r_min) * K_t / Lambda_0[0]
+            if index == 0:
+                data.append([i, result])
+            else:
+                data[num].append(result)
+    savename = "%s/double.png" % (savedir)
+    title = "double Reaction"
+    xlabel = "Ratio of Dose in Comparison with Normalized IC50 (%)"
+    ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
+    makeGraph(np.array(data), savename, legendList, title, xlabel, ylabel)
+    """
+
+    # 2 : ヒートマップ作成
+    """
+    import seaborn as sns
+    import pandas as pd
+    import itertools as itr
+
+    newIC50 = {'Kanamycin': 0.67584228515625, 'Streptmycin': 1.458984375, 'Chloramphenicol': 10.3125, 'Tetracycline': 2.0625}
+
+    plt.figure(figsize=(10, 6))
+    drug_comb = list(itr.combinations(dNames, 2)) # 薬剤の組み合わせ
+    for index, dList in enumerate(drug_comb):
+        drugs = [makeDrugDatas(dList[0], 0), makeDrugDatas(dList[1], 0)]
+        X = np.linspace(0, newIC50[dList[0]], 5)
+        Y = np.linspace(0, newIC50[dList[1]], 5)
+        doses = list(itr.product(X, Y))
+        for i, doseList in enumerate(doses):
+            drugs[0]["dose"] = doseList[0]
+            drugs[1]["dose"] = doseList[1]
+            result, legend = run(drugs, step=100, legend=["r_u"])
+            result = (result[-1][1] - r_min) * K_t / Lambda_0[0]
+            if i == 0:
+                data = pd.DataFrame([[round(doseList[0], 3), round(doseList[1], 3), result]], columns=[dList[0], dList[1], "growth_rate"])
+            else:
+                data = data.append(pd.DataFrame([[doseList[0], doseList[1], result]], columns=[dList[0], dList[1], "growth_rate"]))
+        heatmap = pd.pivot_table(data=data, values="growth_rate", index=dList[0], columns=dList[1], aggfunc=np.mean) # x軸を0, y軸を1番目の薬剤にしてグラフデータ化
+        plt.subplot(230 + index + 1) # 1つの画像データに集約
+        sns.heatmap(heatmap)
+        plt.axis(fontsize=8)
+        plt.xlabel(dList[0])
+        plt.ylabel(dList[1])
+
+    savename = "%s/heatmap.png" % (savedir)
+    plt.fontsize()
+    plt.tight_layout()
+    plt.savefig(savename, dpi=200)
+    plt.close()
+    """
+
+    # 4 : bar plot
