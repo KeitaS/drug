@@ -229,9 +229,29 @@ def makedir(dirname):
         os.makedirs(dirname)
     del(os)
 
-if __name__ == "__main__":
-    # 0 : 単剤
+def makeCmap(): # eをかませるためのカラーマップを作る関数
+    import matplotlib
+    color_range = {"red": 30, "pink": 5, "white": 10, "light_green": 5, "green": 13, "blue": 17}
+    color_num = {"red": "#ff0000", "pink": "#ffc0cb", "white": "#ffffff", "light_green": "#90ee90", "green": "#008000", "blue": "#0000ff"}
+    color_list = ["red", "pink", "white", "light_green", "green", "blue"]
+    color_result = []
+    for color in color_list:
+        for i in range(color_range[color]):
+            color_result.append(color_num[color])
+    cmap = matplotlib.colors.ListedColormap(color_result)
+    del(matplotlib)
+    return cmap
 
+def epsilon(x, y, val):
+    """
+    Nature genetics 2006のepsilonを計算する関数
+    e = (Wxy - WxWy)/|min(Wx, Wy) - WxWy|
+    """
+    result = (val - x * y) / abs(min(x, y) - x * y)
+    return result
+
+
+if __name__ == "__main__":
     # 保存用ディレクトリの作成
     savedir = "./images/result2"
     makedir(savedir)
@@ -343,7 +363,6 @@ if __name__ == "__main__":
     """
 
     # 1 : ヒートマップの作成
-    """
     ## 2分法でIC50を計算
     newIC50 = {}
     for dName in dNames:
@@ -352,13 +371,14 @@ if __name__ == "__main__":
         dose_min = 0.
         result = 1.
         dose = 0
-        while abs(0.5 - abs(result)) > 0.01:
+        target = 0.5
+        while abs(target - abs(result)) > 0.01:
             dose = (dose_max + dose_min) / 2. # maxとminの中間を取る
             drugs[0]["dose"] = dose
             result, legend = run(drugs, step=100, legend=["r_u"])
             result = (result[-1][1] - r_min) * K_t / Lambda_0[0]
-            if result < 0.5:
-                dose_max = dose # 0.5より小さい時は
+            if result < target:
+                dose_max = dose # targetより小さい時は
             else:
                 dose_min = dose
         newIC50[dName] = dose
@@ -368,38 +388,49 @@ if __name__ == "__main__":
     import pandas as pd
     import itertools as itr
 
+    cmap = makeCmap() # カラーマップを設定
+
     # newIC50 = {'Kanamycin': 0.67584228515625, 'Streptmycin': 1.458984375, 'Chloramphenicol': 10.3125, 'Tetracycline': 2.0625}
 
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(15, 9))
     drug_comb = list(itr.combinations(dNames, 2)) # 薬剤の組み合わせ
     for index, dList in enumerate(drug_comb):
         drugs = [makeDrugDatas(dList[0], 0), makeDrugDatas(dList[1], 0)]
-        X = np.linspace(0, newIC50[dList[0]]*2, 10)
-        Y = np.linspace(0, newIC50[dList[1]]*2, 10)
+        X = np.linspace(0, newIC50[dList[0]]*2, 10) # IC50にするときは2倍
+        Y = np.linspace(0, newIC50[dList[1]]*2, 10) # IC50にするときは2倍
         doses = list(itr.product(X, Y))
         for i, doseList in enumerate(doses):
-            drugs[0]["dose"] = doseList[0]
-            drugs[1]["dose"] = doseList[1]
-            result, legend = run(drugs, step=100, legend=["r_u"])
-            result = (result[-1][1] - r_min) * K_t / Lambda_0[0]
-            if i == 0:
-                data = pd.DataFrame([[round(doseList[0], 2), round(doseList[1], 2), result]], columns=[dList[0], dList[1], "growth_rate"])
+            if (doseList[0] == X[0] or doseList[0] == X[-1]) or (doseList[1] == Y[0] or doseList[1] == Y[-1]):
+                result = 0.
             else:
-                data = data.append(pd.DataFrame([[doseList[0], doseList[1], result]], columns=[dList[0], dList[1], "growth_rate"]))
+                drugs[0]["dose"] = doseList[0]
+                drugs[1]["dose"] = doseList[1]
+                result, legend = run([drugs[0]], step=100, legend=["r_u"])
+                x = (result[-1][1] - r_min) * K_t / Lambda_0[0]
+                result, legend = run([drugs[1]], step=100, legend=["r_u"])
+                y = (result[-1][1] - r_min) * K_t / Lambda_0[0]
+                result, legend = run(drugs, step=100, legend=["r_u"])
+                result = (result[-1][1] - r_min) * K_t / Lambda_0[0]
+                result = epsilon(x, y, result)
+            if i == 0:
+                data = pd.DataFrame([[round(doseList[0], 1), round(doseList[1], 1), result]], columns=[dList[0], dList[1], "growth_rate"])
+            else:
+                data = data.append(pd.DataFrame([[round(doseList[0], 1), round(doseList[1], 1), result]], columns=[dList[0], dList[1], "growth_rate"]))
         heatmap = pd.pivot_table(data=data, values="growth_rate", index=dList[0], columns=dList[1], aggfunc=np.mean) # x軸を0, y軸を1番目の薬剤にしてグラフデータ化
         plt.subplot(230 + index + 1) # 1つの画像データに集約
-        sns.heatmap(heatmap)
+        sns.heatmap(heatmap, vmin=-2, vmax=2, cmap=cmap, annot=True)
+        # sns.heatmap(heatmap)
         plt.axis(fontsize=3)
-        plt.xlabel(dList[0])
-        plt.ylabel(dList[1])
+        plt.ylabel(dList[0])
+        plt.xlabel(dList[1])
 
-    savename = "%s/heatmap.png" % (savedir)
+    savename = "%s/epsilon_IC50.png" % (savedir)
     plt.tight_layout()
     plt.savefig(savename, dpi=200)
     plt.close()
-    """
 
     # 3 : bar plot
+    """
     drug_comb = [["Chloramphenicol", "Tetracycline"],
                  ["Chloramphenicol", "Streptmycin"],
                  ["Tetracycline", "Streptmycin"]]
@@ -428,6 +459,8 @@ if __name__ == "__main__":
                     dose_min = dose
                 count += 1
             doses[dName] = dose
+
+        print doses
 
         ##グラフ化用データ作成
         ### φ
@@ -469,3 +502,4 @@ if __name__ == "__main__":
     savename = savedir + "/bar.png"
     plt.savefig(savename, bbox_inches="tight", pad_inches=0.3, dpi=200)
     plt.close()
+    """
