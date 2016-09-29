@@ -229,11 +229,12 @@ def makedir(dirname):
         os.makedirs(dirname)
     del(os)
 
-def makeCmap(): # eをかませるためのカラーマップを作る関数
+def makeCmap(color_range={"red": 30, "pink": 5, "white": 10, "light_green": 5, "green": 13, "blue": 17},
+            color_num = {"red": "#ff0000", "pink": "#ffc0cb", "white": "#ffffff", "light_green": "#90ee90", "green": "#008000", "blue": "#0000ff"},
+            color_list = ["red", "pink", "white", "light_green", "green", "blue"]): # eをかませるためのカラーマップを作る関数
+
     import matplotlib
-    color_range = {"red": 30, "pink": 5, "white": 10, "light_green": 5, "green": 13, "blue": 17}
-    color_num = {"red": "#ff0000", "pink": "#ffc0cb", "white": "#ffffff", "light_green": "#90ee90", "green": "#008000", "blue": "#0000ff"}
-    color_list = ["red", "pink", "white", "light_green", "green", "blue"]
+
     color_result = []
     for color in color_list:
         for i in range(color_range[color]):
