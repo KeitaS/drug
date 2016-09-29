@@ -229,18 +229,20 @@ def makedir(dirname):
         os.makedirs(dirname)
     del(os)
 
-def makeCmap(): # eをかませるためのカラーマップを作る関数
+def makeCmap(c_range={"red": 30, "pink": 5, "white": 10, "light_green": 5, "green": 13, "blue": 17},
+            c_num = {"red": "#ff0000", "pink": "#ffc0cb", "white": "#ffffff", "light_green": "#90ee90", "green": "#008000", "blue": "#0000ff"},
+            c_list = ["red", "pink", "white", "light_green", "green", "blue"]): # eをかませるためのカラーマップを作る関数
+
     import matplotlib
-    color_range = {"red": 30, "pink": 5, "white": 10, "light_green": 5, "green": 13, "blue": 17}
-    color_num = {"red": "#ff0000", "pink": "#ffc0cb", "white": "#ffffff", "light_green": "#90ee90", "green": "#008000", "blue": "#0000ff"}
-    color_list = ["red", "pink", "white", "light_green", "green", "blue"]
-    color_result = []
-    for color in color_list:
-        for i in range(color_range[color]):
-            color_result.append(color_num[color])
-    cmap = matplotlib.colors.ListedColormap(color_result)
+
+    c_result = []
+    for color in c_list:
+        for i in range(c_range[color]):
+            c_result.append(c_num[color])
+    cmap = matplotlib.colors.ListedColormap(c_result)
     del(matplotlib)
     return cmap
+
 
 def epsilon(x, y, val):
     """
@@ -265,8 +267,10 @@ def checkLinerType(a):
         if index > 0:
             if before == 0:
                 if num < i: # 増えてるとき
+                    linertype = 0
                     before = 1
                 else: # それ以外
+                    linertype = 1
                     before = 2
             else:
                 if num < i:
@@ -277,9 +281,20 @@ def checkLinerType(a):
                     count += 1
                     before = after
         num = i
-    return count
+    if count == 0:
+        linertype = 0
+    elif count > 0 and linertype == 0:
+        linertype = -1
+    elif count > 0 and linertype == 1:
+        lienrtype = 1
+    return linertype
 
 if __name__ == "__main__":
+    # import
+    import itertools as itr
+    import seaborn as sns
+    import pandas as pd
+
     # 保存用ディレクトリの作成
     savedir = "./images/result3"
     makedir(savedir)
@@ -319,20 +334,44 @@ if __name__ == "__main__":
                 dose_min = dose
         IC30[dName] = dose
 
-    drugs = [makeDrugDatas(dNames[0], 0), makeDrugDatas(dNames[1], 0)]
-    X = np.linspace(0, IC30[dNames[0]], 11)
-    Y = np.linspace(0, IC30[dNames[1]], 11)
-    ## 切片1，傾き1
-    data = []
-    for i in range(len(X)):
-        if i > 0:
-            result_list = []
-            dose0 = np.linspace(0, X[i], 11)
-            dose1 = np.linspace(0, Y[i], 11)[::-1]
-            doses = list([dose0[j], dose1[j]] for j in range(len(dose0)))
-            for dose in doses:
-                drugs[0]["dose"] = dose[0]
-                drugs[1]["dose"] = dose[1]
-                result, legend = run(drugs, step=100, legend=["r_u"])
-                result_list.append(calcGrowthrate(result[-1][1]))
-            data.append(checkLinerType(result_list))
+    drug_comb = list(itr.combinations(dNames, 2)) # 薬剤の組み合わせ
+
+    cmap = makeCmap({"blue": 1, "white": 1, "red": 1},
+                    {"red": "#ff0000", "white": "#ffffff", "blue": "#0000ff"},
+                    ["blue", "white", "red"]) # カラーマップを設定
+
+    # plt.figure(figsize=())
+
+    for index, dList in enumerate(drug_comb):
+        drugs = [makeDrugDatas(dList[0], 0), makeDrugDatas(dList[1], 0)]
+        X = np.linspace(0, IC30[dList[0]], 11)
+        Y = np.linspace(0, IC30[dList[1]], 11)
+        ## 傾き1
+        data = pd.DataFrame()
+
+        for i in range(len(X)): # i == 切片
+            if i > 0:
+                result_list = []
+                dose0 = np.linspace(0, X[i], 11)
+                dose1 = np.linspace(0, Y[i], 11)[::-1]
+                doses = list([dose0[j], dose1[j]] for j in range(len(dose0)))
+                for dose in doses:
+                    drugs[0]["dose"] = dose[0]
+                    drugs[1]["dose"] = dose[1]
+                    result, legend = run(drugs, step=100, legend=["r_u"])
+                    result_list.append(calcGrowthrate(result[-1][1]))
+                linertype = checkLinerType(result_list)
+                data = data.append(pd.DataFrame([[1, i/10., linertype]], columns=["S", "I", "growth_type"]))
+
+        heatmap = pd.pivot_table(data=data, values="growth_type", index="I", columns="S") # x軸を0, y軸を1番目の薬剤にしてグラフデータ化
+        plt.subplot(230 + index + 1) # 1つの画像データに集約
+        sns.heatmap(heatmap, vmin=-1, vmax=1, cmap=cmap, annot=True)
+        plt.axis(fontsize=3)
+        plt.ylabel("I")
+        plt.xlabel("S")
+        plt.title("{} vs {}".format(dList[0], dList[1]))
+
+    savename = "{}/test.png".format(savedir)
+    plt.tight_layout()
+    plt.savefig(savename, dpi=200)
+    plt.close()
