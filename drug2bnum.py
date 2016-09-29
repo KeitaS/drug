@@ -9,7 +9,7 @@ value: b-numberが入ったリスト
 import re, os, collections, copy
 
 
-def drug2upid(fname):
+def drug2upid(fname="model/approved_target_ids_all.csv"):
     """
     DrubBankから取ってきたデータを抽出するモジュール
     result: key = Drug name
@@ -65,7 +65,7 @@ def association(fname="model/ecoli.txt"):
 
 
     
-def drug2bnum(fname):
+def drug2bnum(fname="model/approved_target_ids_all.csv"):
     data = drug2upid(fname)
     result = upid2bnum(data)
     
@@ -76,3 +76,4 @@ if __name__ == "__main__":
     import sys
     data = drug2bnum("model/approved_target_ids_all.csv")
     print data.keys()
+    print len(data.keys())
