@@ -371,7 +371,7 @@ if __name__ == "__main__":
         plt.xlabel("S")
         plt.title("{} vs {}".format(dList[0], dList[1]))
 
-    savename = "{}/test.png".format(savedir)
+    savename = "{}/heatmap_neweval_1.png".format(savedir)
     plt.tight_layout()
     plt.savefig(savename, dpi=200)
     plt.close()
