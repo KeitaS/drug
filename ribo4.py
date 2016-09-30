@@ -281,11 +281,11 @@ def checkLinerType(a):
                     count += 1
                     before = after
         num = i
-    if count == 0:
+    if count == 0: # 単調増加 or 単調減少(additive)
         linertype = 0
-    elif count > 0 and linertype == 0:
+    elif count > 0 and linertype == 0: # 上に凸(synergetic)
         linertype = -1
-    elif count > 0 and linertype == 1:
+    elif count > 0 and linertype == 1: # 下に凸(antagonistic)
         lienrtype = 1
     return linertype
 
@@ -335,6 +335,7 @@ if __name__ == "__main__":
         IC30[dName] = dose
 
     drug_comb = list(itr.combinations(dNames, 2)) # 薬剤の組み合わせ
+    # drug_comb = [[dNames[0], dNames[1]]] # 薬剤の組み合わせ
 
     cmap = makeCmap({"blue": 1, "white": 1, "red": 1},
                     {"red": "#ff0000", "white": "#ffffff", "blue": "#0000ff"},
@@ -361,12 +362,14 @@ if __name__ == "__main__":
                     result, legend = run(drugs, step=100, legend=["r_u"])
                     result_list.append(calcGrowthrate(result[-1][1]))
                 linertype = checkLinerType(result_list)
-                data = data.append(pd.DataFrame([[1, i/10., linertype]], columns=["S", "I", "growth_type"]))
+                data = data.append(pd.DataFrame([[1, i*10, linertype]], columns=["S", "I", "growth_type"]))
 
         heatmap = pd.pivot_table(data=data, values="growth_type", index="I", columns="S") # x軸を0, y軸を1番目の薬剤にしてグラフデータ化
         plt.subplot(230 + index + 1) # 1つの画像データに集約
-        sns.heatmap(heatmap, vmin=-1, vmax=1, cmap=cmap, annot=True)
-        plt.axis(fontsize=3)
+        sns.heatmap(heatmap, vmin=-1, vmax=1, cmap=cmap, cbar=False, linewidths=.3)
+        ax = plt.gca()
+        ax.invert_yaxis() # ヒートマップのy軸の逆転
+        plt.tick_params(labelsize=7)
         plt.ylabel("I")
         plt.xlabel("S")
         plt.title("{} vs {}".format(dList[0], dList[1]))
