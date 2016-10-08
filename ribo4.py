@@ -259,11 +259,14 @@ def calcGrowthrate(a, r_min=19.3, K_t=6.1*10**-2, Lambda_0=1.35):
     result = (a - r_min) * K_t / Lambda_0
     return result
 
-def checkLinerType(a):
+def checkLinerType(inp):
+    """
+    input: growth rate list
+    """
     num = 0
     before = 0
     count = 0
-    for index, i in enumerate(a):
+    for index, i in enumerate(inp):
         if index > 0:
             if before == 0:
                 if num < i: # 増えてるとき
@@ -470,7 +473,7 @@ if __name__ == "__main__":
         data = np.array(result_list)
         plt.subplot(2, 3, index+1)
         for i in range(len(data.T)-1):
-            plt.plot(data.T[0], data.T[i + 1], label="{}\%".format(i * 10))
+            plt.plot(data.T[0], data.T[i + 1], label="{}%".format((i + 1) * 10))
         plt.xlabel("count")
         plt.ylabel("growth rate")
         plt.legend(loc="upper right")
