@@ -123,7 +123,7 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1., K_t=6.1*10**-2, K_on=3
     return get_model()
 
 
-def makeDrugDatas(drugName, medium):
+def makeDrugDatas(drugName, medium=0):
     """
     薬剤データを作成して返す関数
     drugName : 投与する薬剤の名前
@@ -289,6 +289,30 @@ def checkLinerType(a):
         lienrtype = 1
     return linertype
 
+def calcIC(dNames, a_ex, target):
+    """
+    2文法でIC〜〜を計算
+    """
+    calc_result = {}
+    for dName in dNames:
+        drugs = [makeDrugDatas(dName, 0)] # 薬剤データの作成
+        dose_max = a_ex[dName] * 3
+        dose_min = .0
+        result = 1.
+        dose = .0
+        while abs(target - abs(result)) > 0.01:
+            dose = (dose_max + dose_min) / 2.
+            drugs[0]["dose"] = dose
+            result, legend = run(drugs, step=100, legend=["r_u"])
+            result = calcGrowthrate(result[-1][1])
+            if result < target:
+                dose_max = dose
+            else:
+                dose_min = dose
+        calc_result[dName] = dose
+    return calc_result
+
+
 if __name__ == "__main__":
     # import
     import itertools as itr
@@ -313,35 +337,16 @@ if __name__ == "__main__":
     a_ex = {"Streptmycin": 0.6, "Kanamycin": 0.5, "Tetracycline":2, "Chloramphenicol": 20}
     dataset = {"Lambda_0": Lambda_0[0]}
 
-    # 0: 線形グラフを作成
-    ## 2分技法でIC30を計算
-    IC30 = {}
-    for dName in dNames:
-        drugs = [makeDrugDatas(dName, 0)] # 薬剤データの作成
-        dose_max = a_ex[dName] * 3
-        dose_min = .0
-        result = 1.
-        dose = .0
-        target = .3
-        while abs(target - abs(result)) > 0.01:
-            dose = (dose_max + dose_min) / 2.
-            drugs[0]["dose"] = dose
-            result, legend = run(drugs, step=100, legend=["r_u"])
-            result = calcGrowthrate(result[-1][1])
-            if result < target:
-                dose_max = dose
-            else:
-                dose_min = dose
-        IC30[dName] = dose
+    # IC30 = calcIC(dNames, a_ex, .3) # IC30を計算
+    IC30 = {'Kanamycin': 0.6761398315429688, 'Streptmycin': 1.4652465820312497, 'Chloramphenicol': 22.5, 'Tetracycline': 5.25}
 
+
+    # 0: 新たな判定を入れたヒートマップの作成
+    """
     drug_comb = list(itr.combinations(dNames, 2)) # 薬剤の組み合わせ
-    # drug_comb = [[dNames[0], dNames[1]]] # 薬剤の組み合わせ
-
     cmap = makeCmap({"blue": 1, "white": 1, "red": 1},
                     {"red": "#ff0000", "white": "#ffffff", "blue": "#0000ff"},
                     ["blue", "white", "red"]) # カラーマップを設定
-
-    # plt.figure(figsize=())
 
     for index, dList in enumerate(drug_comb):
         drugs = [makeDrugDatas(dList[0], 0), makeDrugDatas(dList[1], 0)]
@@ -375,6 +380,103 @@ if __name__ == "__main__":
         plt.title("{} vs {}".format(dList[0], dList[1]))
 
     savename = "{}/heatmap_neweval_1.png".format(savedir)
+    plt.tight_layout()
+    plt.savefig(savename, dpi=200)
+    plt.close()
+    """
+
+    # 1 : hetmap_IC30を再作成
+    """
+    drug_comb = list(itr.combinations(dNames, 2)) # 薬剤の組み合わせ
+
+    plt.figure(figsize=(15, 9))
+    for index, dList in enumerate(drug_comb):
+        drugs = [makeDrugDatas(dList[0], 0), makeDrugDatas(dList[1], 0)]
+        X = np.linspace(0, IC30[dList[0]] * 2, 11)
+        Y = np.linspace(0, IC30[dList[1]] * 2, 11)
+
+        doses = list(itr.product(X, Y))
+        data = pd.DataFrame()
+        for doseList in doses:
+            drugs[0]["dose"] = doseList[0]
+            drugs[1]["dose"] = doseList[1]
+            result, legend = run(drugs, step=100, legend=["r_u"])
+            result = calcGrowthrate(result[-1][1])
+            data = data.append(pd.DataFrame([[round(doseList[0], 1), round(doseList[1], 1), result]], columns=[dList[0], dList[1], "growth_rate"]))
+        heatmap = pd.pivot_table(data=data, values="growth_rate", index=dList[0], columns=[dList[1]])
+        plt.subplot(230 + index + 1)
+        sns.heatmap(heatmap)
+        plt.tick_params(labelsize=7)
+        plt.ylabel(dList[0])
+        plt.xlabel(dList[1])
+
+    savename = "{}/heatmap_IC30.png".format(savedir)
+    plt.tight_layout()
+    plt.savefig(savename, dpi=200)
+    plt.close()
+    """
+
+    # 2 : 新しい評価基準を確認するため，線グラフを作成
+    drug_comb = list(itr.combinations(dNames, 2)) # 薬剤の組み合わせ
+
+    plt.figure(figsize=(15, 9))
+
+    for index, dList in enumerate(drug_comb):
+        drugs = [makeDrugDatas(dList[0], 0), makeDrugDatas(dList[1], 0)]
+        X = np.linspace(0, IC30[dList[0]] * 2, 11)
+        Y = np.linspace(0, IC30[dList[1]] * 2, 11)
+
+        ### 分割して保存
+        """
+        for i in range(len(X)): # i == 切片
+            if i > 0:
+                result_list = []
+                dose0 = np.linspace(0, X[i], 11)
+                dose1 = np.linspace(0, Y[i], 11)[::-1]
+                doses = list([dose0[j], dose1[j]] for j in range(len(dose0)))
+                for j, dose in enumerate(doses):
+                    drugs[0]["dose"] = dose[0]
+                    drugs[1]["dose"] = dose[1]
+                    result, legend = run(drugs, step=100, legend=["r_u"])
+                    result_list.append([j, calcGrowthrate(result[-1][1])])
+                plt.subplot(2, 5, i)
+                data = np.array(result_list)
+                plt.plot(data.T[0], data.T[1])
+                plt.xlabel("count")
+                plt.ylabel("growth rate")
+                plt.title("{}\%".format(i * 10))
+        savename = "{}/liner_{}_vs_{}.png".format(savedir, dList[0][:3], dList[1][:3])
+        plt.tight_layout()
+        plt.savefig(savename, dpi=200)
+        plt.close()
+        """
+
+        ### mergeして保存
+        result_list = []
+        for i in range(len(X)): # i == 切片
+            if i > 0:
+                dose0 = np.linspace(0, X[i], 11)
+                dose1 = np.linspace(0, Y[i], 11)[::-1]
+                doses = list([dose0[j], dose1[j]] for j in range(len(dose0)))
+                for j, dose in enumerate(doses):
+                    drugs[0]["dose"] = dose[0]
+                    drugs[1]["dose"] = dose[1]
+                    result, legend = run(drugs, step=100, legend=["r_u"])
+                    if i == 1:
+                        result_list.append([j, calcGrowthrate(result[-1][1])])
+                    else:
+                        result_list[j].append(calcGrowthrate(result[-1][1]))
+
+        data = np.array(result_list)
+        plt.subplot(2, 3, index+1)
+        for i in range(len(data.T)-1):
+            plt.plot(data.T[0], data.T[i + 1], label="{}\%".format(i * 10))
+        plt.xlabel("count")
+        plt.ylabel("growth rate")
+        plt.legend(loc="upper right")
+        plt.title("{} vs {}".format(dList[0][:3], dList[1][:3]))
+
+    savename = "{}/linechart_neweval.png".format(savedir)
     plt.tight_layout()
     plt.savefig(savename, dpi=200)
     plt.close()
