@@ -252,6 +252,7 @@ def epsilon(x, y, val):
     result = (val - x * y) / abs(min(x, y) - x * y)
     return result
 
+
 def calcGrowthrate(a, r_min=19.3, K_t=6.1*10**-2, Lambda_0=1.35):
     """
     growth_rateを計算する関数
@@ -259,38 +260,39 @@ def calcGrowthrate(a, r_min=19.3, K_t=6.1*10**-2, Lambda_0=1.35):
     result = (a - r_min) * K_t / Lambda_0
     return result
 
-def checkLinerType(inp):
+
+def checkLinerType(inp, eps_rel):
     """
     input: growth rate list
     """
-    num = 0
-    before = 0
-    count = 0
-    for index, i in enumerate(inp):
-        if index > 0:
-            if before == 0:
-                if num < i: # 増えてるとき
-                    linertype = 0
-                    before = 1
-                else: # それ以外
-                    linertype = 1
-                    before = 2
+    inp = np.array(inp)
+    dinp = inp[1:] - inp[:-1] # 差のリスト
+    before_type = 0 # -1: <, 0: ==, 1: >
+    linertype = 0 # -1: synergistic, 0: additive, 2: antagonistic`
+
+    for i in range(len(dinp)):
+        if abs(dinp[i]) > inp[i] * eps_rel: #
+            if dinp[i] < 0:
+                current_type = -1 # 減少
             else:
-                if num < i:
-                    after = 1
-                else:
-                    after = 2
-                if after != before:
-                    count += 1
-                    before = after
-        num = i
-    if count == 0: # 単調増加 or 単調減少(additive)
-        linertype = 0
-    elif count > 0 and linertype == 0: # 上に凸(synergetic)
-        linertype = -1
-    elif count > 0 and linertype == 1: # 下に凸(antagonistic)
-        lienrtype = 1
+                current_type = 1 # 増加
+        else:
+            current_type = 0
+
+        if i == 0:
+            before_type = current_type
+        else:
+            if current_type == 0 or before_type == 0 or current_type == before_type:
+                pass
+            else:
+                if current_type == 1: # 減少から増加
+                    linertype = -1
+                else: # 増加から減少
+                    linertype = 1
+                return linertype
+                break
     return linertype
+
 
 def calcIC(dNames, a_ex, target):
     """
@@ -345,16 +347,15 @@ if __name__ == "__main__":
 
 
     # 0: 新たな判定を入れたヒートマップの作成
-    """
     drug_comb = list(itr.combinations(dNames, 2)) # 薬剤の組み合わせ
     cmap = makeCmap({"blue": 1, "white": 1, "red": 1},
                     {"red": "#ff0000", "white": "#ffffff", "blue": "#0000ff"},
-                    ["blue", "white", "red"]) # カラーマップを設定
+                    ["red", "white", "blue"]) # カラーマップを設定
 
     for index, dList in enumerate(drug_comb):
         drugs = [makeDrugDatas(dList[0], 0), makeDrugDatas(dList[1], 0)]
-        X = np.linspace(0, IC30[dList[0]], 11)
-        Y = np.linspace(0, IC30[dList[1]], 11)
+        X = np.linspace(0, IC30[dList[0]]*2, 11)
+        Y = np.linspace(0, IC30[dList[1]]*2, 11)
         ## 傾き1
         data = pd.DataFrame()
 
@@ -369,7 +370,8 @@ if __name__ == "__main__":
                     drugs[1]["dose"] = dose[1]
                     result, legend = run(drugs, step=100, legend=["r_u"])
                     result_list.append(calcGrowthrate(result[-1][1]))
-                linertype = checkLinerType(result_list)
+                result_list = np.array(result_list)
+                linertype = checkLinerType(result_list, 1.0e-6)
                 data = data.append(pd.DataFrame([[1, i*10, linertype]], columns=["S", "I", "growth_type"]))
 
         heatmap = pd.pivot_table(data=data, values="growth_type", index="I", columns="S") # x軸を0, y軸を1番目の薬剤にしてグラフデータ化
@@ -382,11 +384,11 @@ if __name__ == "__main__":
         plt.xlabel("S")
         plt.title("{} vs {}".format(dList[0], dList[1]))
 
-    savename = "{}/heatmap_neweval_1.png".format(savedir)
+    savename = "{}/heatmap_neweval_2.png".format(savedir)
     plt.tight_layout()
     plt.savefig(savename, dpi=200)
     plt.close()
-    """
+
 
     # 1 : hetmap_IC30を再作成
     """
@@ -420,6 +422,7 @@ if __name__ == "__main__":
     """
 
     # 2 : 新しい評価基準を確認するため，線グラフを作成
+    """
     drug_comb = list(itr.combinations(dNames, 2)) # 薬剤の組み合わせ
 
     plt.figure(figsize=(15, 9))
@@ -430,7 +433,6 @@ if __name__ == "__main__":
         Y = np.linspace(0, IC30[dList[1]] * 2, 11)
 
         ### 分割して保存
-        """
         for i in range(len(X)): # i == 切片
             if i > 0:
                 result_list = []
@@ -452,7 +454,6 @@ if __name__ == "__main__":
         plt.tight_layout()
         plt.savefig(savename, dpi=200)
         plt.close()
-        """
 
         ### mergeして保存
         result_list = []
@@ -483,3 +484,4 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(savename, dpi=200)
     plt.close()
+    """
