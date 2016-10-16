@@ -352,27 +352,29 @@ if __name__ == "__main__":
                     {"red": "#ff0000", "white": "#ffffff", "blue": "#0000ff"},
                     ["red", "white", "blue"]) # カラーマップを設定
 
+    slope_list = [1./4, 1./2, 1, 2, 4] # 傾き
+
     for index, dList in enumerate(drug_comb):
         drugs = [makeDrugDatas(dList[0], 0), makeDrugDatas(dList[1], 0)]
         X = np.linspace(0, IC30[dList[0]]*2, 11)
         Y = np.linspace(0, IC30[dList[1]]*2, 11)
-        ## 傾き1
-        data = pd.DataFrame()
 
-        for i in range(len(X)): # i == 切片
-            if i > 0:
-                result_list = []
-                dose0 = np.linspace(0, X[i], 11)
-                dose1 = np.linspace(0, Y[i], 11)[::-1]
-                doses = list([dose0[j], dose1[j]] for j in range(len(dose0)))
-                for dose in doses:
-                    drugs[0]["dose"] = dose[0]
-                    drugs[1]["dose"] = dose[1]
-                    result, legend = run(drugs, step=100, legend=["r_u"])
-                    result_list.append(calcGrowthrate(result[-1][1]))
-                result_list = np.array(result_list)
-                linertype = checkLinerType(result_list, 1.0e-6)
-                data = data.append(pd.DataFrame([[1, i*10, linertype]], columns=["S", "I", "growth_type"]))
+        data = pd.DataFrame()
+        for slope in slope_list:
+            for i in range(len(X)): # i == 切片
+                if i > 0:
+                    result_list = []
+                    dose0 = np.linspace(0, X[i], 11)
+                    dose1 = np.linspace(0, Y[i] * slope, 11)[::-1]
+                    doses = list([dose0[j], dose1[j]] for j in range(len(dose0)))
+                    for dose in doses:
+                        drugs[0]["dose"] = dose[0]
+                        drugs[1]["dose"] = dose[1]
+                        result, legend = run(drugs, step=100, legend=["r_u"])
+                        result_list.append(calcGrowthrate(result[-1][1]))
+                    result_list = np.array(result_list)
+                    linertype = checkLinerType(result_list, 1.0e-6)
+                    data = data.append(pd.DataFrame([[slope, i*10, linertype]], columns=["S", "I", "growth_type"]))
 
         heatmap = pd.pivot_table(data=data, values="growth_type", index="I", columns="S") # x軸を0, y軸を1番目の薬剤にしてグラフデータ化
         plt.subplot(230 + index + 1) # 1つの画像データに集約
@@ -384,7 +386,7 @@ if __name__ == "__main__":
         plt.xlabel("S")
         plt.title("{} vs {}".format(dList[0], dList[1]))
 
-    savename = "{}/heatmap_neweval_2.png".format(savedir)
+    savename = "{}/heatmap_neweval_3.png".format(savedir)
     plt.tight_layout()
     plt.savefig(savename, dpi=200)
     plt.close()
