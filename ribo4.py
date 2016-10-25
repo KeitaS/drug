@@ -232,6 +232,7 @@ def makedir(dirname):
 def makeCmap(c_range={"red": 30, "pink": 5, "white": 10, "light_green": 5, "green": 13, "blue": 17},
             c_num = {"red": "#ff0000", "pink": "#ffc0cb", "white": "#ffffff", "light_green": "#90ee90", "green": "#008000", "blue": "#0000ff"},
             c_list = ["red", "pink", "white", "light_green", "green", "blue"]): # eをかませるためのカラーマップを作る関数
+    """自分で定義したカラーマップを返す(固定)"""
 
     import matplotlib
 
@@ -242,6 +243,17 @@ def makeCmap(c_range={"red": 30, "pink": 5, "white": 10, "light_green": 5, "gree
     cmap = matplotlib.colors.ListedColormap(c_result)
     del(matplotlib)
     return cmap
+
+def generate_cmap(colors):
+    """自分で定義したカラーマップを返す(線形補完)"""
+    from matplotlib.colors import LinearSegmentedColormap
+    values = range(len(colors))
+
+    vmax = np.ceil(np.max(values))
+    color_list = []
+    for v, c in zip(values, colors):
+        color_list.append( ( v/ vmax, c) )
+    return LinearSegmentedColormap.from_list('custom_cmap', color_list)
 
 
 def epsilon(x, y, val):
@@ -285,10 +297,12 @@ def checkLinerType(inp, eps_rel):
             if current_type == 0 or before_type == 0 or current_type == before_type:
                 pass
             else:
-                if current_type == 1: # 減少から増加
-                    linertype = -1
-                else: # 増加から減少
-                    linertype = 1
+                linerList = np.linspace(inp[0], inp[-1], len(inp))
+                linertype = inp[i+1] - linerList[i+1]
+                # if current_type == 1: # 減少から増加
+                #     linertype = -1
+                # else: # 増加から減少
+                #     linertype = 1
                 return linertype
                 break
     return linertype
@@ -325,7 +339,7 @@ if __name__ == "__main__":
     import pandas as pd
 
     # 保存用ディレクトリの作成
-    savedir = "./images/result3"
+    savedir = "./images/ribo4"
     makedir(savedir)
 
     # 初期値
@@ -348,9 +362,10 @@ if __name__ == "__main__":
 
     # 0: 新たな判定を入れたヒートマップの作成
     drug_comb = list(itr.combinations(dNames, 2)) # 薬剤の組み合わせ
-    cmap = makeCmap({"blue": 1, "white": 1, "red": 1},
-                    {"red": "#ff0000", "white": "#ffffff", "blue": "#0000ff"},
-                    ["red", "white", "blue"]) # カラーマップを設定
+    cmap = generate_cmap(["mediumblue", "white", "orangered"])
+    # cmap = makeCmap({"blue": 1, "white": 1, "red": 1},
+    #                 {"red": "#ff0000", "white": "#ffffff", "blue": "#0000ff"},
+    #                 ["red", "white", "blue"]) # カラーマップを設定
 
     slope_list = [1./4, 1./2, 1, 2, 4] # 傾き
 
@@ -378,7 +393,7 @@ if __name__ == "__main__":
 
         heatmap = pd.pivot_table(data=data, values="growth_type", index="I", columns="S") # x軸を0, y軸を1番目の薬剤にしてグラフデータ化
         plt.subplot(230 + index + 1) # 1つの画像データに集約
-        sns.heatmap(heatmap, vmin=-1, vmax=1, cmap=cmap, cbar=False, linewidths=.3)
+        sns.heatmap(heatmap, vmin=-1, vmax=1, cmap=cmap, linewidths=.3)
         ax = plt.gca()
         ax.invert_yaxis() # ヒートマップのy軸の逆転
         plt.tick_params(labelsize=7)
@@ -386,7 +401,7 @@ if __name__ == "__main__":
         plt.xlabel("S")
         plt.title("{} vs {}".format(dList[0], dList[1]))
 
-    savename = "{}/heatmap_neweval_3.png".format(savedir)
+    savename = "{}/heatmap_neweval_4.png".format(savedir)
     plt.tight_layout()
     plt.savefig(savename, dpi=200)
     plt.close()
