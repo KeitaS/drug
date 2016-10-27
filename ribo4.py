@@ -297,8 +297,8 @@ def checkLinerType(inp, eps_rel):
             if current_type == 0 or before_type == 0 or current_type == before_type:
                 pass
             else:
-                linerList = np.linspace(inp[0], inp[-1], len(inp))
-                linertype = inp[i+1] - linerList[i+1]
+                linerList = np.linspace(inp[0], inp[-1], len(inp)) # 両端点を線形で結んだList
+                linertype = linerList[i+1] - inp[i+1] #
                 # if current_type == 1: # 減少から増加
                 #     linertype = -1
                 # else: # 増加から減少
