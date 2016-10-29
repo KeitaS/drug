@@ -298,7 +298,7 @@ def checkLinerType(inp, eps_rel):
                 pass
             else:
                 linerList = np.linspace(inp[0], inp[-1], len(inp)) # 両端点を線形で結んだList
-                linertype = linerList[i+1] - inp[i+1] #
+                linertype = linerList[i] - inp[i] #
                 # if current_type == 1: # 減少から増加
                 #     linertype = -1
                 # else: # 増加から減少
@@ -310,7 +310,7 @@ def checkLinerType(inp, eps_rel):
 
 def calcIC(dNames, a_ex, target):
     """
-    2文法でIC〜〜を計算
+    二分法でIC〜〜を計算
     """
     calc_result = {}
     for dName in dNames:
@@ -371,37 +371,37 @@ if __name__ == "__main__":
 
     for index, dList in enumerate(drug_comb):
         drugs = [makeDrugDatas(dList[0], 0), makeDrugDatas(dList[1], 0)]
-        X = np.linspace(0, IC30[dList[0]]*2, 11)
-        Y = np.linspace(0, IC30[dList[1]]*2, 11)
+        pointX = np.linspace(0, IC30[dList[0]]*2, 11)
+        pointY = np.linspace(0, IC30[dList[1]]*2, 11)
+        midPointList = [[pointX[i]/2, pointY[i]/2] for i in range(len(pointX)) if i > 0] # 中点のリスト
 
         data = pd.DataFrame()
         for slope in slope_list:
-            for i in range(len(X)): # i == 切片
-                if i > 0:
-                    result_list = []
-                    dose0 = np.linspace(0, X[i], 11)
-                    dose1 = np.linspace(0, Y[i] * slope, 11)[::-1]
-                    doses = list([dose0[j], dose1[j]] for j in range(len(dose0)))
-                    for dose in doses:
-                        drugs[0]["dose"] = dose[0]
-                        drugs[1]["dose"] = dose[1]
-                        result, legend = run(drugs, step=100, legend=["r_u"])
-                        result_list.append(calcGrowthrate(result[-1][1]))
-                    result_list = np.array(result_list)
-                    linertype = checkLinerType(result_list, 1.0e-6)
-                    data = data.append(pd.DataFrame([[slope, i*10, linertype]], columns=["S", "I", "growth_type"]))
+            for pCount, midPoint in enumerate(midPointList): # i == 切片
+                result_list = []
+                doseX = np.linspace(0, midPoint[0] * (1 + slope), 11)
+                doseY = np.linspace(0, midPoint[1] * (1 + (1 / slope)), 11)[::-1]
+                doses = [[doseX[i], doseY[i]] for i in range(len(doseX))]
+                for dose in doses:
+                    drugs[0]["dose"] = dose[0]
+                    drugs[1]["dose"] = dose[1]
+                    result, legend = run(drugs, step=100, legend=["r_u"])
+                    result_list.append(calcGrowthrate(result[-1][1]))
+
+                linertype = checkLinerType(result_list, 1.0e-6)
+                data = data.append(pd.DataFrame([[slope, (pCount + 1) * 10, linertype]], columns=["S", "I", "growth_type"]))
 
         heatmap = pd.pivot_table(data=data, values="growth_type", index="I", columns="S") # x軸を0, y軸を1番目の薬剤にしてグラフデータ化
         plt.subplot(230 + index + 1) # 1つの画像データに集約
-        sns.heatmap(heatmap, vmin=-1, vmax=1, cmap=cmap, linewidths=.3)
+        sns.heatmap(heatmap, vmin=-1, vmax=1, cmap=cmap, linewidths=.3, annot=True, annot_kws={"size": 7})
         ax = plt.gca()
         ax.invert_yaxis() # ヒートマップのy軸の逆転
         plt.tick_params(labelsize=7)
-        plt.ylabel("I")
-        plt.xlabel("S")
-        plt.title("{} vs {}".format(dList[0], dList[1]))
+        plt.ylabel("MidPoint")
+        plt.xlabel("Slope")
+        plt.title("{} vs {}".format(dList[0][:3], dList[1][:3]))
 
-    savename = "{}/heatmap_neweval_4.png".format(savedir)
+    savename = "{}/heatmap_neweval_5.png".format(savedir)
     plt.tight_layout()
     plt.savefig(savename, dpi=200)
     plt.close()
