@@ -132,7 +132,6 @@ def makeDrugDatas(drugName, medium=0):
                       2: ,
                      )
     """
-    dNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
     Lambda_0_a = {"Streptmycin": 0.31, "Kanamycin": 0.169, "Tetracycline": 5.24, "Chloramphenicol": 1.83} # 1/h
     IC50 = {"Streptmycin": [0.41, 0.28, 0.196], "Kanamycin": [0.246, 0.096, 0.065], "Tetracycline": [0.5, 0.6, 1.45], "Chloramphenicol": [2.85, 2.65, 5.7]} # µg/ml
     IC50_a = {"Streptmycin": 0.189, "Kanamycin": 0.05, "Tetracycline": 0.229, "Chloramphenicol": 2.49} # µg/ml
@@ -170,10 +169,6 @@ def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30
 
     model = createModel(**dataset) # モデルを作成
 
-    # reactionの確認
-    # for i, rr in enumerate(model.reaction_rules()):
-    #     print("{:d}: {:s}".format(i, rr.as_string()))
-
     # legend
     if not legend:
         legend = y0.keys()
@@ -185,45 +180,8 @@ def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30
     return data, legend
 
 
-def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel="", type="single"):
-    """
-    グラフ作成用モジュール
-    """
-    import sys
-    if type == "single":
-        for i in range(len(data[0]) - 1):
-            if len(legend) > i:
-                plt.plot(data.T[0], data.T[i+1], label=legend[i])
-            else:
-                plt.plot(data.T[0], data.T[i+1])
-    elif type == "multi":
-        if len(data[0]) % 2. > 0:
-            sys.stderr.write("Error: Input data length is not Even.")
-
-        else:
-            for i in range(len(data[0]) / 2):
-                if len(legend) > i:
-                    plt.plot(data.T[i * 2], data.T[i * 2 + 1], label=legend[i])
-                else:
-                    plt.plot(data.T[i * 2], data.T[i * 2 + 1])
-
-    if title: # titleがあったらつける
-        plt.title(title)
-
-    if xlabel: # xlabelがあったらつける
-        plt.xlabel(xlabel)
-
-    if ylabel: # ylabelがあったらつける
-        plt.ylabel(ylabel)
-
-    if legend:
-        plt.legend(loc="upper right")
-    # plt.show()
-    plt.savefig(savename, dpi=200)
-    plt.close()
-
-
 def makedir(dirname):
+    """ディレクトリ作成関数"""
     import os
     if not os.path.exists(dirname):
         os.makedirs(dirname)
@@ -273,9 +231,11 @@ def calcGrowthrate(a, r_min=19.3, K_t=6.1*10**-2, Lambda_0=1.35):
     return result
 
 
-def checkLinerType(inp, eps_rel):
+def checkLinerType(inp, eps_rel, pattern):
     """
-    input: growth rate list
+    inp: growth rate list
+    eps_rel: 差の許容率
+    pattern: linertypeを計算するときのパターン
     """
     inp = np.array(inp)
     dinp = inp[1:] - inp[:-1] # 差のリスト
@@ -297,12 +257,22 @@ def checkLinerType(inp, eps_rel):
             if current_type == 0 or before_type == 0 or current_type == before_type:
                 pass
             else:
-                linerList = np.linspace(inp[0], inp[-1], len(inp)) # 両端点を線形で結んだList
-                linertype = linerList[i] - inp[i] #
-                # if current_type == 1: # 減少から増加
-                #     linertype = -1
-                # else: # 増加から減少
-                #     linertype = 1
+                if pattern == 0:
+                    linerList = np.linspace(inp[0], inp[-1], len(inp)) # 両端点を線形で結んだList
+                    linertype = linerList[i] - inp[i] #
+
+                elif pattern == 1:
+                    if inp[0] > inp[-1]:
+                        inp_min = inp[-1]
+                        inp_max = inp[0]
+                    else:
+                        inp_min = inp[0]
+                        inp_max = inp[-1]
+                    if current_type == -1: # synergistic
+                        linertype = inp_min - inp[i]
+                    else: # antagonistic
+                        linertype = inp_max - inp[i]
+
                 return linertype
                 break
     return linertype
@@ -342,30 +312,18 @@ if __name__ == "__main__":
     savedir = "./images/ribo4"
     makedir(savedir)
 
-    # 初期値
-    r_min = 19.3 # Lambdaの計算で使用
-    K_t = 6.1 * 10 ** -2 # Lambdaの計算で使用
-    # (result[-1][1] - r_min) * K_t / Lambda_0[0] # growth_rate / Lambda_0
-
     ## drug data
     dNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
-    Lambda_0 =  [1.35, 0.85, 0.40] # 1/h (1.35, 0.85, 0.40)
-    Lambda_0_a = {"Streptmycin": 0.31, "Kanamycin": 0.169, "Tetracycline": 5.24, "Chloramphenicol": 1.83} # 1/h
-    IC50 = {"Streptmycin": [0.41, 0.28, 0.196], "Kanamycin": [0.246, 0.096, 0.065], "Tetracycline": [0.5, 0.6, 1.45], "Chloramphenicol": [2.85, 2.65, 5.7]} # µg/ml
-    IC50_a = {"Streptmycin": 0.189, "Kanamycin": 0.05, "Tetracycline": 0.229, "Chloramphenicol": 2.49} # µg/ml
     a_ex = {"Streptmycin": 0.6, "Kanamycin": 0.5, "Tetracycline":2, "Chloramphenicol": 20}
-    dataset = {"Lambda_0": Lambda_0[0]}
 
     # IC30 = calcIC(dNames, a_ex, .3) # IC30を計算
     IC30 = {'Kanamycin': 0.6761398315429688, 'Streptmycin': 1.4652465820312497, 'Chloramphenicol': 22.5, 'Tetracycline': 5.25}
 
 
     # 0: 新たな判定を入れたヒートマップの作成
+    """
     drug_comb = list(itr.combinations(dNames, 2)) # 薬剤の組み合わせ
     cmap = generate_cmap(["mediumblue", "white", "orangered"])
-    # cmap = makeCmap({"blue": 1, "white": 1, "red": 1},
-    #                 {"red": "#ff0000", "white": "#ffffff", "blue": "#0000ff"},
-    #                 ["red", "white", "blue"]) # カラーマップを設定
 
     slope_list = [1./4, 1./2, 1, 2, 4] # 傾き
 
@@ -388,7 +346,7 @@ if __name__ == "__main__":
                     result, legend = run(drugs, step=100, legend=["r_u"])
                     result_list.append(calcGrowthrate(result[-1][1]))
 
-                linertype = checkLinerType(result_list, 1.0e-6)
+                linertype = checkLinerType(result_list, 1.0e-6, 1)
                 data = data.append(pd.DataFrame([[slope, (pCount + 1) * 10, linertype]], columns=["S", "I", "growth_type"]))
 
         heatmap = pd.pivot_table(data=data, values="growth_type", index="I", columns="S") # x軸を0, y軸を1番目の薬剤にしてグラフデータ化
@@ -401,11 +359,11 @@ if __name__ == "__main__":
         plt.xlabel("Slope")
         plt.title("{} vs {}".format(dList[0][:3], dList[1][:3]))
 
-    savename = "{}/heatmap_neweval_5.png".format(savedir)
+    savename = "{}/heatmap_neweval_6.png".format(savedir)
     plt.tight_layout()
     plt.savefig(savename, dpi=200)
     plt.close()
-
+    """
 
     # 1 : hetmap_IC30を再作成
     """
@@ -502,3 +460,42 @@ if __name__ == "__main__":
     plt.savefig(savename, dpi=200)
     plt.close()
     """
+
+    # 3 : 個別に気になる部分をLine Chartを作成
+    drug_comb = [["Kanamycin", "Tetracycline"], ["Streptmycin", "Chloramphenicol"], ["Kanamycin", "Chloramphenicol"]] # 薬剤の組み合わせ
+    slope_list = [1./4, 4.0, 4.0]
+
+    plt.figure(figsize=(15, 9))
+
+    for index, dList in enumerate(drug_comb):
+        drugs = [makeDrugDatas(dList[0], 0), makeDrugDatas(dList[1], 0)]
+        pointX = np.linspace(0, IC30[dList[0]] * 2, 11)
+        pointY = np.linspace(0, IC30[dList[1]] * 2, 11)
+        midPointList = [[pointX[i]/2, pointY[i]/2] for i in range(len(pointX)) if i > 0] # 中点のリスト
+        slope = slope_list[index]
+        
+        result_list = []
+        for pCount, midPoint in enumerate(midPointList): #
+            doseX = np.linspace(0, midPoint[0] * (1 + slope), 11)
+            doseY = np.linspace(0, midPoint[1] * (1 + (1 / slope)), 11)[::-1]
+            doses = [[doseX[i], doseY[i]] for i in range(len(doseX))]
+            for i, dose in enumerate(doses):
+                drugs[0]["dose"] = dose[0]
+                drugs[1]["dose"] = dose[1]
+                result, legend = run(drugs, step=100, legend=["r_u"])
+                if pCount == 0:
+                    result_list.append([i, calcGrowthrate(result[-1][1])])
+                else:
+                    result_list[i].append(calcGrowthrate(result[-1][1]))
+
+        data = np.array(result_list)
+        for i in range(len(data.T)-1):
+            plt.plot(data.T[0], data.T[i + 1], label="{}%".format((i + 1) * 10))
+        plt.xlabel("count")
+        plt.ylabel("growth rate")
+        plt.legend(loc="upper right")
+        plt.title("{} vs {}".format(dList[0][:3], dList[1][:3]))
+        savename = "{}/linechart_{}_{}_{}.png".format(savedir, dList[0][:3], dList[1][:3], slope)
+        plt.tight_layout()
+        plt.savefig(savename, dpi=200)
+        plt.close()
