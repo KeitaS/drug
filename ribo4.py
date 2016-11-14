@@ -242,39 +242,38 @@ def checkLinerType(inp, eps_rel, pattern):
     before_type = 0 # -1: <, 0: ==, 1: >
     linertype = 0 # -1: synergistic, 0: additive, 2: antagonistic`
 
-    for i in range(len(dinp)):
-        if abs(dinp[i]) > inp[i] * eps_rel: #
-            if dinp[i] < 0:
-                current_type = -1 # 減少
+    if pattern == 0:
+        for i in range(len(dinp)):
+            if abs(dinp[i]) > inp[i] * eps_rel: #
+                if dinp[i] < 0:
+                    current_type = -1 # 減少
+                else:
+                    current_type = 1 # 増加
             else:
-                current_type = 1 # 増加
-        else:
-            current_type = 0
+                current_type = 0
 
-        if i == 0:
-            before_type = current_type
-        else:
-            if current_type == 0 or before_type == 0 or current_type == before_type:
-                pass
+            if i == 0:
+                before_type = current_type
             else:
-                if pattern == 0:
+                if current_type == 0 or before_type == 0 or current_type == before_type:
+                    pass
+                else:
                     linerList = np.linspace(inp[0], inp[-1], len(inp)) # 両端点を線形で結んだList
                     linertype = linerList[i] - inp[i] #
 
-                elif pattern == 1:
-                    if inp[0] > inp[-1]:
-                        inp_min = inp[-1]
-                        inp_max = inp[0]
-                    else:
-                        inp_min = inp[0]
-                        inp_max = inp[-1]
-                    if current_type == -1: # synergistic
-                        linertype = inp_min - inp[i]
-                    else: # antagonistic
-                        linertype = inp_max - inp[i]
+                    return linertype
+                    break
 
-                return linertype
-                break
+    elif pattern == 1:
+        upper_bound = max(inp[0], inp[-1])
+        lower_bound = min(inp[0], inp[-1])
+        max_inp = max(inp)
+        min_inp = min(inp)
+        if max_inp > upper_bound:
+            linertype = upper_bound - max_inp
+        elif min_inp < lower_bound:
+            linertype = lower_bound - min_inp
+
     return linertype
 
 
@@ -321,7 +320,6 @@ if __name__ == "__main__":
 
 
     # 0: 新たな判定を入れたヒートマップの作成
-    """
     drug_comb = list(itr.combinations(dNames, 2)) # 薬剤の組み合わせ
     cmap = generate_cmap(["mediumblue", "white", "orangered"])
 
@@ -363,7 +361,6 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(savename, dpi=200)
     plt.close()
-    """
 
     # 1 : hetmap_IC30を再作成
     """
@@ -462,8 +459,9 @@ if __name__ == "__main__":
     """
 
     # 3 : 個別に気になる部分をLine Chartを作成
-    drug_comb = [["Kanamycin", "Tetracycline"], ["Streptmycin", "Chloramphenicol"], ["Kanamycin", "Chloramphenicol"]] # 薬剤の組み合わせ
-    slope_list = [1./4, 4.0, 4.0]
+    """
+    drug_comb = [["Streptmycin", "Chloramphenicol"], ["Kanamycin", "Chloramphenicol"]] # 薬剤の組み合わせ
+    slope_list = [0.25, 0.25]
 
     plt.figure(figsize=(15, 9))
 
@@ -473,7 +471,7 @@ if __name__ == "__main__":
         pointY = np.linspace(0, IC30[dList[1]] * 2, 11)
         midPointList = [[pointX[i]/2, pointY[i]/2] for i in range(len(pointX)) if i > 0] # 中点のリスト
         slope = slope_list[index]
-        
+
         result_list = []
         for pCount, midPoint in enumerate(midPointList): #
             doseX = np.linspace(0, midPoint[0] * (1 + slope), 11)
@@ -499,3 +497,4 @@ if __name__ == "__main__":
         plt.tight_layout()
         plt.savefig(savename, dpi=200)
         plt.close()
+    """
