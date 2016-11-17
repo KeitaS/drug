@@ -23,6 +23,7 @@ def makeCmap(c_range={"red": 30, "pink": 5, "white": 10, "light_green": 5, "gree
 
 def generate_cmap(colors):
     """自分で定義したカラーマップを返す(線形補完)"""
+    import numpy as np
     from matplotlib.colors import LinearSegmentedColormap
     values = range(len(colors))
 
@@ -30,6 +31,7 @@ def generate_cmap(colors):
     color_list = []
     for v, c in zip(values, colors):
         color_list.append( ( v/ vmax, c) )
+    del(np)
     return LinearSegmentedColormap.from_list('custom_cmap', color_list)
 
 
