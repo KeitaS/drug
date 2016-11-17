@@ -85,26 +85,40 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1., K_t=6.1*10**-2, K_on=3
         ### reaction
         ## drug
         if len(drugs) > 0:
+            K_on_exp = K_on * 1 / (1 + a2 / K_ma2)
+            K_off_exp = K_on_exp * K_D
+            P_in = drugs[0]["P_in"] * 1 / (1 + a2 / K_ma2)
+
             if drugs[0]["type"] == "30s":
                 # r30_binding_reaction(a1_ex, a1, r30_1_b, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
-                r30_binding_reaction(a1_ex, a1, r30_1_b, drugs[0]["P_in"] * 1 / (1 + a2 / K_ma2), drugs[0]["P_out"], K_on, K_off, Lambda)
+                r30_binding_reaction(a1_ex, a1, r30_1_b, P_in, drugs[0]["P_out"], K_on, K_off, Lambda)
+                # r30_binding_reaction(a1_ex, a1, r30_1_b, drugs[0]["P_in"], drugs[0]["P_out"], K_on_exp, K_off_exp, Lambda)
             elif drugs[0]["type"] == "50s":
                 # r50_binding_reaction(a1_ex, a1, r50_1_b, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
-                r50_binding_reaction(a1_ex, a1, r50_1_b, drugs[0]["P_in"] * 1 / (1 + a2 / K_ma2), drugs[0]["P_out"], K_on, K_off, Lambda)
+                r50_binding_reaction(a1_ex, a1, r50_1_b, P_in, drugs[0]["P_out"], K_on, K_off, Lambda)
+                # r50_binding_reaction(a1_ex, a1, r50_1_b, drugs[0]["P_in"], drugs[0]["P_out"], K_on_exp, K_off_exp, Lambda)
             elif drugs[0]["type"] == "ribo":
                 # ribo_binding_reaction(a1_ex, a1, r_1_b, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
-                ribo_binding_reaction(a1_ex, a1, r_1_b, drugs[0]["P_in"] * 1 / (1 + a2 / K_ma2), drugs[0]["P_out"], K_on, K_off, Lambda)
+                ribo_binding_reaction(a1_ex, a1, r_1_b, P_in, drugs[0]["P_out"], K_on, K_off, Lambda)
+                # ribo_binding_reaction(a1_ex, a1, r_1_b, drugs[0]["P_in"], drugs[0]["P_out"], K_on_exp, K_off_exp, Lambda)
 
         if len(drugs) > 1:
+            K_on_exp = K_on * 1 / (1 + a1 / K_ma1)
+            K_off_exp = K_on_exp * K_D
+            P_in = drugs[1]["P_in"] * 1 / (1 + a1 / K_ma1)
+
             if drugs[1]["type"] == "30s":
                 # r30_binding_reaction(a2_ex, a2, r30_2_b, drugs[1]["P_in"], drugs[1]["P_out"], K_on, K_off, Lambda)
-                r30_binding_reaction(a2_ex, a2, r30_2_b, drugs[1]["P_in"] * 1 / (1 + a1 / K_ma1), drugs[1]["P_out"], K_on, K_off, Lambda)
+                r30_binding_reaction(a2_ex, a2, r30_2_b, P_in, drugs[1]["P_out"], K_on, K_off, Lambda)
+                # r30_binding_reaction(a2_ex, a2, r30_2_b, drugs[1]["P_in"], drugs[1]["P_out"], K_on_exp, K_off_exp, Lambda)
             elif drugs[1]["type"] == "50s":
                 # r50_binding_reaction(a2_ex, a2, r50_2_b, drugs[1]["P_in"], drugs[1]["P_out"], K_on, K_off, Lambda)
-                r50_binding_reaction(a2_ex, a2, r50_2_b, drugs[1]["P_in"] * 1 / (1 + a1 / K_ma1), drugs[1]["P_out"], K_on, K_off, Lambda)
+                r50_binding_reaction(a2_ex, a2, r50_2_b, P_in, drugs[1]["P_out"], K_on, K_off, Lambda)
+                # r50_binding_reaction(a2_ex, a2, r50_2_b, drugs[1]["P_in"], drugs[1]["P_out"], K_on_exp, K_off_exp, Lambda)
             elif drugs[1]["type"] == "ribo":
                 # ribo_binding_reaction(a2_ex, a2, r_2_b, drugs[1]["P_in"], drugs[1]["P_out"], K_on, K_off, Lambda)
-                ribo_binding_reaction(a2_ex, a2, r_2_b, drugs[1]["P_in"] * 1 / (1 + a1 / K_ma1), drugs[1]["P_out"], K_on, K_off, Lambda)
+                ribo_binding_reaction(a2_ex, a2, r_2_b, P_in, drugs[1]["P_out"], K_on, K_off, Lambda)
+                # ribo_binding_reaction(a2_ex, a2, r_2_b, drugs[1]["P_in"], drugs[1]["P_out"], K_on_exp, K_off_exp, Lambda)
 
         ## ribo and subunit
         # production
@@ -190,7 +204,7 @@ def calcGrowthrate(a, r_min=19.3, K_t=6.1*10**-2, Lambda_0=1.35):
     return result
 
 
-def checkLinerType(inp, eps_rel, pattern):
+def checkLinerType(inp, eps_rel, pattern, buffpoint=0.):
     """
     inp: growth rate list
     eps_rel: 差の許容率
@@ -228,10 +242,21 @@ def checkLinerType(inp, eps_rel, pattern):
         lower_bound = min(inp[0], inp[-1])
         max_inp = max(inp)
         min_inp = min(inp)
-        if max_inp > upper_bound:
+        if max_inp > upper_bound: # antagonistic
             linertype = upper_bound - max_inp
-        elif min_inp < lower_bound:
+        elif min_inp < lower_bound: # synergistic
             linertype = lower_bound - min_inp
+
+    elif pattern == 2:
+        if buffpoint != 0:
+            upper_bound = max(inp[0], inp[-1])
+            lower_bound = min(inp[0], inp[-1])
+            max_inp = max(inp)
+            min_inp = min(inp)
+            if max_inp > upper_bound: # antagonistic
+                linertype = -(max_inp / buffpoint)
+            elif min_inp < lower_bound: # synergistic
+                linertype = lower_bound - min_inp
 
     return linertype
 
@@ -258,6 +283,39 @@ def calcIC(dNames, a_ex, target):
                 dose_min = dose
         calc_result[dName] = dose
     return calc_result
+
+
+def calcBufferingPoint(dNames, doses):
+    """
+    二分法でBufferingPointを計算
+    """
+    a_range = [0, doses[0]]
+    a_mid = 0
+    b_range = [0, doses[1]]
+    b_mid = doses[1]
+    result = 1
+    drugA = [makeDrugDatas(dNames[0])]
+    drugB = [makeDrugDatas(dNames[1])]
+    result_a = 0
+    result_b = 0
+    while abs(result) > 0.01:
+        if result > 0:
+            a_range[0] = a_mid
+            b_range[1] = b_mid
+        else:
+            a_range[1] = a_mid
+            b_range[0] = b_mid
+        a_mid = np.linspace(a_range[0], a_range[1], 3)[1]
+        b_mid = np.linspace(b_range[0], b_range[1], 3)[::-1][1]
+        drugA[0]["dose"] = a_mid
+        drugB[0]["dose"] = b_mid
+        result, legend = run(drugA, step=100, legend=["r_u"])
+        result_a = calcGrowthrate(result[-1][1])
+        result, legend = run(drugB, step=100, legend=["r_u"])
+        result_b = calcGrowthrate(result[-1][1])
+        result = result_a - result_b
+
+    return min(result_a, result_b)
 
 
 if __name__ == "__main__":
