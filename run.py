@@ -45,7 +45,8 @@ plt.show()
 """
 
 # create heatmap
-plt.figure(figsize=(12, 9))
+"""
+plt.figure(figsize=(6, 9))
 for index, dName in enumerate(dNames):
     drugs = [makeDrugDatas(dName), makeDrugDatas(dName)]
     doses = np.linspace(0, IC30[dName] * 2, 11)
@@ -55,7 +56,7 @@ for index, dName in enumerate(dNames):
     for dose in doses:
         drugs[0]["dose"] = dose[0]
         drugs[1]["dose"] = dose[1]
-        result, legend = run(drugs, step=100, inpData={"K_ma": 1.}, legend=["r_u"])
+        result, legend = run(drugs, step=100, inpData={"K_ma": 30.}, legend=["r_u"])
         result = calcGrowthrate(result[-1][1])
         result_list.append([round(dose[0], 2), round(dose[1], 2), result])
     data = pd.DataFrame(result_list, columns=["a1", "a2", "growth"])
@@ -67,5 +68,105 @@ for index, dName in enumerate(dNames):
     plt.xlabel("a2")
     plt.tick_params(labelsize=7)
 plt.tight_layout()
-plt.savefig("{}/modification_1_double_1.png".format(savedir), dpi=200)
+# plt.savefig("{}/modification_1_double_10.png".format(savedir), dpi=200)
+plt.show()
 plt.close()
+"""
+
+
+# 指標のヒートマップ
+plt.figure(figsize=(12, 9))
+cmap = generate_cmap(["mediumblue", "white", "orangered"])
+slope_list = [1./4, 1./2, 1, 2, 4] # 傾き
+
+for index, dName in enumerate(dNames):
+    drugs = [makeDrugDatas(dName), makeDrugDatas(dName)]
+    doses = np.linspace(0, IC30[dName] * 2, 11)
+    midPointList = [[doses[i] / 2, doses[i] / 2] for i in range(len(doses)) if i > 0] # 中点のリスト
+    data = []
+    K_ma = 15.
+    linertype = 0
+    for slope in slope_list:
+        for pCount, midPoint in enumerate(midPointList):
+            result_list = []
+            doseX = np.linspace(0, midPoint[0] * (1 + slope), 11)
+            doseY = np.linspace(0, midPoint[1] * (1 + (1 / slope)), 11)[::-1]
+            doses = [[doseX[i], doseY[i]] for i in range(len(doseX))]
+            for dose in doses:
+                drugs[0]["dose"] = dose[0]
+                drugs[1]["dose"] = dose[1]
+                result, legend = run(drugs, step=100, inpData={"K_ma": K_ma}, legend=["r_u"])
+                result_list.append(calcGrowthrate(result[-1][1]))
+
+            buffpoint = calcBufferingPoint([dName, dName], [doseX[-1], doseY[0]]) # buffering point を計算
+            linertype = checkLinerType(result_list, 1.0e-6, 2, buffpoint)
+            data.append([slope, (pCount + 1) * 10, linertype])
+
+    data = pd.DataFrame(data, columns=["S", "I", "growth_type"])
+
+    heatmap = pd.pivot_table(data=data, values="growth_type", index="I", columns="S") # x軸を0, y軸を1番目の薬剤にしてグラフデータ化
+    plt.subplot(2, 2, index + 1) # 1つの画像データに集約
+    sns.heatmap(heatmap, vmin=-1, vmax=1, cmap=cmap, linewidths=.3, annot=True, annot_kws={"size": 7})
+    ax = plt.gca()
+    ax.invert_yaxis() # ヒートマップのy軸の逆転
+    plt.tick_params(labelsize=7)
+    plt.ylabel("MidPoint")
+    plt.xlabel("Slope")
+    plt.title(dName)
+
+plt.tight_layout()
+plt.savefig("{}/modification_1_antagocheck_15.png".format(savedir), dpi=200)
+# plt.show()
+plt.close()
+
+
+# oldeval heatmap
+"""
+plt.figure(figsize=(12, 9))
+cmap = makeCmap()
+slope_list = [1./4, 1./2, 1, 2, 4] # 傾き
+
+for index, dName in enumerate(dNames):
+    doses = np.linspace(0, IC30[dName] * 2, 11)
+    midPointList = [[doses[i] / 2, doses[i] / 2] for i in range(len(doses)) if i > 0] # 中点のリスト
+    data = []
+    K_ma = 15.
+    linertype = 0
+    for slope in slope_list:
+        for pCount, midPoint in enumerate(midPointList):
+            ## 単剤
+            doses = [midPoint[0] * (1 + slope), midPoint[1] * (1 + (1 / slope))]
+            result_list = []
+            for i in range(3):
+                if i < 2:
+                    drugs = [makeDrugDatas(dName)]
+                    drugs[0]["dose"] = doses[i]
+                    result, legend = run(drugs, step=100, inpData={"K_ma": K_ma}, legend=["r_u"])
+                    result = calcGrowthrate(result[-1][1])
+                    result_list.append(result)
+                else:
+                    drugs = [makeDrugDatas(dName), makeDrugDatas(dName)]
+                    drugs[0]["dose"] = doses[0]
+                    drugs[1]["dose"] = doses[1]
+                    result, legend = run(drugs, step=100, inpData={"K_ma": K_ma}, legend=["r_u"])
+                    result = calcGrowthrate(result[-1][1])
+                    result_list.append(result)
+            linertype = epsilon(result_list[0], result_list[1], result_list[2])
+            data.append([slope, (pCount + 1) * 10, linertype])
+
+    data = pd.DataFrame(data, columns=["S", "I", "growth_type"])
+
+    heatmap = pd.pivot_table(data=data, values="growth_type", index="I", columns="S") # x軸を0, y軸を1番目の薬剤にしてグラフデータ化
+    plt.subplot(2, 2, index + 1) # 1つの画像データに集約
+    sns.heatmap(heatmap, vmin=-1, vmax=1, cmap=cmap, linewidths=.3, annot=True, annot_kws={"size": 7})
+    ax = plt.gca()
+    ax.invert_yaxis() # ヒートマップのy軸の逆転
+    plt.tick_params(labelsize=7)
+    plt.ylabel("MidPoint")
+    plt.xlabel("Slope")
+    plt.title(dName)
+
+plt.tight_layout()
+plt.savefig("{}/modification_1_oldeval_15.png".format(savedir), dpi=200)
+plt.close()
+"""
