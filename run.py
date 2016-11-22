@@ -61,7 +61,7 @@ for index, dName in enumerate(dNames):
 
     plt.subplot(2, 2, index + 1)
     data = pd.DataFrame(data, columns=["S", "I", "growth_type"])
-    evalHeatmap(data, cmap, "growth_type", "S", "I", ylabel="MidPoint", xlabel="Slope", title=dName)
+    evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title=dName)
 
 plt.tight_layout()
 plt.savefig("{}/modification_2_oldeval.png".format(savedir), dpi=200)
@@ -75,10 +75,10 @@ plt.figure(figsize=(12, 9))
 cmap = generate_cmap(["mediumblue", "white", "orangered"])
 slope_list = [1./4, 1./2, 1., 2., 4.] # 傾き
 
+
 for index, dName in enumerate(dNames):
-    print dName
     drugs = [makeDrugDatas(dName), makeDrugDatas(dName)]
-    doses = np.linspace(0, IC30[dName] * 2., 11)
+    doses = np.linspace(0, IC30[dName] * 2., 4)
     midPointList = [[doses[i] / 2., doses[i] / 2.] for i in range(len(doses)) if i > 0] # 中点のリスト
     data = []
     linertype = 0
@@ -96,11 +96,12 @@ for index, dName in enumerate(dNames):
 
     plt.subplot(2, 2, index + 1)
     data = pd.DataFrame(data, columns=["S", "I", "growth_type"])
-    evalHeatmap(data, cmap, "growth_type", "S", "I", ylabel="MidPoint", xlabel="Slope", title=dName)
+    print data
+    evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title=dName)
 
 plt.tight_layout()
-plt.savefig("{}/modification_2_neweval.png".format(savedir), dpi=200)
-# plt.show()
+# plt.savefig("{}/modification_2_neweval.png".format(savedir), dpi=200)
+plt.show()
 plt.close()
 """
 

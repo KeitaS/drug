@@ -105,8 +105,7 @@ def growthHeatmap(data, values, index, columns, title="", xlabel="", ylabel=""):
 def evalHeatmap(data, cmap, values, index, columns, title="", xlabel="", ylabel=""):
     heatmap = pd.pivot_table(data=data, values=values , index=index, columns=columns)
     sns.heatmap(heatmap, vmin=-1, vmax=1, cmap=cmap, linewidths=.3, annot=True, annot_kws={"size": 7})
-    ax = plt.gca()
-    ax.invert_yaxis() # ヒートマップのy軸の逆転
+
 
     # ラベルの設定
     if ylabel: plt.ylabel(ylabel)
