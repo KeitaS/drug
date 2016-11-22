@@ -320,20 +320,6 @@ def calcBufferingPoint(dNames, doses):
     return min(result_a, result_b)
 
 
-def doseResponse(drugs, dose, inpData={"K_ma": 15., "modif": 1}):
-    drugs[0]["dose"] = dose[0]
-    drugs[1]["dose"] = dose[1]
-    result, legend = run(drugs, step=100, inpData=inpData, legend=["r_u"])
-    result = calcGrowthrate(result[-1][1])
-    return result
-
-def createSlopedose(slope, midPointList, divnum=11):
-    doseX = np.linspace(0, midPointList[0] * (1 + slope), divnum)
-    doseY = np.linspace(0, midPointList[1] * (1 + (1 / slope)), divnum)[::-1]
-    return_list = [[doseX[i], doseY[i]] for i in range(len(doseX))]
-    return [[doseX[i], doseY[i]] for i in range(len(doseX))]
-
-
 if __name__ == "__main__":
     # import
     import itertools as itr
