@@ -48,12 +48,17 @@ def epsilon(x, y, val):
     return result
 
 
-def doseResponse(drugs, dose, inpData={"K_ma": 15., "modif": 1}):
+def doseResponse(drugs, dose, inpData={"modif": 1}):
     """
         run して，Growth rateを返す関数
     """
+    modif2_K_ma = {'Kanamycin': 8.9, 'Streptmycin': 9.2, 'Chloramphenicol': 23.1, 'Tetracycline': 24.7}
+
     for i in range(len(drugs)):
         drugs[i]["dose"] = dose[i]
+        # modifの数値によって，K_maを変更
+        if inpData["modif"] < 2: drugs[i]["K_ma"] = 15.
+        elif inpData["modif"] == 2: drugs[i]["K_ma"] = modif2_K_ma[drugs[i]["name"]]
     result, legend = run(drugs, step=100, inpData=inpData, legend=["r_u"])
     result = calcGrowthrate(result[-1][1])
     return result
@@ -67,7 +72,7 @@ def createSlopedose(slope, midPointList, divnum=11):
     return_list = [[doseX[i], doseY[i]] for i in range(len(doseX))]
     return [[doseX[i], doseY[i]] for i in range(len(doseX))]
 
-def calcEpsilon(dNames, doses, inpData={"K_ma": 15, "modif": 1}):
+def calcEpsilon(dNames, doses, inpData={"modif": 1}):
     """
     """
     result_list = []
@@ -120,3 +125,9 @@ def evalHeatmap(data, cmap, values, index, columns, title="", xlabel="", ylabel=
 
     # ラベルの文字サイズ
     plt.tick_params(labelsize=7)
+
+def midPointCombination(dose, divnum=11):
+    pointX = np.linspace(0, dose[0], divnum)
+    pointY = np.linspace(0, dose[1], divnum)
+    midPointList = [[pointX[i]/2, pointY[i]/2] for i in range(len(pointX)) if i > 0] # 中点のリスト
+    return midPointList
