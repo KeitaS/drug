@@ -36,7 +36,7 @@ def ribo_binding_reaction(a_ex, a, r_b, P_in, P_out, K_on, K_off, Lambda):
     r_b > ~r_b | r_b * Lambda # dilution
 
 
-def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1., K_t=6.1*10**-2, K_on=3.0, Lambda_0=1.35, Kd=1., p=1., K_ma=3., modif=0):
+def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1., K_t=6.1*10**-2, K_on=3.0, Lambda_0=1.35, Kd=1., p=1., modif=0):
     """
     リボソームモデルを構成するモジュール
     r_max: µM
@@ -74,8 +74,6 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1., K_t=6.1*10**-2, K_on=3
     K_off = K_on * K_D # riboと薬剤との結合
     r_u_0 = Lambda_0 / K_t + r_min # 定常の時にこの値になる。
     Ka = (Kd / K_t + r_u_0) * Lambda_0 / ((p * r_u_0) ** 2)
-    K_ma1 = K_ma
-    K_ma2 = K_ma
 
     with reaction_rules():
         ### expression
@@ -85,10 +83,16 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1., K_t=6.1*10**-2, K_on=3
         ### reaction
         ## drug
         if len(drugs) > 0:
-            K_on_exp = K_on * 1 / (1 + a2 / K_ma2)
+            # "単剤と多剤で分ける
+            if len(drugs) == 1:
+                K_on_exp = K_on
+                P_in = drugs[0]["P_in"]
+            else:
+                K_on_exp = K_on * 1 / (1 + a2 / drugs[1]["K_ma"])
+                P_in = drugs[0]["P_in"] * 1 / (1 + a2 / drugs[1]["K_ma"])
             # K_off_exp = K_on_exp * K_D
             K_off_exp = K_off
-            P_in = drugs[0]["P_in"] * 1 / (1 + a2 / K_ma2)
+
 
             if drugs[0]["type"] == "30s":
                 if modif == 0: r30_binding_reaction(a1_ex, a1, r30_1_b, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda)
@@ -104,10 +108,11 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1., K_t=6.1*10**-2, K_on=3
                 elif modif == 2:ribo_binding_reaction(a1_ex, a1, r_1_b, drugs[0]["P_in"], drugs[0]["P_out"], K_on_exp, K_off_exp, Lambda)
 
         if len(drugs) > 1:
-            K_on_exp = K_on * 1 / (1 + a1 / K_ma1)
+            # こちらは多剤のみ
+            K_on_exp = K_on * 1 / (1 + a1 / drugs[0]["K_ma"])
             # K_off_exp = K_on_exp * K_D
             K_off_exp = K_off
-            P_in = drugs[1]["P_in"] * 1 / (1 + a1 / K_ma1)
+            P_in = drugs[1]["P_in"] * 1 / (1 + a1 / drugs[0]["K_ma"])
 
             if drugs[1]["type"] == "30s":
                 if modif == 0: r30_binding_reaction(a2_ex, a2, r30_2_b, drugs[1]["P_in"], drugs[1]["P_out"], K_on, K_off, Lambda)
@@ -171,7 +176,7 @@ def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30
     y0:
     """
 
-    dataset = {"r_max": 65.8, "r_min": 19.3, "K_D": 1.0, "K_t": 6.1*10**-2, "K_on": 3.0, "Lambda_0": 1.35, "Kd": 1., "p": 1., "K_ma": 3.} # 基本のデータセット
+    dataset = {"r_max": 65.8, "r_min": 19.3, "K_D": 1.0, "K_t": 6.1*10**-2, "K_on": 3.0, "Lambda_0": 1.35, "Kd": 1., "p": 1.} # 基本のデータセット
     dataset.update(inpData) # inpDataの内容をdatasetに入れる
 
     # P_in, P_outをdrugのデータに入れる
