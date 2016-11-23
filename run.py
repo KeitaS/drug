@@ -17,93 +17,92 @@ a_ex = {"Streptmycin": 0.6, "Kanamycin": 0.5, "Tetracycline":2, "Chloramphenicol
 IC30 = {'Kanamycin': 0.6761398315429688, 'Streptmycin': 1.4652465820312497, 'Chloramphenicol': 22.5, 'Tetracycline': 5.25}
 modif2_K_ma = {'Kanamycin': 8.9, 'Streptmycin': 9.2, 'Chloramphenicol': 23.1, 'Tetracycline': 24.7}
 
+drug_comb = list(itertools.combinations(dNames, 2))
 
 # create Growth heatmap
-plt.figure(figsize=(12, 9))
+"""
+plt.figure(figsize=(12, 6))
 
-for index, dName in enumerate(dNames):
-    drugs = [makeDrugDatas(dName), makeDrugDatas(dName)]
-    doses = np.linspace(0, IC30[dName] * 2, 11)
-    doses = list(itertools.product(doses, doses))
+for index, dName in enumerate(drug_comb):
+    drugs = [makeDrugDatas(dName[0]), makeDrugDatas(dName[1])]
+    doses = [np.linspace(0, IC30[dName[0]] * 2, 11), np.linspace(0, IC30[dName[1]] * 2, 11)]
+    doses = list(itertools.product(doses[0], doses[1]))
     result_list = []
-    inpData = {"K_ma": modif2_K_ma[dName], "modif": 2}
+    inpData = {"modif": 2}
 
     for dose in doses:
         result = doseResponse(drugs, dose, inpData=inpData)
         result_list.append([round(dose[0], 2), round(dose[1], 2), result])
 
-    data = pd.DataFrame(result_list, columns=["a1", "a2", "growth"])
-    plt.subplot(2, 2, index + 1)
-    growthHeatmap(data=data, values="growth", index="a1", columns="a2", title=dName)
+    data = pd.DataFrame(result_list, columns=[dName[0], dName[1], "growth"])
+    plt.subplot(2, 3, index + 1)
+    growthHeatmap(data=data, values="growth", index=dName[0], columns=dName[1])
 
 plt.tight_layout()
-plt.savefig("{}/modification_2_double.png".format(savedir), dpi=200)
+plt.savefig("{}/modification_comb_2_double.png".format(savedir), dpi=200)
 # plt.show()
 plt.close()
-
+"""
 
 # create Epsilon heatmap
 """
-plt.figure(figsize=(12, 9))
+plt.figure(figsize=(12, 6))
 cmap = makeCmap()
 slope_list = [1./4, 1./2, 1., 2., 4.] # 傾き
 
-for index, dName in enumerate(dNames):
-    doses = np.linspace(0, IC30[dName] * 2, 11)
-    midPointList = [[doses[i] / 2, doses[i] / 2] for i in range(len(doses)) if i > 0] # 中点のリスト
+for index, dName in enumerate(drug_comb):
+    midPointList = midPointCombination([IC30[dName[0]] * 2, IC30[dName[1]] * 2])
     data = []
     linertype = 0
+    inpData = {"modif": 2}
     for slope in slope_list:
         for pCount, midPoint in enumerate(midPointList):
             doses = [midPoint[0] * (1 + slope), midPoint[1] * (1 + (1 / slope))]
-            linertype = calcEpsilon([dName, dName], doses, inpData={"K_ma": modif2_K_ma[dName], "modif": 2})
+            linertype = calcEpsilon(dName, doses, inpData=inpData)
             data.append([slope, (pCount + 1) * 10, linertype])
 
-    plt.subplot(2, 2, index + 1)
+    plt.subplot(2, 3, index + 1)
     data = pd.DataFrame(data, columns=["S", "I", "growth_type"])
-    evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title=dName)
+    evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title="{} vs {}".format(dName[0][:3], dName[1][:3]))
 
 plt.tight_layout()
-plt.savefig("{}/modification_2_oldeval.png".format(savedir), dpi=200)
+plt.savefig("{}/modification_comb_2_oldeval.png".format(savedir), dpi=200)
 # plt.show()
 plt.close()
 """
 
 # create neweval heatmap
-"""
-plt.figure(figsize=(12, 9))
+plt.figure(figsize=(12, 6))
 cmap = generate_cmap(["mediumblue", "white", "orangered"])
 slope_list = [1./4, 1./2, 1., 2., 4.] # 傾き
 
-
-for index, dName in enumerate(dNames):
-    drugs = [makeDrugDatas(dName), makeDrugDatas(dName)]
-    doses = np.linspace(0, IC30[dName] * 2., 4)
-    midPointList = [[doses[i] / 2., doses[i] / 2.] for i in range(len(doses)) if i > 0] # 中点のリスト
+for index, dName in enumerate(drug_comb):
+    drugs = [makeDrugDatas(dName[0]), makeDrugDatas(dName[1])]
+    midPointList = midPointCombination([IC30[dName[0]] * 2, IC30[dName[1]] * 2])
     data = []
     linertype = 0
+    inpData = {"modif": 1}
     for slope in slope_list:
         for pCount, midPoint in enumerate(midPointList):
             result_list = []
             doses = createSlopedose(slope, midPoint)
             for dose in doses:
-                result_list.append(doseResponse(drugs, dose, inpData={"K_ma": modif2_K_ma[dName], "modif": 2}))
+                result_list.append(doseResponse(drugs, dose, inpData=inpData))
 
-            # buffpoint = calcBufferingPoint([dName, dName], [doseX[-1], doseY[0]]) # buffering point を計算
-            # linertype = checkLinerType(result_list, 1.0e-6, 2, buffpoint)
-            linertype = checkLinerType(result_list, 1.0e-6, 1)
+            buffpoint = calcBufferingPoint([dName[0], dName[1]], [doses[-1][0], doses[0][1]]) # buffering point を計算
+            linertype = checkLinerType(result_list, 1.0e-6, 2, buffpoint)
+            # linertype = checkLinerType(result_list, 1.0e-6, 1)
             data.append([slope, (pCount + 1) * 10, linertype])
 
-    plt.subplot(2, 2, index + 1)
+    plt.subplot(2, 3, index + 1)
     data = pd.DataFrame(data, columns=["S", "I", "growth_type"])
-    print data
-    evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title=dName)
+    evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title="{} vs {}".format(dName[0][:3], dName[1][:3]))
 
 plt.tight_layout()
-# plt.savefig("{}/modification_2_neweval.png".format(savedir), dpi=200)
-plt.show()
+plt.savefig("{}/modification_comb_2_neweval_norm.png".format(savedir), dpi=200)
+# plt.show()
 plt.close()
-"""
+
 
 # ①に近くなるK_maを特定する
 """
