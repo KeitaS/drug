@@ -465,6 +465,120 @@ def midPointCombination(dose, divnum=11):
     return midPointList
 
 
+# createGrowthHeatmap
+def createGrowthHeatmap(modif, savename, comb=True):
+    if comb:
+        plt.figure(figsize=(12, 6))
+    else:
+        plt.figure(figsize=(12, 9))
+        drug_comb = [[i, i] for i in dNames]
+    for index, dName in enumerate(drug_comb):
+        drugs = [makeDrugDatas(dName[0]), makeDrugDatas(dName[1])]
+        doses = [np.linspace(0, IC30[dName[0]] * 2, 11), np.linspace(0, IC30[dName[1]] * 2, 11)]
+        doses = list(itertools.product(doses[0], doses[1]))
+        result_list = []
+        inpData = {"modif": modif}
+
+        for dose in doses:
+            result = doseResponse(drugs, dose, inpData=inpData)
+            result_list.append([round(dose[0], 2), round(dose[1], 2), result])
+
+        if comb:
+            data = pd.DataFrame(result_list, columns=[dName[0], dName[1], "growth"])
+            plt.subplot(2, 3, index + 1)
+            growthHeatmap(data=data, values="growth", index=dName[0], columns=dName[1], title="{} vs {}".format(dName[0][:3], dName[1][:3]))
+
+        else:
+            data = pd.DataFrame(result_list, columns=["a1", "a2", "growth"])
+            plt.subplot(2, 2, index + 1)
+            growthHeatmap(data=data, values="growth", index="a1", columns="a2", title=dName[0])
+
+    plt.tight_layout()
+    # plt.savefig(savename, dpi=200)
+    plt.show()
+    plt.close()
+
+
+# create Epsilon heatmap
+def createEpsilonHeatmap(modif, savename, comb=True):
+    if comb:
+        plt.figure(figsize=(12, 6))
+    else:
+        plt.figure(figsize=(12, 9))
+        drug_comb = [[i, i] for i in dNames]
+    cmap = makeCmap()
+    slope_list = [1./4, 1./2, 1., 2., 4.] # 傾き
+
+    for index, dName in enumerate(drug_comb):
+        midPointList = midPointCombination([IC30[dName[0]] * 2, IC30[dName[1]] * 2], divnum=11)
+        data = []
+        linertype = 0
+        inpData = {"modif": modif}
+        for slope in slope_list:
+            for pCount, midPoint in enumerate(midPointList):
+                doses = [midPoint[0] * (1 + slope), midPoint[1] * (1 + (1 / slope))]
+                linertype = calcEpsilon(dName, doses, inpData=inpData)
+                data.append([slope, (pCount + 1) * 10, linertype])
+
+        data = pd.DataFrame(data, columns=["S", "I", "growth_type"])
+        if comb:
+            plt.subplot(2, 3, index + 1)
+            evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title="{} vs {}".format(dName[0][:3], dName[1][:3]))
+        else:
+            plt.subplot(2, 2, index + 1)
+            evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title=dName[0])
+
+    plt.tight_layout()
+    plt.savefig(savename, dpi=200)
+    # plt.show()
+    plt.close()
+
+# create neweval heatmap
+def createNewevalHeatmap(modif, norm, savename, comb=True):
+    if comb:
+        plt.figure(figsize=(12, 6))
+    else:
+        plt.figure(figsize=(12, 9))
+        drug_comb = [[i, i] for i in dNames]
+    cmap = generate_cmap(["mediumblue", "white", "orangered"])
+    slope_list = [1./4, 1./2, 1., 2., 4.] # 傾き\
+
+    for index, dName in enumerate(drug_comb):
+        drugs = [makeDrugDatas(dName[0]), makeDrugDatas(dName[1])]
+        midPointList = midPointCombination([IC30[dName[0]] * 2, IC30[dName[1]] * 2], divnum=11)
+        data = []
+        linertype = 0
+        inpData = {"modif": modif}
+        for slope in slope_list:
+            for pCount, midPoint in enumerate(midPointList):
+                result_list = []
+                doses = createSlopedose(slope, midPoint)
+                for dose in doses:
+                    result_list.append(doseResponse(drugs, dose, inpData=inpData))
+
+                if norm == True:
+                    buffpoint = calcBufferingPoint([dName[0], dName[1]], [doses[-1][0], doses[0][1]]) # buffering point を計算
+                    linertype = checkLinerType(result_list, 1.0e-6, 2, buffpoint)
+                else:
+                    linertype = checkLinerType(result_list, 1.0e-6, 1)
+                data.append([slope, (pCount + 1) * 10, linertype])
+
+        data = pd.DataFrame(data, columns=["S", "I", "growth_type"])
+        if comb:
+            plt.subplot(2, 3, index + 1)
+            evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title="{} vs {}".format(dName[0][:3], dName[1][:3]))
+
+        else:
+            plt.subplot(2, 2, index + 1)
+            evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title=dName[0])
+
+    plt.tight_layout()
+    # plt.savefig(savename, dpi=200)
+    plt.show()
+    plt.close()
+
+
+
 if __name__ == "__main__":
     # import
     import itertools as itr
