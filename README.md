@@ -39,6 +39,14 @@ print(growth)
 - <font size="5px">**past-script**</font>  
   過去のriboモデル．
 
+## riboモデルの説明
+- <font size="4px">**ribo5.py**</font>  
+  antagonisticが起こりうる2つのパターンを入れたモデル．  
+
+- <font size="4px">**ribo6.py**</font>  
+  synergisticの機構を加えたモデル．  
+  機能型リボソームに結合して解離するようにモデリング．
+
 ---
 ## 内容
 nature2006の評価基準を用いると，Additiveが表現できない．→ 新たな評価基準を設定．  
