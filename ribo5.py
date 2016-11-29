@@ -463,9 +463,14 @@ def midPointCombination(dose, divnum=11):
 
 
 # createGrowthHeatmap
-def createGrowthHeatmap(modif, savename, comb=True):
+def createGrowthHeatmap(dataset, modif, savename, comb=True):
+    dNames = dataset["dNames"]
+    IC30 = dataset["IC30"]
+
     if comb:
         plt.figure(figsize=(12, 6))
+        drug_comb = list(itertools.combinations(dNames, 2))
+
     else:
         plt.figure(figsize=(12, 9))
         drug_comb = [[i, i] for i in dNames]
@@ -497,9 +502,13 @@ def createGrowthHeatmap(modif, savename, comb=True):
 
 
 # create Epsilon heatmap
-def createEpsilonHeatmap(modif, savename, comb=True):
+def createEpsilonHeatmap(dataset, modif, savename, comb=True):
+    dNames = dataset["dNames"]
+    IC30 = dataset["IC30"]
+
     if comb:
         plt.figure(figsize=(12, 6))
+        drug_comb = list(itertools.combinations(dNames, 2))
     else:
         plt.figure(figsize=(12, 9))
         drug_comb = [[i, i] for i in dNames]
@@ -531,9 +540,14 @@ def createEpsilonHeatmap(modif, savename, comb=True):
     plt.close()
 
 # create neweval heatmap
-def createNewevalHeatmap(modif, norm, savename, comb=True):
+def createNewevalHeatmap(dataset, modif, norm, savename, comb=True):
+    dNames = dataset["dNames"]
+    IC30 = dataset["IC30"]
+
     if comb:
         plt.figure(figsize=(12, 6))
+        drug_comb = list(itertools.combinations(dNames, 2))
+
     else:
         plt.figure(figsize=(12, 9))
         drug_comb = [[i, i] for i in dNames]
@@ -574,30 +588,24 @@ def createNewevalHeatmap(modif, norm, savename, comb=True):
     plt.show()
     plt.close()
 
+
 if __name__ == "__main__":
+    dataset = {"dNames": ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"],
+               "IC30": {'Kanamycin': 0.6761398315429688, 'Streptmycin': 1.4652465820312497, 'Chloramphenicol': 22.5, 'Tetracycline': 5.25}
+               }
     savedir = "images/ribo5/original"
     makedir(savedir)
 
-    dNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
-    a_ex = {"Streptmycin": 0.6, "Kanamycin": 0.5, "Tetracycline":2, "Chloramphenicol": 20}
-
-    # IC30 = calcIC(dNames, a_ex, .3) # IC30を計算
-    IC30 = {'Kanamycin': 0.6761398315429688, 'Streptmycin': 1.4652465820312497, 'Chloramphenicol': 22.5, 'Tetracycline': 5.25}
-    modif2_K_ma = {'Kanamycin': 8.9, 'Streptmycin': 9.2, 'Chloramphenicol': 23.1, 'Tetracycline': 24.7}
-
-    drug_comb = list(itertools.combinations(dNames, 2))
-
-
     # 実行
-    createGrowthHeatmap(modif=0, savename="{}/original_heatmap.png".format(savedir), comb=False)
-    createEpsilonHeatmap(modif=0, savename="{}/original_oldval.png".format(savedir), comb=False)
-    createNewevalHeatmap(modif=0, norm=False, savename="{}/original_neweval.png".format(savedir), comb=False)
-    createNewevalHeatmap(modif=0, norm=True, savename="{}/original_neweval_norm.png".format(savedir), comb=False)
-    createGrowthHeatmap(modif=0, savename="{}/original_heatmap_comb.png".format(savedir), comb=True)
-    createEpsilonHeatmap(modif=0, savename="{}/original_oldval_comb.png".format(savedir), comb=True)
-    createNewevalHeatmap(modif=0, norm=False, savename="{}/original_neweval_comb.png".format(savedir), comb=True)
-    createNewevalHeatmap(modif=0, norm=True, savename="{}/original_neweval_norm_comb.png".format(savedir), comb=True)
+    createGrowthHeatmap(dataset=dataset, modif=0, savename="{}/original_heatmap.png".format(savedir), comb=False)
+    createEpsilonHeatmap(dataset=dataset, modif=0, savename="{}/original_oldval.png".format(savedir), comb=False)
+    createNewevalHeatmap(dataset=dataset, modif=0, norm=False, savename="{}/original_neweval.png".format(savedir), comb=False)
+    createNewevalHeatmap(dataset=dataset, modif=0, norm=True, savename="{}/original_neweval_norm.png".format(savedir), comb=False)
+    createGrowthHeatmap(dataset=dataset, modif=0, savename="{}/original_heatmap_comb.png".format(savedir), comb=True)
+    createEpsilonHeatmap(dataset=dataset, modif=0, savename="{}/original_oldval_comb.png".format(savedir), comb=True)
+    createNewevalHeatmap(dataset=dataset, modif=0, norm=False, savename="{}/original_neweval_comb.png".format(savedir), comb=True)
+    createNewevalHeatmap(dataset=dataset, modif=0, norm=True, savename="{}/original_neweval_norm_comb.png".format(savedir), comb=True)
 
     savedir = "images/ribo5/modif2"
-    createNewevalHeatmap(modif=0, norm=False, savename="{}/modification_2_neweval.png".format(savedir), comb=False)
-    createNewevalHeatmap(modif=0, norm=True, savename="{}/modification_2_neweval_norm.png".format(savedir), comb=False)
+    createNewevalHeatmap(dataset=dataset, modif=0, norm=False, savename="{}/modification_2_neweval.png".format(savedir), comb=False)
+    createNewevalHeatmap(dataset=dataset, modif=0, norm=True, savename="{}/modification_2_neweval_norm.png".format(savedir), comb=False)

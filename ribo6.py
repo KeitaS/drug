@@ -466,9 +466,14 @@ def midPointCombination(dose, divnum=11):
 
 
 # createGrowthHeatmap
-def createGrowthHeatmap(modif, savename, comb=True):
+def createGrowthHeatmap(dataset, modif, savename, comb=True):
+    dNames = dataset["dNames"]
+    IC30 = dataset["IC30"]
+
     if comb:
         plt.figure(figsize=(12, 6))
+        drug_comb = list(itertools.combinations(dNames, 2))
+
     else:
         plt.figure(figsize=(12, 9))
         drug_comb = [[i, i] for i in dNames]
@@ -500,9 +505,13 @@ def createGrowthHeatmap(modif, savename, comb=True):
 
 
 # create Epsilon heatmap
-def createEpsilonHeatmap(modif, savename, comb=True):
+def createEpsilonHeatmap(dataset, modif, savename, comb=True):
+    dNames = dataset["dNames"]
+    IC30 = dataset["IC30"]
+
     if comb:
         plt.figure(figsize=(12, 6))
+        drug_comb = list(itertools.combinations(dNames, 2))
     else:
         plt.figure(figsize=(12, 9))
         drug_comb = [[i, i] for i in dNames]
@@ -534,9 +543,14 @@ def createEpsilonHeatmap(modif, savename, comb=True):
     plt.close()
 
 # create neweval heatmap
-def createNewevalHeatmap(modif, norm, savename, comb=True):
+def createNewevalHeatmap(dataset, modif, norm, savename, comb=True):
+    dNames = dataset["dNames"]
+    IC30 = dataset["IC30"]
+
     if comb:
         plt.figure(figsize=(12, 6))
+        drug_comb = list(itertools.combinations(dNames, 2))
+
     else:
         plt.figure(figsize=(12, 9))
         drug_comb = [[i, i] for i in dNames]
@@ -583,14 +597,8 @@ if __name__ == "__main__":
     # import
     import itertools as itr
 
-
-    # 保存用ディレクトリの作成
-    savedir = "./images/ribo5"
-    makedir(savedir)
-
     ## drug data
-    dNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
+    dataset = {"dNames": ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"],
+               "IC30": {'Kanamycin': 0.6761398315429688, 'Streptmycin': 1.4652465820312497, 'Chloramphenicol': 22.5, 'Tetracycline': 5.25}
+               }
     a_ex = {"Streptmycin": 0.6, "Kanamycin": 0.5, "Tetracycline":2, "Chloramphenicol": 20}
-
-    # IC30 = calcIC(dNames, a_ex, .3) # IC30を計算
-    IC30 = {'Kanamycin': 0.6761398315429688, 'Streptmycin': 1.4652465820312497, 'Chloramphenicol': 22.5, 'Tetracycline': 5.25}
