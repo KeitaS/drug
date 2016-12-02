@@ -4,30 +4,31 @@ import numpy as np
 import matplotlib.pylab as plt
 from ecell4 import *
 util.decorator.SEAMLESS_RATELAW_SUPPORT = True
+import numpy as np
 import seaborn as sns
 import pandas as pd
+import matplotlib.pylab as plt
+import itertools
 
 @reaction_rules
-def r30_binding_reaction(a_ex, a, r30_b, P_in, P_out, K_on, K_off, Lambda, pattern):
+def r30_binding_reaction(a_ex, a, r30_b, P_in, P_out, K_on, K_off, Lambda, r_min, pattern):
     ~a_ex > a | P_in * a_ex
     a > ~a_ex | P_out * a
-    if pattern == 0:
-        a + r30_u > r30_b | K_on * a * r30_u
-    else:
-        a + r_u > r30_b + r50_u | K_on * a * r_u
+    a + r30_u > r30_b | K_on * a * r30_u
+    if pattern == 1:
+        a + r_u > r30_b + r50_u | K_on * a * (r_u - r_min)
     r30_b > a + r30_u | K_off * r30_b
     a > ~a | a * Lambda # dilution
     r30_b > ~r30_b | r30_b * Lambda # dilution
 
 
 @reaction_rules
-def r50_binding_reaction(a_ex, a, r50_b, P_in, P_out, K_on, K_off, Lambda, pattern):
+def r50_binding_reaction(a_ex, a, r50_b, P_in, P_out, K_on, K_off, Lambda, r_min, pattern):
     ~a_ex > a | P_in * a_ex
     a > ~a_ex | P_out * a
-    if pattern == 0:
-        a + r50_u > r50_b | K_on * a * r50_u
-    else:
-        a + r_u > r50_b + r30_u| K_on * a * r_u
+    a + r50_u > r50_b | K_on * a * r50_u
+    if pattern == 1:
+        a + r_u > r50_b + r30_u | K_on * a * (r_u - r_min)
     r50_b > a + r50_u | K_off * r50_b # dissociation
     a > ~a | a * Lambda # dilution
     r50_b > ~r50_b | r50_b * Lambda # dilution
@@ -87,7 +88,7 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1., K_t=6.1*10**-2, K_on=3
         ### expression
         Lambda = (r_u - r_min) * K_t
         SUP = (Lambda * (r_max - Lambda * Delta_r * (1 / Lambda_0 - 1/K_t / Delta_r))) * (1 + p) # subunit product expression
-        pattern = 0 # synergistic pattern
+        pattern = 1 # synergistic pattern
         ### reaction
         ## drug
         if len(drugs) > 0:
@@ -103,11 +104,11 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1., K_t=6.1*10**-2, K_on=3
 
 
             if drugs[0]["type"] == "30s":
-                if modif == 0: r30_binding_reaction(a1_ex, a1, r30_1_b, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda, pattern)
+                if modif == 0: r30_binding_reaction(a1_ex, a1, r30_1_b, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda, r_min, pattern)
                 elif modif == 1: r30_binding_reaction(a1_ex, a1, r30_1_b, P_in, drugs[0]["P_out"], K_on, K_off, Lambda)
                 elif modif == 2:r30_binding_reaction(a1_ex, a1, r30_1_b, drugs[0]["P_in"], drugs[0]["P_out"], K_on_exp, K_off_exp, Lambda)
             elif drugs[0]["type"] == "50s":
-                if modif == 0: r50_binding_reaction(a1_ex, a1, r50_1_b, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda, pattern)
+                if modif == 0: r50_binding_reaction(a1_ex, a1, r50_1_b, drugs[0]["P_in"], drugs[0]["P_out"], K_on, K_off, Lambda, r_min, pattern)
                 elif modif == 1: r50_binding_reaction(a1_ex, a1, r50_1_b, P_in, drugs[0]["P_out"], K_on, K_off, Lambda)
                 elif modif == 2:r50_binding_reaction(a1_ex, a1, r50_1_b, drugs[0]["P_in"], drugs[0]["P_out"], K_on_exp, K_off_exp, Lambda)
             elif drugs[0]["type"] == "ribo":
@@ -123,11 +124,11 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1., K_t=6.1*10**-2, K_on=3
             P_in = drugs[1]["P_in"] * 1 / (1 + a1 / drugs[0]["K_ma"])
 
             if drugs[1]["type"] == "30s":
-                if modif == 0: r30_binding_reaction(a2_ex, a2, r30_2_b, drugs[1]["P_in"], drugs[1]["P_out"], K_on, K_off, Lambda, pattern)
+                if modif == 0: r30_binding_reaction(a2_ex, a2, r30_2_b, drugs[1]["P_in"], drugs[1]["P_out"], K_on, K_off, Lambda, r_min, pattern)
                 elif modif == 1: r30_binding_reaction(a2_ex, a2, r30_2_b, P_in, drugs[1]["P_out"], K_on, K_off, Lambda)
                 elif modif == 2:r30_binding_reaction(a2_ex, a2, r30_2_b, drugs[1]["P_in"], drugs[1]["P_out"], K_on_exp, K_off_exp, Lambda)
             elif drugs[1]["type"] == "50s":
-                if modif == 0: r50_binding_reaction(a2_ex, a2, r50_2_b, drugs[1]["P_in"], drugs[1]["P_out"], K_on, K_off, Lambda, pattern)
+                if modif == 0: r50_binding_reaction(a2_ex, a2, r50_2_b, drugs[1]["P_in"], drugs[1]["P_out"], K_on, K_off, Lambda, r_min, pattern)
                 elif modif == 1: r50_binding_reaction(a2_ex, a2, r50_2_b, P_in, drugs[1]["P_out"], K_on, K_off, Lambda)
                 elif modif == 2:r50_binding_reaction(a2_ex, a2, r50_2_b, drugs[1]["P_in"], drugs[1]["P_out"], K_on_exp, K_off_exp, Lambda)
             elif drugs[1]["type"] == "ribo":
@@ -203,8 +204,8 @@ def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30
     # legend
     if not legend:
         legend = y0.keys()
-
-    print drugs
+    # for rr in model.reaction_rules():
+    #     print(rr.as_string())
     runsim = run_simulation(step, solver="ode", y0=y0,
                             return_type="observer", model=model,
                             species_list=legend)
@@ -499,8 +500,8 @@ def createGrowthHeatmap(dataset, modif, savename, comb=True):
             growthHeatmap(data=data, values="growth", index="a1", columns="a2", title=dName[0])
 
     plt.tight_layout()
-    # plt.savefig(savename, dpi=200)
-    plt.show()
+    plt.savefig(savename, dpi=200)
+    # plt.show()
     plt.close()
 
 
@@ -587,8 +588,8 @@ def createNewevalHeatmap(dataset, modif, norm, savename, comb=True):
             evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title=dName[0])
 
     plt.tight_layout()
-    # plt.savefig(savename, dpi=200)
-    plt.show()
+    plt.savefig(savename, dpi=200)
+    # plt.show()
     plt.close()
 
 
