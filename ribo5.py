@@ -496,8 +496,8 @@ def createGrowthHeatmap(dataset, modif, savename, comb=True):
             growthHeatmap(data=data, values="growth", index="a1", columns="a2", title=dName[0])
 
     plt.tight_layout()
-    # plt.savefig(savename, dpi=200)
-    plt.show()
+    plt.savefig(savename, dpi=200)
+    # plt.show()
     plt.close()
 
 
@@ -584,8 +584,8 @@ def createNewevalHeatmap(dataset, modif, norm, savename, comb=True):
             evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title=dName[0])
 
     plt.tight_layout()
-    # plt.savefig(savename, dpi=200)
-    plt.show()
+    plt.savefig(savename, dpi=200)
+    # plt.show()
     plt.close()
 
 
@@ -593,19 +593,9 @@ if __name__ == "__main__":
     dataset = {"dNames": ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"],
                "IC30": {'Kanamycin': 0.6761398315429688, 'Streptmycin': 1.4652465820312497, 'Chloramphenicol': 22.5, 'Tetracycline': 5.25}
                }
-    savedir = "images/ribo5/original"
+    savedir = "images/ribo5/modif2"
     makedir(savedir)
 
     # 実行
-    createGrowthHeatmap(dataset=dataset, modif=0, savename="{}/original_heatmap.png".format(savedir), comb=False)
-    createEpsilonHeatmap(dataset=dataset, modif=0, savename="{}/original_oldval.png".format(savedir), comb=False)
-    createNewevalHeatmap(dataset=dataset, modif=0, norm=False, savename="{}/original_neweval.png".format(savedir), comb=False)
-    createNewevalHeatmap(dataset=dataset, modif=0, norm=True, savename="{}/original_neweval_norm.png".format(savedir), comb=False)
-    createGrowthHeatmap(dataset=dataset, modif=0, savename="{}/original_heatmap_comb.png".format(savedir), comb=True)
-    createEpsilonHeatmap(dataset=dataset, modif=0, savename="{}/original_oldval_comb.png".format(savedir), comb=True)
-    createNewevalHeatmap(dataset=dataset, modif=0, norm=False, savename="{}/original_neweval_comb.png".format(savedir), comb=True)
-    createNewevalHeatmap(dataset=dataset, modif=0, norm=True, savename="{}/original_neweval_norm_comb.png".format(savedir), comb=True)
-
-    savedir = "images/ribo5/modif2"
-    createNewevalHeatmap(dataset=dataset, modif=0, norm=False, savename="{}/modification_2_neweval.png".format(savedir), comb=False)
-    createNewevalHeatmap(dataset=dataset, modif=0, norm=True, savename="{}/modification_2_neweval_norm.png".format(savedir), comb=False)
+    createNewevalHeatmap(dataset=dataset, modif=2, norm=False, savename="{}/modification_2_neweval.png".format(savedir), comb=False)
+    createNewevalHeatmap(dataset=dataset, modif=2, norm=True, savename="{}/modification_2_neweval_norm.png".format(savedir), comb=False)
