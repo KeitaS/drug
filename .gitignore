@@ -1,5 +1,9 @@
+__pycache__
 .DS_Store
 nohup.out
 *~
 *.swp
 *.pyc
+.python-version
+output.txt
+__pycache__
