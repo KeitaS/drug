@@ -551,7 +551,6 @@ def createNewevalHeatmap(dataset, modif, norm, savename, comb=True):
     else:
         plt.figure(figsize=(12, 9))
         drug_comb = [[i, i] for i in dNames]
-
     cmap = generate_cmap(["mediumblue", "white", "orangered"])
     slope_list = [1./4, 1./2, 1., 2., 4.] # 傾き\
 
