@@ -16,6 +16,9 @@ makedir(savedir)
 savedir = "images/ribo6/synergistic"
 makedir(savedir)
 
+# IC30を計算
+dataset["IC30"] = calcIC(dataset["dNames"], a_ex, 0.3)
+print(dataset["IC30"])
 # R30(b,a1,a2) + R50(b) == R30(b^1,a1,a2).R50(b^1)
 # R30(a1,b^_free) + a1(b) == R30(a1^1,b).a1(b^1)
 # a1 > ~a1
