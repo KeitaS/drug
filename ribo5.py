@@ -165,7 +165,15 @@ def makeDrugDatas(drugName, medium=0):
     IC50_a = {"Streptmycin": 0.189, "Kanamycin": 0.05, "Tetracycline": 0.229, "Chloramphenicol": 2.49} # µg/ml
     types = {"Streptmycin": "30s", "Kanamycin": "30s", "Tetracycline": "30s", "Chloramphenicol": "50s"}
 
-    drugData = {"name": drugName, "type": types[drugName], "dose": .0, "Lambda_0_a": Lambda_0_a[drugName], "IC50": IC50[drugName][medium], "IC50_a": IC50_a[drugName]}
+    drugData = {"name": drugName,
+                "type": types[drugName],
+                "dose": .0,
+                "Lambda_0_a": Lambda_0_a[drugName],
+                "IC50": IC50[drugName][medium],
+                "IC50_a": IC50_a[drugName],
+                "K_ma": 15.
+                }
+
 
     return drugData
 
