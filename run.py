@@ -43,7 +43,7 @@ def double(drug, dose):
     drug[1]["dose"] = dose
     return(run(drug, step=100, inpData={"modif": 0}, legend=["r_u"])[0][-1][1])
 
-data = pd.DataFrame([[dose, (single(drug_single, dose) - r_min) / r_max, (double(drug_double, dose) - r_min) / r_max] for dose in doses],
+data = pd.DataFrame([[dose, (single(drug_single, dose) - r_min) / r_max, (double(drug_double, dose / 2) - r_min) / r_max] for dose in doses],
                     columns=["dose", "single", "double"])
 
 
@@ -52,4 +52,4 @@ plt.plot(data["dose"], data["double"], "b-", label="double")
 plt.legend(loc="upper right")
 plt.xlabel("dose")
 plt.ylabel("$(r_{u} - r_{min}) / r_{max}$")
-plt.savefig("images/ribo6/check_growth/no_lambda.png", dpi=200)
+plt.savefig("images/ribo6/check_growth/no_lambda_sup.png", dpi=200)

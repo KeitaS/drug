@@ -138,8 +138,8 @@ def createModel(drugs=[], r_max=65.8, r_min=19.3, K_D=1., K_t=6.1*10**-2, K_on=3
 
         ## ribo and subunit
         # production
-        ~r30_u > r30_u | SUP
-        ~r50_u > r50_u | SUP
+        # ~r30_u > r30_u | SUP
+        # ~r50_u > r50_u | SUP
 
         # bonding
         r30_u + r50_u > r_u | Ka * r30_u * r50_u
