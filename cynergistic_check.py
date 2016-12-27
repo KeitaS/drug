@@ -12,8 +12,8 @@ import itertools
 
 @reaction_rules
 def r30_binding_reaction(a_ex, a, r30_b, P_in, P_out, K_on, K_off, Lambda, r_min, pattern):
-    ~a_ex > a | P_in * a_ex
-    a > ~a_ex | P_out * a
+    # ~a_ex > a | P_in * a_ex
+    # a > ~a_ex | P_out * a
     a + r30_u > r30_b | K_on * a * r30_u
     if pattern == 1:
         a + r_u > r30_b + r50_u | K_on * a * (r_u - r_min)
@@ -24,8 +24,8 @@ def r30_binding_reaction(a_ex, a, r30_b, P_in, P_out, K_on, K_off, Lambda, r_min
 
 @reaction_rules
 def r50_binding_reaction(a_ex, a, r50_b, P_in, P_out, K_on, K_off, Lambda, r_min, pattern):
-    ~a_ex > a | P_in * a_ex
-    a > ~a_ex | P_out * a
+    # ~a_ex > a | P_in * a_ex
+    # a > ~a_ex | P_out * a
     a + r50_u > r50_b | K_on * a * r50_u
     if pattern == 1:
         a + r_u > r50_b + r30_u | K_on * a * (r_u - r_min)
@@ -36,8 +36,8 @@ def r50_binding_reaction(a_ex, a, r50_b, P_in, P_out, K_on, K_off, Lambda, r_min
 
 @reaction_rules
 def ribo_binding_reaction(a_ex, a, r_b, P_in, P_out, K_on, K_off, Lambda):
-    ~a_ex > a | P_in * a_ex
-    a > ~a_ex | P_out * a
+    # ~a_ex > a | P_in * a_ex
+    # a > ~a_ex | P_out * a
     a + r_u > r_b | K_on * a * (r_u - r_min)
     r_b > a + r_u | K_off * r_b
     r_b > a + r30_u + r50_u | Kd * r_b # dissociation
@@ -204,7 +204,8 @@ def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30
         dataset["drugs"] = drugs
         # y0に薬剤のdoseを入れる
         for index, drug in enumerate(drugs):
-            y0["a%d_ex" % (index + 1)] = drug["dose"]
+            # y0["a%d_ex" % (index + 1)] = drug["dose"]
+            y0["a%d" % (index + 1)] = drug["dose"] * drug["P_in"] / drug["P_out"]
 
     model = createModel(**dataset) # モデルを作成
 
