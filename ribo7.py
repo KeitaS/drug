@@ -106,7 +106,28 @@ def createModel(drugs=[], dataset={}):
 
     return get_model()
 
+def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u_u": 30., "r50_u_u": 30., "r_u": 30.}):
+    model = createModel(drugs)
+    #
+    # for i, rr in enumerate(model.reaction_rules()):
+    #     print("{}, {}".format(i, rr.as_string()))
 
+    if drugs:
+        for index, drug in enumerate(drugs):
+            y0["a{}_ex".format(index)] = drug["dose"]
+
+    if not legend:
+        legend = list(y0.keys())
+    runsim = run_simulation(step, solver="ode", y0=y0,
+                            return_type="observer", model=model,
+                            species_list=legend)
+    data = runsim.data()
+    # legend.insert(0, "t")
+    # data = pd.DataFrame(runsim.data(), columns=legend)
+    return data, legend
+
+
+# sub modules
 def makeDrugDatas(drugName, medium=0):
     """
     薬剤データを作成して返す関数
@@ -132,27 +153,6 @@ def makeDrugDatas(drugName, medium=0):
 
     return drugData
 
-def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u_u": 30., "r50_u_u": 30., "r_u": 30.}):
-    model = createModel(drugs)
-    #
-    # for i, rr in enumerate(model.reaction_rules()):
-    #     print("{}, {}".format(i, rr.as_string()))
-
-    if drugs:
-        for index, drug in enumerate(drugs):
-            y0["a{}_ex".format(index)] = drug["dose"]
-
-    if not legend:
-        legend = list(y0.keys())
-    runsim = run_simulation(step, solver="ode", y0=y0,
-                            return_type="observer", model=model,
-                            species_list=legend)
-    data = runsim.data()
-    # legend.insert(0, "t")
-    # data = pd.DataFrame(runsim.data(), columns=legend)
-    return data, legend
-
-# sub modules
 def calcGrowthRate(r_u, r_min=19.3, K_t=6.1*10**-2, Lambda_0=1.35):
     result = (r_u - r_min) * K_t / Lambda_0
     return result
