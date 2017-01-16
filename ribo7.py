@@ -19,13 +19,13 @@ def r30_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda, r_min, num):
         a + r30_u_u == r30_b_u | (K_on, K_off)
         a + r30_u_b == r30_b_b | (K_on, K_off)
         a + r_u > r30_b_u + r50_u_u | K_on * a * (r_u - r_min)
-        r30_b_u > ~r30_b_u | Lambda
+        r30_b_u > ~r30_b_u | Lambda * r30_b_u
     elif num == 1: # 二つ目の薬剤の場合
         a + r30_u_u == r30_u_b | (K_on, K_off)
         a + r30_b_u == r30_b_b | (K_on, K_off)
         a + r_u > r30_u_b + r50_u_u | K_on * a * (r_u - r_min)
-        r30_u_b > ~r30_u_b | Lambda
-    a > ~a | Lambda
+        r30_u_b > ~r30_u_b | Lambda * r30_u_b
+    a > ~a | Lambda * a
 
 @reaction_rules
 def r50_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda, r_min, num):
@@ -34,20 +34,20 @@ def r50_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda, r_min, num):
         a + r50_u_u == r50_b_u | (K_on, K_off)
         a + r50_u_b == r50_b_b | (K_on, K_off)
         a + r_u > r50_b_u + r30_u_u | K_on * a * (r_u - r_min)
-        r50_b_u > ~r50_b_u | Lambda
+        r50_b_u > ~r50_b_u | Lambda * r50_b_u
     elif num == 1: # 二つ目の薬剤の場合
         a + r50_u_u == r50_u_b | (K_on, K_off)
         a + r50_b_u == r50_b_b | (K_on, K_off)
         a + r_u > r50_u_b + r30_u_u | K_on * a * (r_u - r_min)
-        r50_u_b > ~r50_u_b | Lambda
-    a > ~a | Lambda
+        r50_u_b > ~r50_u_b | Lambda * r50_u_b
+    a > ~a | Lambda * a
 
 @reaction_rules
 def ribo_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda, r_min, num):
     ~a_ex == a | (P_in * a_ex, P_out)
     a + r_u == r_b | (K_on * a * (r_u - r_min), K_off)
     r_b > a + r30_u_u + r50_u_u | Kd
-    a > ~a | Lambda
+    a > ~a | Lambda * a
 
 def createModel(drugs=[], dataset={}):
     # 定数
@@ -96,21 +96,21 @@ def createModel(drugs=[], dataset={}):
         ~r50_u_u > r50_u_u | SUP
         r30_u_u + r50_u_u == r_u | (Ka, Kd * (r_u - r_min))
 
-        r30_u_u > ~r30_u_u | Lambda
-        r50_u_u > ~r50_u_u | Lambda
-        r_u > ~r_u | Lambda
+        r30_u_u > ~r30_u_u | Lambda * r30_u_u
+        r50_u_u > ~r50_u_u | Lambda * r50_u_u
+        r_u > ~r_u | Lambda * r_u
 
-        r30_b_b > ~r30_b_b | Lambda
-        r50_b_b > ~r50_b_b | Lambda
-        r_b > ~r_b | Lambda
+        r30_b_b > ~r30_b_b | Lambda * r30_b_b
+        r50_b_b > ~r50_b_b | Lambda * r50_b_b
+        r_b > ~r_b | Lambda * r_b
 
     return get_model()
 
 def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u_u": 30., "r50_u_u": 30., "r_u": 30.}):
     model = createModel(drugs)
     #
-    # for i, rr in enumerate(model.reaction_rules()):
-    #     print("{}, {}".format(i, rr.as_string()))
+    for i, rr in enumerate(model.reaction_rules()):
+        print("{}, {}".format(i, rr.as_string()))
 
     if drugs:
         for index, drug in enumerate(drugs):
