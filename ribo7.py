@@ -109,8 +109,8 @@ def createModel(drugs=[], dataset={}):
 def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u_u": 30., "r50_u_u": 30., "r_u": 30.}):
     model = createModel(drugs)
     #
-    for i, rr in enumerate(model.reaction_rules()):
-        print("{}, {}".format(i, rr.as_string()))
+    # for i, rr in enumerate(model.reaction_rules()):
+    #     print("{}, {}".format(i, rr.as_string()))
 
     if drugs:
         for index, drug in enumerate(drugs):
