@@ -107,7 +107,7 @@ def createModel(drugs=[], dataset={}):
     return get_model()
 
 def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u_u": 30., "r50_u_u": 30., "r_u": 30.}):
-    model = createModel(drugs)
+    model = createModel(drugs, inpData)
     #
     # for i, rr in enumerate(model.reaction_rules()):
     #     print("{}, {}".format(i, rr.as_string()))
