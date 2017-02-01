@@ -50,17 +50,18 @@ def checkLinerType(inp, buff=0.):
         linertype = lower_bound - min_inp
     return linertype
 
-def checkEpsilon(dName, dose):
+def checkEpsilon(dName, dose): # nature genesis 2006's evaluation
     x = sim([makeDrugDatas(dName[0])], [dose[0]])
     y = sim([makeDrugDatas(dName[1])], [dose[1]])
     xy = sim([makeDrugDatas(dName[0]), makeDrugDatas(dName[1])], dose)
     return (xy - x * y) / abs(min(x, y) - x * y)
 
-def growthPlot(dNames, IC30, type=0, savename=""):
+def growthPlot(dNames, IC30, type=0, savename=""): # glowth calc.
     for index, dName in enumerate(dNames):
         drugs = [makeDrugDatas(dName)]
-        doses = np.linspace(0, IC30[dName] * 2, 101)
-        plt.subplot(2, 2, index + 1)
+        doses = np.linspace(0, IC30[dName] * 2, 101) # 0 - IC30 * 2
+        x = math.ceil(math.sqrt(len(dNames)))
+        plt.subplot(int(math.ceil(len(dNames) / x)), int(x), index + 1) # subplotの動的確保
         plt.plot(doses, [sim(drugs, [dose]) for dose in doses])
         plt.title(dName)
         plt.xlabel("Dose")
@@ -69,12 +70,13 @@ def growthPlot(dNames, IC30, type=0, savename=""):
     if type == 0: plt.show()
     elif type == 1: plt.savefig(savename, dpi=300)
 
-def heatmap(dNames, IC30, split=11, type=0, savename="", figsize=(12, 9)):
+def heatmap(dNames, IC30, split=11, type=0, savename="", figsize=(12, 9), savecsv=""):
     plt.figure(figsize=figsize)
     for index, dNameList in enumerate(dNames):
         drugs = [makeDrugDatas(dNameList[0]), makeDrugDatas(dNameList[1])]
         doses = [[x, y] for x in np.linspace(0, IC30[dNameList[0]] * 2, split) for y in np.linspace(0, IC30[dNameList[1]] * 2, split)]
         data = pd.DataFrame([[round(dose[0], 2), round(dose[1], 2), sim(drugs, dose)] for dose in doses], columns=["a1", "a2", "growth"])
+        if savecsv: data.to_csv(savecsv, index=False)
         heatmap = pd.pivot_table(data=data, values="growth", index="a1", columns="a2")
         x = math.ceil(math.sqrt(len(dNames)))
         plt.subplot(int(math.ceil(len(dNames) / x)), int(x), index + 1)
@@ -86,7 +88,7 @@ def heatmap(dNames, IC30, split=11, type=0, savename="", figsize=(12, 9)):
     if type == 0: plt.show()
     elif type == 1: plt.savefig(savename, dpi=300)
 
-def neweval(dNames, IC30, split=11, type=0, savename="", figsize=(12, 9)):
+def neweval(dNames, IC30, split=11, type=0, savename="", figsize=(12, 9), savecsv=""):
     plt.figure(figsize=figsize)
     cmap = generate_cmap(["mediumblue", "white", "orangered"])
     slopeList = [1./4, 1./2, 1., 2., 4.] # 傾き
@@ -94,17 +96,21 @@ def neweval(dNames, IC30, split=11, type=0, savename="", figsize=(12, 9)):
 
     for index, dNameList in enumerate(dNames):
         drugs = [makeDrugDatas(dNameList[0]), makeDrugDatas(dNameList[1])]
+        # 中点をリスト化
         midPointList = [x for x in itertools.zip_longest(np.linspace(0, IC30[dNameList[0]], split), np.linspace(0, IC30[dNameList[1]], split))][1:]
+        # slopeに応じたdoselistの生成
         dosesList = [[[x for x in itertools.zip_longest(np.linspace(0, midPoint[0] * (1 + slope), 11), np.linspace(0, midPoint[1] * (1 + (1 / slope)), 11)[::-1])] for midPoint in midPointList] for slope in slopeList]
         resultList = []
-        for slope, a in enumerate(dosesList):
-            for midPoint, doses in enumerate(a):
-                resultList.append([slopeList[slope], midPoint + 1, checkLinerType([sim(drugs, dose) for dose in doses])])
-        data = pd.DataFrame(resultList, columns=["Slope", "Midpoint", "result"])
 
-        heatmap = pd.pivot_table(data=data, values="result", index="Midpoint", columns="Slope")
+        data = pd.DataFrame([[[slopeList[slope], midPoint + 1, [sim(drugs, dose) for dose in doses]] for midPoint, doses in enumerate(a)] for slope, a in enumerate(dosesList)][0],
+                            columns=["Slope", "MidPoint", "GrowthList"])
+        data["LinerType"] = [checkLinerType(inp) for inp in data["GrowthList"]]
+        if savecsv: data.to_csv(savecsv, index=False)
+        heatmap = pd.pivot_table(data=data, values="LinerType", index="MidPoint", columns="Slope")
+        # make subplot
         x = math.ceil(math.sqrt(len(dNames)))
         plt.subplot(int(math.ceil(len(dNames) / x)), int(x), index + 1)
+        # heatmap
         sns.heatmap(heatmap, vmin=-1, vmax=1, cmap=cmap, linewidths=.3, annot=True, annot_kws={"size": 7})
         plt.gca().invert_yaxis()
         plt.ylabel("Midpoint")
@@ -123,14 +129,13 @@ def oldeval(dNames, IC30, split=11, type=0, savename="", figsize=(12, 9)):
 
     for index, dNameList in enumerate(dNames):
         drugs = [makeDrugDatas(dNameList[0]), makeDrugDatas(dNameList[1])]
-        midPointList = [x for x in itertools.zip_longest(np.linspace(0, IC30[dNameList[0]], split), np.linspace(0, IC30[dNameList[1]], split))][1:]
+        midPointList = [x for x in itertools.zip_longest(np.linspace(0, IC30[dNameList[0]] * 2, split), np.linspace(0, IC30[dNameList[1]] * 2, split))][1:]
         dosesList = [[[x for x in itertools.zip_longest(np.linspace(0, midPoint[0] * (1 + slope), 11), np.linspace(0, midPoint[1] * (1 + (1 / slope)), 11)[::-1])] for midPoint in midPointList] for slope in slopeList]
         resultList = []
         for slope, a in enumerate(dosesList):
             for midPoint, doses in enumerate(a):
                 resultList.append([slopeList[slope], midPoint + 1, checkEpsilon([sim(drugs, dose) for dose in doses])])
         data = pd.DataFrame(resultList, columns=["Slope", "Midpoint", "result"])
-
         heatmap = pd.pivot_table(data=data, values="result", index="Midpoint", columns="Slope")
         x = math.ceil(math.sqrt(len(dNames)))
         plt.subplot(int(math.ceil(len(dNames) / x)), int(x), index + 1)
@@ -143,12 +148,20 @@ def oldeval(dNames, IC30, split=11, type=0, savename="", figsize=(12, 9)):
     if type == 0: plt.show()
     elif type == 1: plt.savefig(savename, dpi=300)
 
-#
+def simtest(drugs, dose):
+    import ribo6
+    for i in range(len(drugs)):
+        drugs[i]["dose"] = dose[i]
+    result, legend = ribo6.run(drugs, legend=["r_u"])
+    return calcGrowthRate(result[-1][1])
+
+
 # 保存するディレクトリの設定
-savedir = "images/ribo7"
-makedir(savedir)
-# growthPlot(dNames, IC30, 1, savedir+"/single_all_growthrate.png")
-# heatmap(list(itertools.combinations(dNames, 2)), IC30, 11, 1, savedir + "/double_heatmap_comb.png", figsize=(18, 9))
-# heatmap([[dName, dName] for dName in dNames], IC30, 11, 1, savedir + "/double_heatmap.png", figsize=(12, 9))
-neweval(list(itertools.combinations(dNames, 2)), IC30, 11, 1, savedir + "/double_neweval_comb.png", figsize=(18, 9))
-neweval([[dName, dName] for dName in dNames], IC30, 11, 1, savedir + "/double_neweval.png", figsize=(12, 9))
+savedir = "results/ribo7"
+makedir(savedir + "/images")
+makedir(savedir + "/datas")
+# growthPlot(dNames, IC30, 1, savedir+"/images/single_all_growthrate.png")
+# heatmap(list(itertools.combinations(dNames, 2)), IC30, 11, 1, savedir + "/images/double_heatmap_comb.png", figsize=(18, 9))
+# heatmap([[dName, dName] for dName in dNames], IC30, 11, 1, savedir + "/images/double_heatmap.png", figsize=(12, 9))
+neweval(list(itertools.combinations(dNames, 2)), IC30, 11, 1, savedir + "/images/double_neweval_comb.png", (18, 9), savedir + "/datas/double_neweval_comb.csv")
+neweval([[dName, dName] for dName in dNames], IC30, 11, 1, savedir + "/images/double_neweval.png", (12, 9), savedir + "/datas/double_neweval.csv")
