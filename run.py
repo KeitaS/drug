@@ -56,7 +56,7 @@ def checkEpsilon(dName, dose): # nature genesis 2006's evaluation
     xy = sim([makeDrugDatas(dName[0]), makeDrugDatas(dName[1])], dose)
     return (xy - x * y) / abs(min(x, y) - x * y)
 
-def growthPlot(dNames, IC30, type=0, savename=""): # glowth calc.
+def growthPlot(dNames, IC30, savename=""): # glowth calc.
     for index, dName in enumerate(dNames):
         drugs = [makeDrugDatas(dName)]
         doses = np.linspace(0, IC30[dName] * 2, 101) # 0 - IC30 * 2
@@ -67,16 +67,16 @@ def growthPlot(dNames, IC30, type=0, savename=""): # glowth calc.
         plt.xlabel("Dose")
         plt.ylabel("Growth Rate ($\lambda / \lambda_0$)")
     plt.tight_layout()
-    if type == 0: plt.show()
-    elif type == 1: plt.savefig(savename, dpi=300)
+    if savename: plt.savefig(savename, dpi=300)
+    else: plt.show()
 
-def heatmap(dNames, IC30, split=11, type=0, savename="", figsize=(12, 9), savecsv=""):
+def heatmap(dNames, IC30, split=11, savename="", figsize=(12, 9), csvdir=""):
     plt.figure(figsize=figsize)
     for index, dNameList in enumerate(dNames):
         drugs = [makeDrugDatas(dNameList[0]), makeDrugDatas(dNameList[1])]
         doses = [[x, y] for x in np.linspace(0, IC30[dNameList[0]] * 2, split) for y in np.linspace(0, IC30[dNameList[1]] * 2, split)]
         data = pd.DataFrame([[round(dose[0], 2), round(dose[1], 2), sim(drugs, dose)] for dose in doses], columns=["a1", "a2", "growth"])
-        if savecsv: data.to_csv(savecsv, index=False)
+        if csvdir: data.to_csv("{}/{}_{}.csv".format(csvdir, dNameList[0][:3], dNameList[1][:3]), index=False)
         heatmap = pd.pivot_table(data=data, values="growth", index="a1", columns="a2")
         x = math.ceil(math.sqrt(len(dNames)))
         plt.subplot(int(math.ceil(len(dNames) / x)), int(x), index + 1)
@@ -85,10 +85,10 @@ def heatmap(dNames, IC30, split=11, type=0, savename="", figsize=(12, 9), savecs
         plt.xlabel(dNameList[1])
     plt.tight_layout()
     plt.tick_params(labelsize=10)
-    if type == 0: plt.show()
-    elif type == 1: plt.savefig(savename, dpi=300)
+    if savename: plt.savefig(savename, dpi=300)
+    else: plt.show()
 
-def neweval(dNames, IC30, split=11, type=0, savename="", figsize=(12, 9), savecsv=""):
+def neweval(dNames, IC30, split=11, savename="", figsize=(12, 9), csvdir=""):
     plt.figure(figsize=figsize)
     cmap = generate_cmap(["mediumblue", "white", "orangered"])
     slopeList = [1./4, 1./2, 1., 2., 4.] # 傾き
@@ -101,11 +101,13 @@ def neweval(dNames, IC30, split=11, type=0, savename="", figsize=(12, 9), savecs
         # slopeに応じたdoselistの生成
         dosesList = [[[x for x in itertools.zip_longest(np.linspace(0, midPoint[0] * (1 + slope), 11), np.linspace(0, midPoint[1] * (1 + (1 / slope)), 11)[::-1])] for midPoint in midPointList] for slope in slopeList]
         resultList = []
+        for slope, a in enumerate(dosesList):
+            for midPoint, doses in enumerate(a):
+                resultList.append([slopeList[slope], midPoint + 1, [sim(drugs, dose) for dose in doses]])
 
-        data = pd.DataFrame([[[slopeList[slope], midPoint + 1, [sim(drugs, dose) for dose in doses]] for midPoint, doses in enumerate(a)] for slope, a in enumerate(dosesList)][0],
-                            columns=["Slope", "MidPoint", "GrowthList"])
+        data = pd.DataFrame(resultList, columns=["Slope", "MidPoint", "GrowthList"])
         data["LinerType"] = [checkLinerType(inp) for inp in data["GrowthList"]]
-        if savecsv: data.to_csv(savecsv, index=False)
+        if csvdir: data.to_csv("{}/{}_{}.csv".format(csvdir, dNameList[0][:3], dNameList[1][:3]), index=False)
         heatmap = pd.pivot_table(data=data, values="LinerType", index="MidPoint", columns="Slope")
         # make subplot
         x = math.ceil(math.sqrt(len(dNames)))
@@ -118,10 +120,10 @@ def neweval(dNames, IC30, split=11, type=0, savename="", figsize=(12, 9), savecs
         plt.title("{} vs {}".format(dNameList[0][:3], dNameList[1][:3]))
     plt.tight_layout()
     plt.tick_params(labelsize=10)
-    if type == 0: plt.show()
-    elif type == 1: plt.savefig(savename, dpi=300)
+    if savename: plt.savefig(savename, dpi=300)
+    else: plt.show()
 
-def oldeval(dNames, IC30, split=11, type=0, savename="", figsize=(12, 9)):
+def oldeval(dNames, IC30, split=11, savename="", figsize=(12, 9)):
     plt.figure(figsize=figsize)
     cmap = generate_cmap(["mediumblue", "white", "orangered"])
     slopeList = [1./4, 1./2, 1., 2., 4.] # 傾き
@@ -145,8 +147,8 @@ def oldeval(dNames, IC30, split=11, type=0, savename="", figsize=(12, 9)):
         plt.title("{} vs {}".format(dNameList[0][:3], dNameList[1][:3]))
     plt.tight_layout()
     plt.tick_params(labelsize=10)
-    if type == 0: plt.show()
-    elif type == 1: plt.savefig(savename, dpi=300)
+    if savename: plt.savefig(savename, dpi=300)
+    else: plt.show()
 
 def simtest(drugs, dose):
     import ribo6
@@ -158,10 +160,15 @@ def simtest(drugs, dose):
 
 # 保存するディレクトリの設定
 savedir = "results/ribo7"
-makedir(savedir + "/images")
-makedir(savedir + "/datas")
+# makedir(savedir + "/images")
+# makedir(savedir + "/datas")
+makedir(savedir + "/datas/double_heatmap")
+makedir(savedir + "/datas/double_heatmap_comb")
+makedir(savedir + "/datas/double_neweval")
+makedir(savedir + "/datas/double_neweval_comb")
+
 # growthPlot(dNames, IC30, 1, savedir+"/images/single_all_growthrate.png")
-# heatmap(list(itertools.combinations(dNames, 2)), IC30, 11, 1, savedir + "/images/double_heatmap_comb.png", figsize=(18, 9))
-# heatmap([[dName, dName] for dName in dNames], IC30, 11, 1, savedir + "/images/double_heatmap.png", figsize=(12, 9))
-neweval(list(itertools.combinations(dNames, 2)), IC30, 11, 1, savedir + "/images/double_neweval_comb.png", (18, 9), savedir + "/datas/double_neweval_comb.csv")
-neweval([[dName, dName] for dName in dNames], IC30, 11, 1, savedir + "/images/double_neweval.png", (12, 9), savedir + "/datas/double_neweval.csv")
+heatmap(list(itertools.combinations(dNames, 2)), IC30, 11, savedir + "/images/double_heatmap_comb.png", (18, 9), savedir + "/datas/double_heatmap_comb")
+heatmap([[dName, dName] for dName in dNames], IC30, 11, savedir + "/images/double_heatmap.png", (12, 9), savedir + "/datas/double_heatmap")
+neweval(list(itertools.combinations(dNames, 2)), IC30, 11, savedir + "/images/double_neweval_comb.png", (18, 9), savedir + "/datas/double_neweval_comb")
+neweval([[dName, dName] for dName in dNames], IC30, 11, savedir + "/images/double_neweval.png", (12, 9), savedir + "/datas/double_neweval")
