@@ -18,12 +18,12 @@ def r30_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda, r_min, num):
     if num == 0: # 一つ目の薬剤の場合
         a + r30_u_u == r30_b_u | (K_on, K_off)
         a + r30_u_b == r30_b_b | (K_on, K_off)
-        a + r_u > r30_b_u + r50_u_u | K_on * a * (r_u - r_min)
+        # a + r_u > r30_b_u + r50_u_u | K_on * a * (r_u - r_min)
         r30_b_u > ~r30_b_u | Lambda * r30_b_u
     elif num == 1: # 二つ目の薬剤の場合
         a + r30_u_u == r30_u_b | (K_on, K_off)
         a + r30_b_u == r30_b_b | (K_on, K_off)
-        a + r_u > r30_u_b + r50_u_u | K_on * a * (r_u - r_min)
+        # a + r_u > r30_u_b + r50_u_u | K_on * a * (r_u - r_min)
         r30_u_b > ~r30_u_b | Lambda * r30_u_b
     a > ~a | Lambda * a
 
@@ -33,12 +33,12 @@ def r50_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda, r_min, num):
     if num == 0: # 一つ目の薬剤の場合
         a + r50_u_u == r50_b_u | (K_on, K_off)
         a + r50_u_b == r50_b_b | (K_on, K_off)
-        a + r_u > r50_b_u + r30_u_u | K_on * a * (r_u - r_min)
+        # a + r_u > r50_b_u + r30_u_u | K_on * a * (r_u - r_min)
         r50_b_u > ~r50_b_u | Lambda * r50_b_u
     elif num == 1: # 二つ目の薬剤の場合
         a + r50_u_u == r50_u_b | (K_on, K_off)
         a + r50_b_u == r50_b_b | (K_on, K_off)
-        a + r_u > r50_u_b + r30_u_u | K_on * a * (r_u - r_min)
+        # a + r_u > r50_u_b + r30_u_u | K_on * a * (r_u - r_min)
         r50_u_b > ~r50_u_b | Lambda * r50_u_b
     a > ~a | Lambda * a
 
