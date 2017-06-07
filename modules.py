@@ -68,21 +68,48 @@ def growthPlot(dNames, IC30, savename=""): # glowth calc.
     if savename: plt.savefig(savename, dpi=300)
     else: plt.show()
 
-def heatmap(dNames, IC30, split=11, savename="", figsize=(12, 9), csvdir=""):
-    plt.figure(figsize=figsize)
-    for index, dNameList in enumerate(dNames):
-        drugs = [makeDrugDatas(dNameList[0]), makeDrugDatas(dNameList[1])]
-        doses = [[x, y] for x in np.linspace(0, IC30[dNameList[0]] * 2, split) for y in np.linspace(0, IC30[dNameList[1]] * 2, split)]
-        data = pd.DataFrame([[round(dose[0], 2), round(dose[1], 2), sim(drugs, dose)] for dose in doses], columns=["a1", "a2", "growth"])
-        if csvdir: data.to_csv("{}/{}_{}.csv".format(csvdir, dNameList[0][:3], dNameList[1][:3]), index=False)
-        heatmap = pd.pivot_table(data=data, values="growth", index="a1", columns="a2")
-        x = math.ceil(math.sqrt(len(dNames)))
-        plt.subplot(int(math.ceil(len(dNames) / x)), int(x), index + 1)
-        sns.heatmap(heatmap)
-        plt.ylabel(dNameList[0])
-        plt.xlabel(dNameList[1])
+
+def divideFigure(drugNames):
+    """
+        drugNamesに応じて，figureの分割数を計算するモジュール．
+    """
+    x = int(math.ceil(math.sqrt(len(drugNames))))
+    y = int(math.ceil(len(drugNames) / x))
+    return (x, y)
+
+
+def createHeatmap(data, drugNames, cbar=False, cmap=False):
+    """
+        function of create Heatmap.
+        data: pandas data.
+        cmap: color map of heatmap.
+    """
+    if not cmap: cmap = sns.diverging_palette(220, 10, as_cmap=True) # coler map
+    heatmap = pd.pivot_table(data=data, values="growth", index="a1", columns="a2") # heatmap data
+    sns.heatmap(heatmap, cbar=False, cmap=cmap) # create Heatmap
+    plt.ylabel(drugNames[0], fontsize=16) # create ylabel
+    plt.xlabel(drugNames[1], fontsize=16) # create xlabel
+
+    ax = plt.gca()
+    ax.invert_yaxis() # reverse ylabel
+
+
+def heatmap(drugNames, IC30, split=11, savename="", csvdir=""):
+    x, y = divideFigure(drugNames) # calc division number
+    plt.figure(figsize=(x * 5, y * 5)) # set figure size
+
+    for index, drugNameList in enumerate(drugNames):
+        drugs = [makeDrugDatas(drugNameList[0]), makeDrugDatas(drugNameList[1])] # create drug data
+        doses = [[x, y] for x in np.linspace(0, IC30[drugNameList[0]] * 2, split) for y in np.linspace(0, IC30[drugNameList[1]] * 2, split)] # create dose patern
+        data = pd.DataFrame([[round(dose[0], 2), round(dose[1], 2), sim(drugs, dose)] for dose in doses],
+                            columns=["a1", "a2", "growth"]) # simulation & create data
+
+        if csvdir: data.to_csv("{}/{}_{}.csv".format(csvdir, drugNameList[0], drugNameList[1]), index=False) # make csv data
+
+        plt.subplot(y, x, index + 1) # create subplot area
+        createHeatmap(data, drugNameList)
+
     plt.tight_layout()
-    plt.tick_params(labelsize=10)
     if savename: plt.savefig(savename, dpi=300)
     else: plt.show()
 
@@ -208,3 +235,4 @@ def ribo5_diffTargetCheck(dNames, IC30, figsize=(12, 9), savename=""):
         plt.title(dName)
     plt.tight_layout()
     plt.savefig(savename, dpi=300)
+    del(ribo5)
