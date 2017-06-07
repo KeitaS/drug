@@ -6,4 +6,4 @@ nohup.out
 *.pyc
 .python-version
 output.txt
-__pycache__
+.ipynb_checkpoints
