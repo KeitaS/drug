@@ -1,7 +1,7 @@
 # coding: utf-8
 """
     r30, r50に，それぞれ2つ薬剤が結合できるようにしたもの．
-    State : add_reaction
+    State : no_reaction
 """
 
 import numpy as np
@@ -12,45 +12,46 @@ from ecell4 import *
 util.decorator.SEAMLESS_RATELAW_SUPPORT = True
 import itertools
 
+
 # main
 @reaction_rules
-def r30_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda, r_min, num):
+def r30_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda, r_min, num, addReaction):
     ~a_ex == a | (P_in * a_ex, P_out)
     if num == 0: # 一つ目の薬剤の場合
         a + r30_u_u == r30_b_u | (K_on, K_off)
         a + r30_u_b == r30_b_b | (K_on, K_off)
-        a + r_u > r30_b_u + r50_u_u | K_on * a * (r_u - r_min) # add
+        if addReaction: a + r_u > r30_b_u + r50_u_u | K_on * a * (r_u - r_min) # add
         r30_b_u > ~r30_b_u | Lambda * r30_b_u
     elif num == 1: # 二つ目の薬剤の場合
         a + r30_u_u == r30_u_b | (K_on, K_off)
         a + r30_b_u == r30_b_b | (K_on, K_off)
-        a + r_u > r30_u_b + r50_u_u | K_on * a * (r_u - r_min) # add
+        if addReaction: a + r_u > r30_u_b + r50_u_u | K_on * a * (r_u - r_min) # add
         r30_u_b > ~r30_u_b | Lambda * r30_u_b
     a > ~a | Lambda * a
 
 @reaction_rules
-def r50_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda, r_min, num):
+def r50_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda, r_min, num, addReaction):
     ~a_ex == a | (P_in * a_ex, P_out)
     if num == 0: # 一つ目の薬剤の場合
         a + r50_u_u == r50_b_u | (K_on, K_off)
         a + r50_u_b == r50_b_b | (K_on, K_off)
-        a + r_u > r50_b_u + r30_u_u | K_on * a * (r_u - r_min) # add
+        if addReaction: a + r_u > r50_b_u + r30_u_u | K_on * a * (r_u - r_min) # add
         r50_b_u > ~r50_b_u | Lambda * r50_b_u
     elif num == 1: # 二つ目の薬剤の場合
         a + r50_u_u == r50_u_b | (K_on, K_off)
         a + r50_b_u == r50_b_b | (K_on, K_off)
-        a + r_u > r50_u_b + r30_u_u | K_on * a * (r_u - r_min) # add
+        if addReaction: a + r_u > r50_u_b + r30_u_u | K_on * a * (r_u - r_min) # add
         r50_u_b > ~r50_u_b | Lambda * r50_u_b
     a > ~a | Lambda * a
 
 @reaction_rules
-def ribo_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda, r_min, num):
+def ribo_binding_reaction(a_ex, a, P_in, P_out, K_on, K_off, Lambda, r_min, num, addReaction):
     ~a_ex == a | (P_in * a_ex, P_out)
     a + r_u == r_b | (K_on * a * (r_u - r_min), K_off)
     r_b > a + r30_u_u + r50_u_u | Kd
     a > ~a | Lambda * a
 
-def createModel(drugs=[], dataset={}):
+def createModel(drugs=[], dataset={}, addReaction=False):
     # 定数
     K_t = 6.1 * 10 ** -2
 
@@ -89,7 +90,7 @@ def createModel(drugs=[], dataset={}):
                 P_in = (r_max - r_min) * drug["Lambda_0_a"] / 2.0 / drug["IC50_a"] # 薬剤の流入
                 P_out = (drug["Lambda_0_a"] / 2) ** 2.0 / K_t / K_D # 薬剤の流出
                 exec('{}_binding_reaction(a_ex, a, P_in, P_out,\
-                                           K_on, K_off, Lambda, r_min, index)'\
+                                           K_on, K_off, Lambda, r_min, index, addReaction)'\
                                            .format(drug["target"]))
 
         # another reaction
@@ -108,8 +109,12 @@ def createModel(drugs=[], dataset={}):
     return get_model()
 
 def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u_u": 30., "r50_u_u": 30., "r_u": 30.}):
+    """
+        drug: drug data (Data after having changed makeDrugDatas)
+    """
     model = createModel(drugs, inpData)
-    #
+
+    # check reaction rules
     # for i, rr in enumerate(model.reaction_rules()):
     #     print("{}, {}".format(i, rr.as_string()))
 
