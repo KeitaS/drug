@@ -38,43 +38,66 @@ makedir(csvdir)
 """
     ribo5を使って，同じ薬剤を別のターゲットで投与したシミュレーション
 """
-# # IC30を計算
-# import ribo5
-# # IC30 = ribo5.calcIC(dNames, {x: 50 for x in dNames}, 0.3)
+# IC30を計算
+import ribo5
+IC30 = ribo5.calcIC(dNames, {x: 50 for x in dNames}, 0.3)
 # IC30 = {'Tetracycline': 5.2734375, 'Kanamycin': 0.6761401891708374, 'Streptmycin': 1.4652013778686523, 'Chloramphenicol': 21.09375}
 # ribo5_diffTargetCheck(dNames, IC30, (12, 9), savedir + "/ribo5_sameDrug_diffTarget.png")
-
-"""
-    カーブが急なものとカーブがなだらかなもので比較．
-"""
-
 drugNames = list(itertools.combinations_with_replacement(["Streptmycin", "Chloramphenicol"], 2))
+
 plt.figure(figsize=(15, 10))
 num = 1
-
 for drugNameList in drugNames:
-    drugs = [makeDrugDatas(drugNameList[0]), makeDrugDatas(drugNameList[1])]
-    drugs[0]["target"] = "r30"
-    drugs[1]["target"] = "r30"
+    drugs = [ribo5.makeDrugDatas(drugNameList[0]), ribo5.makeDrugDatas(drugNameList[1])]
+    drugs[0]["type"] = "30s"
+    drugs[1]["type"] = "30s"
     doses = [[x, y] for x in np.linspace(0, IC30[drugNameList[0]] * 2, 11) for y in np.linspace(0, IC30[drugNameList[1]] * 2, 11)]
-    data = pd.DataFrame([[round(dose[0], 2), round(dose[1], 2), sim(drugs, dose)] for dose in doses],
-                        columns=["a1", "a2", "growth"]) # simulation & create data
-    data.to_csv("{}/{}_{}_{}_{}".format(csvdir, drugs[0]["name"], drugs[0]["target"], drugs[1]["name"], drugs[1]["target"]))
+    data = pd.DataFrame([[round(dose[0], 2), round(dose[1], 2), simtest(drugs, dose, dataset={"modif": 1})] for dose in doses], columns=["a1", "a2", "growth"])
     plt.subplot(2, 3, num)
     createHeatmap(data, ["30s", "30s"])
     num += 1
 
 for drugNameList in drugNames:
-    drugs = [makeDrugDatas(drugNameList[0]), makeDrugDatas(drugNameList[1])]
-    drugs[0]["target"] = "r30"
-    drugs[1]["target"] = "r50"
+    drugs = [ribo5.makeDrugDatas(drugNameList[0]), ribo5.makeDrugDatas(drugNameList[1])]
+    drugs[0]["type"] = "30s"
+    drugs[1]["type"] = "50s"
     doses = [[x, y] for x in np.linspace(0, IC30[drugNameList[0]] * 2, 11) for y in np.linspace(0, IC30[drugNameList[1]] * 2, 11)]
-    data = pd.DataFrame([[round(dose[0], 2), round(dose[1], 2), sim(drugs, dose)] for dose in doses],
-                        columns=["a1", "a2", "growth"]) # simulation & create data
-    data.to_csv("{}/{}_{}_{}_{}".format(csvdir, drugs[0]["name"], drugs[0]["target"], drugs[1]["name"], drugs[1]["target"]))
+    data = pd.DataFrame([[round(dose[0], 2), round(dose[1], 2), simtest(drugs, dose, dataset={"modif": 1})] for dose in doses], columns=["a1", "a2", "growth"])
     plt.subplot(2, 3, num)
-    createHeatmap(data, ["30s", "50s"])
+    createHeatmap(data, ["30s", "30s"])
     num += 1
 
-plt.tight_layout()
-plt.savefig("{}/sharp_flat.png".format(savedir), dpi=300)
+"""
+    カーブが急なものとカーブがなだらかなもので比較．
+"""
+#
+# drugNames = list(itertools.combinations_with_replacement(["Streptmycin", "Chloramphenicol"], 2))
+# plt.figure(figsize=(15, 10))
+# num = 1
+#
+# for drugNameList in drugNames:
+#     drugs = [makeDrugDatas(drugNameList[0]), makeDrugDatas(drugNameList[1])]
+#     drugs[0]["target"] = "r30"
+#     drugs[1]["target"] = "r30"
+#     doses = [[x, y] for x in np.linspace(0, IC30[drugNameList[0]] * 2, 11) for y in np.linspace(0, IC30[drugNameList[1]] * 2, 11)]
+#     data = pd.DataFrame([[round(dose[0], 2), round(dose[1], 2), sim(drugs, dose)] for dose in doses],
+#                         columns=["a1", "a2", "growth"]) # simulation & create data
+#     data.to_csv("{}/{}_{}_{}_{}".format(csvdir, drugs[0]["name"], drugs[0]["target"], drugs[1]["name"], drugs[1]["target"]))
+#     plt.subplot(2, 3, num)
+#     createHeatmap(data, ["30s", "30s"])
+#     num += 1
+#
+# for drugNameList in drugNames:
+#     drugs = [makeDrugDatas(drugNameList[0]), makeDrugDatas(drugNameList[1])]
+#     drugs[0]["target"] = "r30"
+#     drugs[1]["target"] = "r50"
+#     doses = [[x, y] for x in np.linspace(0, IC30[drugNameList[0]] * 2, 11) for y in np.linspace(0, IC30[drugNameList[1]] * 2, 11)]
+#     data = pd.DataFrame([[round(dose[0], 2), round(dose[1], 2), sim(drugs, dose)] for dose in doses],
+#                         columns=["a1", "a2", "growth"]) # simulation & create data
+#     data.to_csv("{}/{}_{}_{}_{}".format(csvdir, drugs[0]["name"], drugs[0]["target"], drugs[1]["name"], drugs[1]["target"]))
+#     plt.subplot(2, 3, num)
+#     createHeatmap(data, ["30s", "50s"])
+#     num += 1
+#
+# plt.tight_layout()
+# plt.savefig("{}/sharp_flat.png".format(savedir), dpi=300)
