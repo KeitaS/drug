@@ -281,7 +281,7 @@ def checkLinerType(inp, eps_rel, pattern, buffpoint=0.):
     return linertype
 
 
-def calcIC(dNames, a_ex, target):
+def calcIC(dNames, a_ex, target, modif=0):
     """
     二分法でIC〜〜を計算
     """
@@ -295,7 +295,7 @@ def calcIC(dNames, a_ex, target):
         while abs(target - abs(result)) > 0.01:
             dose = (dose_max + dose_min) / 2.
             drugs[0]["dose"] = dose
-            result, legend = run(drugs, step=100, legend=["r_u"])
+            result, legend = run(drugs, step=100, inpData={"modif": modif} legend=["r_u"])
             result = calcGrowthrate(result[-1][1])
             if result < target:
                 dose_max = dose
