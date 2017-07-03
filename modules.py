@@ -201,38 +201,23 @@ def diffTargetCheck(dNames, IC30, figsize=(12, 9), savename=""):
 
 
 # テスト用モジュール
-def simtest(drugs, dose):
+def sim_ribo5(drugs, dose, modif=0):
     """
         ribo5を使ってsim．
     """
     import ribo5
     for i in range(len(drugs)):
         drugs[i]["dose"] = dose[i]
-    result, legend = ribo5.run(drugs, legend=["r_u"])
+    result, legend = ribo5.run(drugs, legend=["r_u"], inpData={"modif": modif})
     return calcGrowthRate(result[-1][1])
 
-def ribo5_diffTargetCheck(dNames, IC30, figsize=(12, 9), savename=""):
-    """
-        同薬剤のターゲットを変えて組み合わせ投与する．
-    """
-    import ribo5
-    plt.figure(figsize=figsize)
-    for index, dName in enumerate(dNames):
-        drugs = [ribo5.makeDrugDatas(dName), ribo5.makeDrugDatas(dName)]
-        if drugs[0]["type"] == "30s":
-            drugs[1]["type"] = "50s"
-        else:
-            drugs[1]["type"] = "30s"
-        doses = [[x, y] for x in np.linspace(0, IC30[dName] * 2, 11) for y in np.linspace(0, IC30[dName] * 2, 11)]
-        data = pd.DataFrame([[round(dose[0], 2), round(dose[1], 2), simtest(drugs, dose)] for dose in doses], columns=[drugs[0]["type"], drugs[1]["type"], "growth"])
 
-        heatmap = pd.pivot_table(data=data, values="growth", index=drugs[0]["type"], columns=drugs[1]["type"])
-        x = math.ceil(math.sqrt(len(dNames)))
-        plt.subplot(int(math.ceil(len(dNames) / x)), int(x), index + 1)
-        sns.heatmap(heatmap)
-        plt.ylabel(drugs[0]["type"])
-        plt.xlabel(drugs[1]["type"])
-        plt.title(dName)
-    plt.tight_layout()
-    plt.savefig(savename, dpi=300)
-    del(ribo5)
+def ribo5_targetChange(drugNames, IC30, target=[], modif=0):
+    import ribo5
+    drugs = [ribo5.makeDrugDatas(drugNames[0]), ribo5.makeDrugDatas(drugNames[1])]
+    if target:
+        drugs[0]["type"] = target[0]
+        drugs[1]["type"] = target[1]
+    doses = [[x, y] for x in np.linspace(0, IC30[drugNames[0]] * 2, 11) for y in np.linspace(0, IC30[drugNames[1]] * 2, 11)]
+    data = pd.DataFrame([[round(dose[0], 2), round(dose[1], 2), sim_ribo5(drugs, dose, modif=modif)] for dose in doses], columns=["a1", "a2", "growth"])
+    return data
