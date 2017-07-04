@@ -221,3 +221,23 @@ def ribo5_targetChange(drugNames, IC30, target=[], modif=0):
     doses = [[x, y] for x in np.linspace(0, IC30[drugNames[0]] * 2, 11) for y in np.linspace(0, IC30[drugNames[1]] * 2, 11)]
     data = pd.DataFrame([[round(dose[0], 2), round(dose[1], 2), sim_ribo5(drugs, dose, modif=modif)] for dose in doses], columns=["a1", "a2", "growth"])
     return data
+
+def ribo5_heatmap(drugNames, IC30, split=11, savename="", csvdir=""):
+    import ribo5
+    x, y = divideFigure(drugNames) # calc division number
+    plt.figure(figsize=(x * 5, y * 5)) # set figure size
+
+    for index, drugNameList in enumerate(drugNames):
+        drugs = [ribo5.makeDrugDatas(drugNameList[0]), ribo5.makeDrugDatas(drugNameList[1])] # create drug data
+        doses = [[x, y] for x in np.linspace(0, IC30[drugNameList[0]] * 2, split) for y in np.linspace(0, IC30[drugNameList[1]] * 2, split)] # create dose patern
+        data = pd.DataFrame([[round(dose[0], 2), round(dose[1], 2), sim_ribo5(drugs, dose)] for dose in doses],
+                            columns=["a1", "a2", "growth"]) # simulation & create data
+
+        if csvdir: data.to_csv("{}/{}_{}.csv".format(csvdir, drugNameList[0], drugNameList[1]), index=False) # make csv data
+
+        plt.subplot(y, x, index + 1) # create subplot area
+        createHeatmap(data, drugNameList)
+
+    plt.tight_layout()
+    if savename: plt.savefig(savename, dpi=300)
+    else: plt.show()
