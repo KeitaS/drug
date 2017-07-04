@@ -154,7 +154,7 @@ def makeDrugDatas(drugName, medium=0):
                 "Lambda_0_a": Lambda_0_a[drugName],
                 "IC50": IC50[drugName][medium],
                 "IC50_a": IC50_a[drugName],
-                "K_ma": 15.
+                "K_ma": 15. # antagonisticにした際のフィッティングパラメータ
                 }
 
     return drugData
