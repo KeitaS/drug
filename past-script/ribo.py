@@ -8,7 +8,7 @@ from ecell4 import *
 util.decorator.SEAMLESS_RATELAW_SUPPORT = True
 
 
-def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambda_0=1.35, Lambda_0_a=0.31, IC50=0.41, IC50_a=0.189):
+def createModel(r_max=65.8, r_min=19.3, K_D=0.1, K_t=6.1*10**-2, K_on=60.0, Lambda_0=1.35, Lambda_0_a=0.31, IC50=0.41, IC50_a=0.189):
     """
     リボソームモデルを構成するモジュール
     r_max: µM
@@ -184,23 +184,24 @@ if __name__ == "__main__":
     xlabel = "Extracellular antibiotic concentration $a_{ex}$ ($\mu$M)"
     ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
     legend = ["$Gly$", "$Gly_{CAA}$", "$Gly_{RDM}$"]
+    color = ["g", "b", "r"]
 
 
     for index, name in enumerate(drug):
         plt.subplot(2, 2, index + 1)
         # data = pd.read_csv("results/ribo1/csv/{}.csv".format(name))
 
-        print("{} simulation >>>".format(name))
+        # print("{} simulation >>>".format(name))
         doses = np.linspace(0, A_ex[name], 101)
         data = pd.DataFrame([doses], index=["dose"]).T
         for i in range(3):
-            print("medium {} >>".format(i))
+            # print("medium {} >>".format(i))
             dataset = {"Lambda_0": Lambda_0[i],
                        "Lambda_0_a": Lambda_0_a[name],
                        "IC50": IC50[name][i],
                        "IC50_a":IC50_a[name]}
             data[legend[i]] = sim(doses, dataset) # 保存は出てきてから
-            plt.plot(list(data["dose"]), list(data[legend[i]]), label=legend[i])
+            plt.plot(list(data["dose"]), list(data[legend[i]]), label=legend[i], color=color[i])
 
         plt.title(name)
         if name == "streptmycin" or name == "kanamycin":
