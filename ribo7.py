@@ -69,7 +69,7 @@ def createModel(drugs=[], dataset={}, addReaction=False):
 
     # リボソームサブユニット関連
     Kd = 1. # リボソームサブユニットの解離定数
-    p = 1. # リボソームサブユニットの存在する比率
+    p = 1. # リボソームサブユニットの存在する比率(r_uと比べて)
     Ka = (Kd / K_t + r_u_0) * Lambda_0 / ((p * r_u_0) ** 2) # リボソームサブユニットの結合定数
 
     # 引数でdatasetを受け取った場合，更新する
@@ -79,7 +79,7 @@ def createModel(drugs=[], dataset={}, addReaction=False):
 
     with reaction_rules():
         # expression
-        Lambda = (r_u - r_min) * K_t
+        Lambda = (r_u - r_min) * K_t # Growth rate
         SUP = (Lambda * (r_max - Lambda * Delta_r * (1 / Lambda_0 - 1 / K_t / Delta_r))) * (1 + p) # subunit product expression
 
         # drug reaction
