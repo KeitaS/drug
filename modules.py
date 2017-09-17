@@ -86,7 +86,7 @@ def createHeatmap(data, drugNames, cbar=False, cmap=False):
     """
     if not cmap: cmap = sns.diverging_palette(220, 10, as_cmap=True) # coler map
     heatmap = pd.pivot_table(data=data, values="growth", index="a1", columns="a2") # heatmap data
-    sns.heatmap(heatmap, cbar=False, cmap=cmap) # create Heatmap
+    sns.heatmap(heatmap, cbar=cbar, cmap=cmap) # create Heatmap
     plt.ylabel(drugNames[0], fontsize=16) # create ylabel
     plt.xlabel(drugNames[1], fontsize=16) # create xlabel
 
