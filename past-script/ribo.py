@@ -2,6 +2,8 @@
 
 import numpy as np
 import matplotlib.pylab as plt
+import seaborn as sns
+import pandas as pd
 from ecell4 import *
 util.decorator.SEAMLESS_RATELAW_SUPPORT = True
 
@@ -49,7 +51,17 @@ def createModel(r_max=65.8, r_min=19.3, K_D=1.0, K_t=6.1*10**-2, K_on=3.0, Lambd
 
     return get_model()
 
-def run_test2(a_ex, step=10., legend=[], inpData={}, y0={"a": .0, "r_u": 30.0, "r_b": .0}):
+def sim(a_ex, inpData={"Lambda_0": 1.35}):
+    r_min = 19.3
+    K_t = 6.1*10**-2
+    Lambda_0 = inpData["Lambda_0"]
+    data = [];
+    for dose in a_ex:
+        result, legend = run_test2(dose, inpData=inpData)
+        data.append((result[-1][1] - r_min) * K_t / Lambda_0)
+    return data
+
+def run_test2(a_ex, step=10., legend=["r_u"], inpData={}, y0={"a": .0, "r_u": 30.0, "r_b": .0}):
     dataset = {"Lambda_0": 1.35, "Lambda_0_a": 0.31, "IC50": 0.41, "IC50_a": 0.189, "K_t": 6.1 * 10 ** -2, "r_min": 19.3}
 
     dataset.update(inpData)
@@ -58,7 +70,6 @@ def run_test2(a_ex, step=10., legend=[], inpData={}, y0={"a": .0, "r_u": 30.0, "
 
     if not legend:
         legend = y0.keys()
-
     runsim = run_simulation(step, solver="ode", y0=y0,
                             return_type="observer", model=model,
                             species_list=legend)
@@ -83,7 +94,7 @@ def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel=""):
 
     plt.legend(loc="upper right")
     # plt.show()
-    plt.savefig("result/%s" % (savename), dpi=200)
+    plt.savefig("{}".format(savename), dpi=200)
     plt.close()
 
 
@@ -172,29 +183,34 @@ if __name__ == "__main__":
 
     xlabel = "Extracellular antibiotic concentration $a_{ex}$ ($\mu$M)"
     ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
+    legend = ["$Gly$", "$Gly_{CAA}$", "$Gly_{RDM}$"]
 
-    for name in drug:
-        print "%s simulation >>>" % (name)
-        data = []
+
+    for index, name in enumerate(drug):
+        plt.subplot(2, 2, index + 1)
+        # data = pd.read_csv("results/ribo1/csv/{}.csv".format(name))
+
+        print("{} simulation >>>".format(name))
+        doses = np.linspace(0, A_ex[name], 101)
+        data = pd.DataFrame([doses], index=["dose"]).T
         for i in range(3):
-            print "medium %d >>" % (i)
+            print("medium {} >>".format(i))
             dataset = {"Lambda_0": Lambda_0[i],
                        "Lambda_0_a": Lambda_0_a[name],
                        "IC50": IC50[name][i],
                        "IC50_a":IC50_a[name]}
-            legend = ["r_u"]
-            count = 0
-            for j in np.linspace(0, A_ex[name], 51):
-                print count
-                result, legend = run_test2(j, inpData=dataset, legend=legend)
+            data[legend[i]] = sim(doses, dataset) # 保存は出てきてから
+            plt.plot(list(data["dose"]), list(data[legend[i]]), label=legend[i])
 
-                if i == 0:
-                    result = [j, (result[-1][1] - r_min) * K_t / Lambda_0[i]]
-                    data.append(result)
-                else:
-                    data[count].append((result[-1][1] - r_min) * K_t / Lambda_0[i])
-                count += 1
+        plt.title(name)
+        if name == "streptmycin" or name == "kanamycin":
+            plt.xlabel("Extracellular antibiotic concentration $a_{ex}$ ($\mu$g/ml)")
+        else:
+            plt.xlabel("Extracellular antibiotic concentration $a_{ex}$ ($\mu$M)")
+        plt.ylabel(ylabel)
+        plt.legend(loc="upper right")
+        data.to_csv("results/ribo1/csv/{}.csv".format(name), index=False) # make csv data
 
-        savename = "20160607/4/%s.png" % (name)
-        legend = ["$Gly$", "$Gly_{CAA}$", "$Gly_{RDM}$"]
-        makeGraph(np.array(data), savename, legend, name, xlabel, ylabel)
+    savename = "results/ribo1/images/single_result.png"
+    plt.tight_layout()
+    plt.savefig(savename, dpi=300)
