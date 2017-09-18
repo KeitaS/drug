@@ -78,7 +78,7 @@ def divideFigure(drugNames):
     return (x, y)
 
 
-def createHeatmap(data, drugNames, cbar=False, cmap=False):
+def createHeatmap(data, drugNames, cbar=False, cmap=False, fontsize=16):
     """
         function of create Heatmap.
         data: pandas data.
@@ -86,12 +86,16 @@ def createHeatmap(data, drugNames, cbar=False, cmap=False):
     """
     if not cmap: cmap = sns.diverging_palette(220, 10, as_cmap=True) # coler map
     heatmap = pd.pivot_table(data=data, values="growth", index="a1", columns="a2") # heatmap data
-    sns.heatmap(heatmap, cbar=cbar, cmap=cmap) # create Heatmap
-    plt.ylabel(drugNames[0], fontsize=16) # create ylabel
-    plt.xlabel(drugNames[1], fontsize=16) # create xlabel
+    ax = sns.heatmap(heatmap, cbar=cbar, cmap=cmap) # create Heatmap
+    ax.invert_yaxis()
+    ax.set_xticks(list(np.linspace(0.5, 10.5, 6)))
+    ax.set_xticklabels(list(map(str,data["a2"].tolist()[0:11:2])))
+    ax.set_yticks(list(np.linspace(0.5, 10.5, 6)))
+    ax.set_yticklabels(list(map(str,data["a1"].tolist()[::-22])))
 
-    ax = plt.gca()
-    ax.invert_yaxis() # reverse ylabel
+
+    plt.ylabel(drugNames[0], fontsize=fontsize) # create ylabel
+    plt.xlabel(drugNames[1], fontsize=fontsize) # create xlabel
 
 
 def heatmap(drugNames, IC30, split=11, savename="", csvdir=""):
