@@ -61,7 +61,8 @@ def createModel(drugs=[], dataset={}, addReaction=False):
     K_off = K_on * K_D # 薬剤の解離定数
 
     # リボソーム，growth関連
-    Lambda_0 = 1.35 # 初期培地でのGrowth Rate
+    meidum = 0 # 培地の設定 0: Gly, 1: Gly_CAA, 2: Gly_RDM
+    Lambda_0_List =  [1.35, 0.85, 0.40] # 初期培地でのGrowth Rateのリスト．内容はmediumに準拠．
     r_min = 19.3 # リボソームの最小値
     r_max = 65.8 # リボソームの最大値
     Delta_r = r_max - r_min # リボソームの最大値と最小値の差
@@ -76,6 +77,9 @@ def createModel(drugs=[], dataset={}, addReaction=False):
     if dataset:
         for key, value in dataset.items():
             exec("{} = {}".format(key, value))
+
+    # mediumに応じて初期培地でのGrowth Rateを変更
+    Lambda_0 = Lambda_0_List[medium] # 初期培地でのGrowth Rate
 
     with reaction_rules():
         # expression

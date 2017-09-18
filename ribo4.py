@@ -142,7 +142,7 @@ def makeDrugDatas(drugName, medium=0):
     return drugData
 
 
-def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30., "r_u": 30., "r_b": .0}):
+def run(drugs=[], step=50., medium=0, legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30., "r_u": 30., "r_b": .0}):
     """
     ribosomeモデル実行関数
 
@@ -152,8 +152,8 @@ def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u": 30., "r50_u": 30
     inpData:
     y0:
     """
-
-    dataset = {"r_max": 65.8, "r_min": 19.3, "K_D": 1.0, "K_t": 6.1*10**-2, "K_on": 3.0, "Lambda_0": 1.35, "Kd": 1., "p": 1.} # 基本のデータセット
+    Lambda_0 =  [1.35, 0.85, 0.40]
+    dataset = {"r_max": 65.8, "r_min": 19.3, "K_D": 1.0, "K_t": 6.1*10**-2, "K_on": 3.0, "Lambda_0": Lambda_0[medium], "Kd": 1., "p": 1.} # 基本のデータセット
     dataset.update(inpData) # inpDataの内容をdatasetに入れる
 
     # P_in, P_outをdrugのデータに入れる
