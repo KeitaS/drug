@@ -40,13 +40,23 @@ print(growth)
   過去のriboモデル．
 
 ## riboモデルの説明  
+- <font size="4px">**ribo.py**</font>  
+  https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4380930/ の論文をE-Cell4に実装したもの．  
+  リボソーム，薬剤，薬剤結合リボソームから成り立つ単純なモデル．  
+
+- <font size="4px">**ribo2.py**</font>  
+  riboを踏まえ，リボソームサブユニットの結合，解離を盛り込んだモデル．  
+  Kaの式が間違っており，r_uがr_minを下回ってしまうため，正しい結果が出てこない．  
+
+- <font size="4px">**ribo3.py**</font>  
+
+
 - <font size="4px">**ribo4.py**</font>  
 
 - <font size="4px">**ribo5.py**</font>  
   antagonisticが起こりうる2つのパターンを入れたモデル．  
   追加したパラメータ：
-  * K_ma：modif1, modif2についての阻害用パラメータ．
-
+  * K_ma：modif1, modif2についての阻害用パラメータ．  
 
 - <font size="4px">**ribo6.py**</font>  
   synergisticの機構を加えたモデル．  
