@@ -39,9 +39,14 @@ print(growth)
 - <font size="5px">**past-script**</font>  
   過去のriboモデル．
 
-## riboモデルの説明
+## riboモデルの説明  
+- <font size="4px">**ribo4.py**</font>  
+
 - <font size="4px">**ribo5.py**</font>  
   antagonisticが起こりうる2つのパターンを入れたモデル．  
+  追加したパラメータ：
+  * K_ma：modif1, modif2についての阻害用パラメータ．
+
 
 - <font size="4px">**ribo6.py**</font>  
   synergisticの機構を加えたモデル．  
@@ -50,7 +55,6 @@ print(growth)
 - <font size="4px">**ribo7.py**</font>  
   同じ薬剤を入れた際にantagonisticになるようなモデルを構成．  
   一つのリボソームサブユニットに複数の結合サイトを作成．  
-
 
 ---
 ## 内容
