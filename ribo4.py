@@ -298,13 +298,24 @@ def createHeatmap(data, drugNames, cbar=False, cmap=False, axizFontSize=16, labe
     heatmapData = pd.pivot_table(data=data, values="growth", index="a1", columns="a2") # heatmap data
     ax = sns.heatmap(heatmapData, cbar=cbar, cmap=cmap) # create Heatmap
     ax.invert_yaxis()
-    ax.set_xticks(list(np.linspace(0.5, 10.5, 6)))
-    ax.set_xticklabels(list(map(str,data["a2"].tolist()[0:11:2])))
-    ax.set_yticks(list(np.linspace(0.5, 10.5, 6)))
-    ax.set_yticklabels(list(map(str,data["a1"].tolist()[::-22])))
+
+    a1DoseList = list(set(data["a1"].tolist()))[::2] # y
+    a2DoseList = list(set(data["a2"].tolist()))[::2] # x
+
+    ax.set_xticks(list(np.linspace(0.5, 10.5, len(a1DoseList))))
+    ax.set_xticklabels(list(map(str, a2DoseList)))
+    ax.set_yticks(list(np.linspace(0.5, 10.5, len(a1DoseList))))
+    ax.set_yticklabels(list(map(str, a1DoseList)))
 
     ax.set_ylabel(drugNames[0], fontsize=axizFontSize) # create ylabel
     ax.set_xlabel(drugNames[1], fontsize=axizFontSize) # create xlabel
+
+    ## virtual drug
+    # if drugNames[0] == "Streptmycin": ax.set_ylabel("Pattern A", fontsize=axizFontSize) # create ylabel
+    # else : ax.set_ylabel("Pattern B", fontsize=axizFontSize) # create ylabe
+    # if drugNames    [1] == "Streptmycin": ax.set_xlabel("Pattern A", fontsize=axizFontSize) # create xlabel
+    # else: ax.set_xlabel("Pattern B", fontsize=axizFontSize) # create xlabel
+
     ax.tick_params(labelsize=labelSize)
 
 
@@ -350,12 +361,12 @@ def oldeval_usecsv(dNameList, subplot, titleFontSize=16, axizFontSize=16, labelS
     fig.tight_layout()
     return fig
 
-def heatmap(dNameList, IC30, subplot, csvdir=".", axizFontSize=16, labelSize=16):
+def heatmap(dNameList, IC30, subplot, csvdir=".", axizFontSize=16, labelSize=16, splitNum=11):
     fig = plt.figure(figsize=(subplot[1] * 10, subplot[0] * 10))
     for index, name in enumerate(dNameList):
         plt.subplot(subplot[0], subplot[1], index + 1)
         drug = [makeDrugDatas(name[0]), makeDrugDatas(name[1])]
-        doses = [[x, y] for x in np.linspace(0, IC30[name[0]] * 2, 11) for y in np.linspace(0, IC30[name[1]] * 2, 11)]
+        doses = [[x, y] for x in np.linspace(0, IC30[name[0]] * 2, splitNum) for y in np.linspace(0, IC30[name[1]] * 2, splitNum)]
         resultList = []
         for dose in doses:
             resultList.append([round(dose[0], 2), round(dose[1], 2), sim(drug, dose)])
@@ -378,8 +389,8 @@ def heatmap_usecsv(dNameList, subplot, csvdir=".", axizFontSize=16, labelSize=16
 
 if __name__ == "__main__":
     # 保存用ディレクトリの作成
-    csvdir = "./results/ribo4/csv/heatmap"
-    imgdir = "./results/ribo4/images/heatmap"
+    csvdir = "./results/ribo4/csv/virtual_drug"
+    imgdir = "./results/ribo4/images/virtual_drug"
     makedir(csvdir)
     makedir(imgdir)
 
@@ -395,6 +406,7 @@ if __name__ == "__main__":
     dNameList = itr.combinations(dNames, 2) # 異なる薬剤を２剤投与した場合．
     slopeList = [1./4, 1./2, 1., 2., 4.] # 傾きのリスト
 
-    imgname = "{}/combination_drug.png".format(imgdir)
-    fig = heatmap_usecsv(dNameList, (2, 3), csvdir, axizFontSize=40, labelSize=30)
+    imgname = "{}/virtual_drug.png".format(imgdir)
+    fig = heatmap(dNameList, IC30, (2, 3), csvdir, axizFontSize=40, labelSize=30)
+    # fig = heatmap_usecsv(dNameList, (2, 3), csvdir, axizFontSize=40, labelSize=30)
     fig.savefig(imgname, dpi=300)
