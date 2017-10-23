@@ -8,7 +8,7 @@ import numpy as np
 import seaborn as sns
 import pandas as pd
 import matplotlib.pylab as plt
-import itertools
+import itertools as itr
 
 @reaction_rules
 def r30_binding_reaction(a_ex, a, r30_b, P_in, P_out, K_on, K_off, Lambda):
@@ -224,60 +224,76 @@ def calcGrowthrate(a, r_min=19.3, K_t=6.1*10**-2, Lambda_0=1.35):
     return result
 
 
-def checkLinerType(inp, eps_rel, pattern, buffpoint=0.):
+# def checkLinerType(inp, eps_rel, pattern, buffpoint=0.):
+#     """
+#     inp: growth rate list
+#     eps_rel: 差の許容率
+#     pattern: linertypeを計算するときのパターン
+#     """
+#     inp = np.array(inp)
+#     dinp = inp[1:] - inp[:-1] # 差のリスト
+#     before_type = 0 # -1: <, 0: ==, 1: >
+#     linertype = 0 # -1: synergistic, 0: additive, 2: antagonistic`
+#
+#     if pattern == 0:
+#         for i in range(len(dinp)):
+#             if abs(dinp[i]) > inp[i] * eps_rel: #
+#                 if dinp[i] < 0:
+#                     current_type = -1 # 減少
+#                 else:
+#                     current_type = 1 # 増加
+#             else:
+#                 current_type = 0
+#
+#             if i == 0:
+#                 before_type = current_type
+#             else:
+#                 if current_type == 0 or before_type == 0 or current_type == before_type:
+#                     pass
+#                 else:
+#                     linerList = np.linspace(inp[0], inp[-1], len(inp)) # 両端点を線形で結んだList
+#                     linertype = linerList[i] - inp[i] #
+#
+#                     return linertype
+#                     break
+#
+#     elif pattern == 1:
+#         upper_bound = max(inp[0], inp[-1])
+#         lower_bound = min(inp[0], inp[-1])
+#         max_inp = max(inp)
+#         min_inp = min(inp)
+#         if max_inp > upper_bound: # antagonistic
+#             linertype = upper_bound - max_inp
+#         elif min_inp < lower_bound: # synergistic
+#             linertype = lower_bound - min_inp
+#
+#     elif pattern == 2:
+#         if buffpoint != 0:
+#             upper_bound = max(inp[0], inp[-1])
+#             lower_bound = min(inp[0], inp[-1])
+#             max_inp = max(inp)
+#             min_inp = min(inp)
+#             if max_inp > upper_bound: # antagonistic
+#                 linertype = -(max_inp / buffpoint)
+#             elif min_inp < lower_bound: # synergistic
+#                 linertype = lower_bound - min_inp
+#
+#     return linertype
+
+def checkLinerType(inp, buff=0.):
     """
     inp: growth rate list
-    eps_rel: 差の許容率
-    pattern: linertypeを計算するときのパターン
+    buff: 差の許容率
     """
-    inp = np.array(inp)
-    dinp = inp[1:] - inp[:-1] # 差のリスト
-    before_type = 0 # -1: <, 0: ==, 1: >
-    linertype = 0 # -1: synergistic, 0: additive, 2: antagonistic`
-
-    if pattern == 0:
-        for i in range(len(dinp)):
-            if abs(dinp[i]) > inp[i] * eps_rel: #
-                if dinp[i] < 0:
-                    current_type = -1 # 減少
-                else:
-                    current_type = 1 # 増加
-            else:
-                current_type = 0
-
-            if i == 0:
-                before_type = current_type
-            else:
-                if current_type == 0 or before_type == 0 or current_type == before_type:
-                    pass
-                else:
-                    linerList = np.linspace(inp[0], inp[-1], len(inp)) # 両端点を線形で結んだList
-                    linertype = linerList[i] - inp[i] #
-
-                    return linertype
-                    break
-
-    elif pattern == 1:
-        upper_bound = max(inp[0], inp[-1])
-        lower_bound = min(inp[0], inp[-1])
-        max_inp = max(inp)
-        min_inp = min(inp)
-        if max_inp > upper_bound: # antagonistic
-            linertype = upper_bound - max_inp
-        elif min_inp < lower_bound: # synergistic
-            linertype = lower_bound - min_inp
-
-    elif pattern == 2:
-        if buffpoint != 0:
-            upper_bound = max(inp[0], inp[-1])
-            lower_bound = min(inp[0], inp[-1])
-            max_inp = max(inp)
-            min_inp = min(inp)
-            if max_inp > upper_bound: # antagonistic
-                linertype = -(max_inp / buffpoint)
-            elif min_inp < lower_bound: # synergistic
-                linertype = lower_bound - min_inp
-
+    upper_bound = max(inp[0], inp[-1]) + buff
+    lower_bound = min(inp[0], inp[-1]) - buff
+    max_inp = max(inp)
+    min_inp = min(inp)
+    linertype = 0
+    if max_inp > upper_bound: # antagonistic
+        linertype = upper_bound - max_inp
+    elif min_inp < lower_bound: # synergistic
+        linertype = lower_bound - min_inp
     return linertype
 
 
@@ -363,7 +379,7 @@ def makeCmap(c_range={"red": 30, "pink": 5, "white": 10, "light_green": 5, "gree
     del(matplotlib)
     return cmap
 
-def generate_cmap(colors):
+def generate_cmap(colors=["mediumblue", "white", "orangered"]):
     """自分で定義したカラーマップを返す(線形補完)"""
     from matplotlib.colors import LinearSegmentedColormap
     values = range(len(colors))
@@ -422,188 +438,164 @@ def calcEpsilon(dNames, doses, inpData={"modif": 1}):
 
     return epsilon(result_list[0], result_list[1], result_list[2])
 
+def calcGrowthRate(a, r_min=19.3, K_t=6.1*10**-2, Lambda_0=1.35):
+    """
+    growth_rateを計算する関数
+    """
+    result = (a - r_min) * K_t / Lambda_0
+    return result
+
+def sim(drugs, dose, inpData={}):
+    for i in range(len(drugs)):
+        drugs[i]["dose"] = dose[i]
+    result, legend = run(drugs, legend=["r_u"], inpData=inpData)
+    return calcGrowthRate(result[-1][1])
 
 
+def neweval(dNameList, IC30, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16, splitNum=11, cmap=generate_cmap(), flag=True, inpData={}):
+    # 論文の評価関数を使用してヒートマップを作成する関数
+    figsize = (subplot[1] * 10, subplot[0] * 10)
+    fig = plt.figure(figsize=figsize)
+    # fig, axn = plt.subplots(subplot[0], subplot[1])
+    # cbar_ax = fig.add_axes([.91, .3, .03, .4])
+    slopeList = [1./4., 1./2., 1., 2., 4.]
+    for index, name in enumerate(dNameList):
+        drugs = [makeDrugDatas(name[0]), makeDrugDatas(name[1])]
 
-def growthHeatmap(data, values, index, columns, title="", xlabel="", ylabel=""):
-    heatmap = pd.pivot_table(data=data, values=values , index=index, columns=columns)
-    sns.heatmap(heatmap)
+        if flag:
+            drugs[0]["target"] = "r30"
+            drugs[1]["target"] = "r30"
 
-    # ラベルの設定
-    if ylabel: plt.ylabel(ylabel)
-    else: plt.ylabel(index)
+        midPointList = [x for x in itr.zip_longest(np.linspace(0, IC30[name[0]], 11), np.linspace(0, IC30[name[1]], 11))][1:] # 0, 0を除いた10点．中点なので，IC30でOK．
+        doseList = [[[x for x in itr.zip_longest(np.linspace(0, midPoint[0] * (1 + slope), 11), np.linspace(0, midPoint[1] * (1 + (1 / slope)), 11)[::-1])] for midPoint in midPointList] for slope in slopeList]
+        resultList = []
 
-    if xlabel: plt.xlabel(xlabel)
-    else: plt.xlabel(columns)
+        plt.subplot(subplot[0], subplot[1], index + 1)
+        for slope, midPointList in enumerate(doseList):
+            for midPoint, doses in enumerate(midPointList):
+                resultList.append([(midPoint + 1) * 10, slopeList[slope], [sim(drugs, dose, inpData) for dose in doses]])
+        data = pd.DataFrame(resultList, columns=["MidPoint", "Slope", "resultList"])
+        data["LinerType"] = [checkLinerType(inp) for inp in data["resultList"]]
+        heatmapData = pd.pivot_table(data=data, index="MidPoint", columns="Slope", values="LinerType") # valueをepsilonに
+        # ax = sns.heatmap(heatmapData, vmin=-1, vmax=1, cmap=cmap,
+        #                  cbar=index == 0, cbar_ax = None if index else cbar_ax,
+        #                  linewidths=.2, annot=True, annot_kws={"size": 4}, fmt="1.2f")
+        ax = sns.heatmap(heatmapData, vmin=-1, vmax=1, cmap=cmap,
+                        cbar=False, linewidths=.2, annot=True, fmt="1.2f", annot_kws={"size": 30})
+        ax.set_ylabel("MidPoint", fontsize=axizFontSize) # y軸
+        ax.set_xlabel("Slope", fontsize=axizFontSize) # x軸
+        ax.set_title("{} vs {}".format(name[0][:3], name[1][:3]), fontsize=titleFontSize)
+        ax.tick_params(labelsize=labelSize)
+        ax.invert_yaxis()
 
-    # タイトルの設定
-    if title:
-        plt.title(title)
+        data.to_csv("{}/{}_{}.csv".format(csvdir, name[0], name[1]), index=False)
+    fig.tight_layout()
+    return fig
 
-    # ラベルの文字サイズ
-    plt.tick_params(labelsize=7)
+def neweval_usecsv(dNameList, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16, splitNum=11, cmap=generate_cmap()):
+    # 論文の評価関数を使用してヒートマップを作成する関数
+    fig = plt.figure(figsize=(subplot[1] * 10, subplot[0] * 10))
+    # fig, axn = plt.subplots(subplot[0], subplot[1])
+    # cbar_ax = fig.add_axes([.91, .35, .01, .3])
+    for index, name in enumerate(dNameList):
+        plt.subplot(subplot[0], subplot[1], index + 1)
+        data = pd.read_csv("{}/{}_{}.csv".format(csvdir, name[0], name[1]))
+        heatmapData = pd.pivot_table(data=data, index="MidPoint", columns="Slope", values="LinerType") # valueをepsilonに
+        # ax = sns.heatmap(heatmapData, vmin=-1, vmax=1, cmap=cmap,
+        #                  cbar=index == 0, cbar_ax = None if index else cbar_ax,
+        #                  linewidths=.2, annot=True, annot_kws={"size": 4}, fmt="1.2f")
+        ax = sns.heatmap(heatmapData, vmin=-1, vmax=1, cmap=cmap,
+                        cbar=False, linewidths=.2, annot=True, fmt="1.2f", annot_kws={"size": 30})
+        ax.set_ylabel("MidPoint", fontsize=axizFontSize) # y軸
+        ax.set_xlabel("Slope", fontsize=axizFontSize) # x軸
+        ax.set_title("{} vs {}".format(name[0][:3], name[1][:3]), fontsize=titleFontSize)
+        ax.tick_params(labelsize=labelSize)
+        ax.invert_yaxis()
 
-def evalHeatmap(data, cmap, values, index, columns, title="", xlabel="", ylabel=""):
-    heatmap = pd.pivot_table(data=data, values=values , index=index, columns=columns)
-    sns.heatmap(heatmap, vmin=-1, vmax=1, cmap=cmap, linewidths=.3, annot=True, annot_kws={"size": 7})
+    # fig.tight_layout(rect=[0, 0, .9 , 1])
+    fig.tight_layout()
+    return fig
 
+def createHeatmap(data, drugNames, cbar=False, cmap=False, axizFontSize=16, labelSize=16):
+    """
+        function of create Heatmap.
+        data: pandas data.
+        cmap: color map of heatmap.
+    """
+    if not cmap: cmap = sns.diverging_palette(220, 10, as_cmap=True) # coler map
+    heatmapData = pd.pivot_table(data=data, values="growth", index="a1", columns="a2") # heatmap data
+    ax = sns.heatmap(heatmapData, cbar=cbar, cmap=cmap, square=True) # create Heatmap
+    ax.invert_yaxis()
 
-    # ラベルの設定
-    if ylabel: plt.ylabel(ylabel)
-    else: plt.ylabel(index)
+    setTickLabel(data, ax)
 
-    if xlabel: plt.xlabel(xlabel)
-    else: plt.xlabel(columns)
+    ax.set_ylabel(drugNames[0], fontsize=axizFontSize) # create ylabel
+    ax.set_xlabel(drugNames[1], fontsize=axizFontSize) # create xlabel
 
-    # タイトルの設定
-    if title:
-        plt.title(title)
+    ## virtual drug
+    # if drugNames[0] == "Streptmycin": ax.set_ylabel("Pattern A", fontsize=axizFontSize) # create ylabel
+    # else : ax.set_ylabel("Pattern B", fontsize=axizFontSize) # create ylabe
+    # if drugNames    [1] == "Streptmycin": ax.set_xlabel("Pattern A", fontsize=axizFontSize) # create xlabel
+    # else: ax.set_xlabel("Pattern B", fontsize=axizFontSize) # create xlabel
 
-    # ラベルの文字サイズ
-    plt.tick_params(labelsize=7)
+    ax.tick_params(labelsize=labelSize)
 
-def midPointCombination(dose, divnum=11):
-    pointX = np.linspace(0, dose[0], divnum)
-    pointY = np.linspace(0, dose[1], divnum)
-    midPointList = [[pointX[i]/2, pointY[i]/2] for i in range(len(pointX)) if i > 0] # 中点のリスト
-    return midPointList
+def heatmap(dNameList, IC30, subplot, csvdir=".", axizFontSize=16, labelSize=16, splitNum=11, flag=False, inpData={}):
+    fig = plt.figure(figsize=(subplot[1] * 10, subplot[0] * 10))
+    for index, name in enumerate(dNameList):
+        plt.subplot(subplot[0], subplot[1], index + 1)
+        drug = [makeDrugDatas(name[0]), makeDrugDatas(name[1])]
 
+        if flag:
+            drug[0]["target"] = "r30"
+            drug[1]["target"] = "r30"
 
-
-# createGrowthHeatmap
-def createGrowthHeatmap(dataset, modif, savename, comb=True):
-    dNames = dataset["dNames"]
-    IC30 = dataset["IC30"]
-
-    if comb:
-        plt.figure(figsize=(12, 6))
-        drug_comb = list(itertools.combinations(dNames, 2))
-
-    else:
-        plt.figure(figsize=(12, 9))
-        drug_comb = [[i, i] for i in dNames]
-    for index, dName in enumerate(drug_comb):
-        drugs = [makeDrugDatas(dName[0]), makeDrugDatas(dName[1])]
-        doses = [np.linspace(0, IC30[dName[0]] * 2, 11), np.linspace(0, IC30[dName[1]] * 2, 11)]
-        doses = list(itertools.product(doses[0], doses[1]))
-        result_list = []
-        inpData = {"modif": modif}
-
+        doses = [[x, y] for x in np.linspace(0, IC30[name[0]] * 2, splitNum) for y in np.linspace(0, IC30[name[1]] * 2, splitNum)]
+        resultList = []
         for dose in doses:
-            result = doseResponse(drugs, dose, inpData=inpData)
-            result_list.append([round(dose[0], 2), round(dose[1], 2), result])
+            resultList.append([round(dose[0], 2), round(dose[1], 2), sim(drug, dose, inpData)])
+        data = pd.DataFrame(resultList, columns=["a1", "a2", "growth"])
+        createHeatmap(data, name, axizFontSize=axizFontSize, labelSize=labelSize)
+        data.to_csv("{}/{}_{}.csv".format(csvdir, name[0], name[1]), index=False)
+    fig.tight_layout()
 
-        if comb:
-            data = pd.DataFrame(result_list, columns=[dName[0], dName[1], "growth"])
-            plt.subplot(2, 3, index + 1)
-            growthHeatmap(data=data, values="growth", index=dName[0], columns=dName[1], title="{} vs {}".format(dName[0][:3], dName[1][:3]))
+    return fig
 
-        else:
-            data = pd.DataFrame(result_list, columns=["a1", "a2", "growth"])
-            plt.subplot(2, 2, index + 1)
-            growthHeatmap(data=data, values="growth", index="a1", columns="a2", title=dName[0])
+def heatmap_usecsv(dNameList, subplot, csvdir=".", axizFontSize=16, labelSize=16):
+    fig = plt.figure(figsize=(subplot[1] * 10, subplot[0] * 10))
+    for index, name in enumerate(dNameList):
+        plt.subplot(subplot[0], subplot[1], index + 1)
+        data = pd.read_csv("{}/{}_{}.csv".format(csvdir, name[0], name[1]))
+        createHeatmap(data, name, axizFontSize=axizFontSize, labelSize=labelSize)
+    fig.tight_layout()
 
-    plt.tight_layout()
-    plt.savefig(savename, dpi=200)
-    # plt.show()
-    plt.close()
+    return fig
 
+def setTickLabel(data, ax):
+    a1DoseList = list(set(data["a1"].tolist()))[::2] # y軸に表示したい数のリスト
+    a2DoseList = list(set(data["a2"].tolist()))[::2] # x軸に表示したい数のリスト
 
-# create Epsilon heatmap
-def createEpsilonHeatmap(dataset, modif, savename, comb=True):
-    dNames = dataset["dNames"]
-    IC30 = dataset["IC30"]
+    ax.set_xticks(list(np.linspace(0.5, 10.5, len(a2DoseList)))) # xticksのせてい
+    ax.set_xticklabels(list(map(str, a2DoseList)))
+    ax.set_yticks(list(np.linspace(0.5, 10.5, len(a1DoseList))))
+    ax.set_yticklabels(list(map(str, a1DoseList)))
 
-    if comb:
-        plt.figure(figsize=(12, 6))
-        drug_comb = list(itertools.combinations(dNames, 2))
-    else:
-        plt.figure(figsize=(12, 9))
-        drug_comb = [[i, i] for i in dNames]
-    cmap = makeCmap()
-    slope_list = [1./4, 1./2, 1., 2., 4.] # 傾き
-
-    for index, dName in enumerate(drug_comb):
-        midPointList = midPointCombination([IC30[dName[0]] * 2, IC30[dName[1]] * 2], divnum=11)
-        data = []
-        linertype = 0
-        inpData = {"modif": modif}
-        for slope in slope_list:
-            for pCount, midPoint in enumerate(midPointList):
-                doses = [midPoint[0] * (1 + slope), midPoint[1] * (1 + (1 / slope))]
-                linertype = calcEpsilon(dName, doses, inpData=inpData)
-                data.append([slope, (pCount + 1) * 10, linertype])
-
-        data = pd.DataFrame(data, columns=["S", "I", "growth_type"])
-        if comb:
-            plt.subplot(2, 3, index + 1)
-            evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title="{} vs {}".format(dName[0][:3], dName[1][:3]))
-        else:
-            plt.subplot(2, 2, index + 1)
-            evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title=dName[0])
-
-    plt.tight_layout()
-    plt.savefig(savename, dpi=200)
-    # plt.show()
-    plt.close()
-
-# create neweval heatmap
-def createNewevalHeatmap(dataset, modif, norm, savename, comb=True):
-    dNames = dataset["dNames"]
-    IC30 = dataset["IC30"]
-
-    if comb:
-        plt.figure(figsize=(12, 6))
-        drug_comb = list(itertools.combinations(dNames, 2))
-
-    else:
-        plt.figure(figsize=(12, 9))
-        drug_comb = [[i, i] for i in dNames]
-    cmap = generate_cmap(["mediumblue", "white", "orangered"])
-    slope_list = [1./4, 1./2, 1., 2., 4.] # 傾き\
-
-    for index, dName in enumerate(drug_comb):
-        drugs = [makeDrugDatas(dName[0]), makeDrugDatas(dName[1])]
-        midPointList = midPointCombination([IC30[dName[0]] * 2, IC30[dName[1]] * 2], divnum=11)
-        data = []
-        linertype = 0
-        inpData = {"modif": modif}
-        for slope in slope_list:
-            for pCount, midPoint in enumerate(midPointList):
-                result_list = []
-                doses = createSlopedose(slope, midPoint)
-                for dose in doses:
-                    result_list.append(doseResponse(drugs, dose, inpData=inpData))
-
-                if norm == True:
-                    buffpoint = calcBufferingPoint([dName[0], dName[1]], [doses[-1][0], doses[0][1]]) # buffering point を計算
-                    linertype = checkLinerType(result_list, 1.0e-6, 2, buffpoint)
-                else:
-                    linertype = checkLinerType(result_list, 1.0e-6, 1)
-                data.append([slope, (pCount + 1) * 10, linertype])
-
-        data = pd.DataFrame(data, columns=["S", "I", "growth_type"])
-        if comb:
-            plt.subplot(2, 3, index + 1)
-            evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title="{} vs {}".format(dName[0][:3], dName[1][:3]))
-
-        else:
-            plt.subplot(2, 2, index + 1)
-            evalHeatmap(data, cmap, "growth_type", "I", "S", ylabel="MidPoint", xlabel="Slope", title=dName[0])
-
-    plt.tight_layout()
-    plt.savefig(savename, dpi=200)
-    # plt.show()
-    plt.close()
 
 
 if __name__ == "__main__":
-    dataset = {"dNames": ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"],
-               "IC30": {'Kanamycin': 0.6761398315429688, 'Streptmycin': 1.4652465820312497, 'Chloramphenicol': 22.5, 'Tetracycline': 5.25}
-               }
-    savedir = "images/ribo5/modif2"
-    makedir(savedir)
 
-    # 実行
-    createNewevalHeatmap(dataset=dataset, modif=2, norm=False, savename="{}/modification_2_neweval.png".format(savedir), comb=False)
-    createNewevalHeatmap(dataset=dataset, modif=2, norm=True, savename="{}/modification_2_neweval_norm.png".format(savedir), comb=False)
+    dNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
+    IC30 = calcIC(dNames, {x: 50 for x in dNames}, 0.3, modif=2)
+    print(IC30)
+    # IC30 = {'Streptmycin': 1.4652013778686523, 'Kanamycin': 0.6761401891708374, 'Tetracycline': 5.2734375, 'Chloramphenicol': 21.09375}
+    inpData = {"modif": 2}
+    csvdir = "results/ribo5/csv/modif2/neweval"
+    makedir(csvdir)
+    imgdir = "results/ribo5/images"
+
+    # dNameList = [[name, name] for name in dNames] # 同じ薬剤を２剤投与した場合．
+    dNameList = itr.combinations(dNames, 2) # 異なる薬剤を２剤投与した場合．
+    # dNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
+
+    fig = neweval(dNameList, IC30, (2,3), csvdir=csvdir, axizFontSize=40, titleFontSize=30, labelSize=30, inpData=inpData)
+    fig.savefig("{}/modif2_neweval_comb.png".format(imgdir), dpi=300)

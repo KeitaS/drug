@@ -9,7 +9,7 @@ import itertools
 import math
 
 
-def generate_cmap(colors):
+def generate_cmap(colors=["mediumblue", "white", "orangered"]):
     """自分で定義したカラーマップを返す(線形補完)"""
     from matplotlib.colors import LinearSegmentedColormap
     values = range(len(colors))
