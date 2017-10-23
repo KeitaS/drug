@@ -51,22 +51,23 @@ def createModel(r_max=65.8, r_min=19.3, K_D=0.1, K_t=6.1*10**-2, K_on=60.0, Lamb
 
     return get_model()
 
-def sim(a_ex, inpData={"Lambda_0": 1.35}):
+def sim(drug, a_ex, inpData={"Lambda_0": 1.35}):
     r_min = 19.3
     K_t = 6.1*10**-2
     Lambda_0 = inpData["Lambda_0"]
     data = [];
     for dose in a_ex:
-        result, legend = run_test2(dose, inpData=inpData)
+        drug["dose"] = dose
+        result, legend = run(drug, inpData=inpData)
         data.append((result[-1][1] - r_min) * K_t / Lambda_0)
     return data
 
-def run_test2(a_ex, step=10., legend=["r_u"], inpData={}, y0={"a": .0, "r_u": 30.0, "r_b": .0}):
-    dataset = {"Lambda_0": 1.35, "Lambda_0_a": 0.31, "IC50": 0.41, "IC50_a": 0.189, "K_t": 6.1 * 10 ** -2, "r_min": 19.3}
+def run(drug, step=50., legend=["r_u"], inpData={}, y0={"a": .0, "r_u": 30.0, "r_b": .0}):
+    dataset = {"Lambda_0": 1.35, "Lambda_0_a": drug["Lambda_0_a"], "IC50": drug["IC50"], "IC50_a": drug["IC50_a"], "K_t": 6.1 * 10 ** -2, "r_min": 19.3}
 
     dataset.update(inpData)
     model = createModel(**dataset)
-    y0["a_ex"] = a_ex
+    y0["a_ex"] = drug["dose"]
 
     if not legend:
         legend = y0.keys()
@@ -76,142 +77,46 @@ def run_test2(a_ex, step=10., legend=["r_u"], inpData={}, y0={"a": .0, "r_u": 30
     data = runsim.data()
     return data, legend
 
-
-def makeGraph(data, savename, legend=[], title="", xlabel="", ylabel=""):
-    for i in range(len(data[0]) - 1):
-        if legend[i]:
-            plt.plot(data.T[0], data.T[i+1], label=legend[i])
-        else:
-            plt.plot(data.T[0], data.T[i+1])
-    if title: # titleがあったらつける
-        plt.title(title)
-
-    if xlabel: # xlabelがあったらつける
-        plt.xlabel(xlabel)
-
-    if ylabel: # ylabelがあったらつける
-        plt.ylabel(ylabel)
-
-    plt.legend(loc="upper right")
-    # plt.show()
-    plt.savefig("{}".format(savename), dpi=200)
-    plt.close()
-
-
-def run_test(dataset={}, y0={"a": .0, "r_u": 30.0, "r_b": .0}, step=[0, 1], stepInt=200):
+def makeDrugDatas(drugName, medium=0):
     """
-    riboモデルをRunするモジュール
-    現段階では、Lambda
-
-    y0: 各変数の初期値{"a": .0, "r_u": 30.0, "r_b": .0}, a_exは振る。
-    dataset: riboモデルに入力必須のもの。Lambda_0, Lambda_0_a, IC50, IC50_a。
-    step: a_exの振り幅。default = [0, 1]
-    # streptmycin, canamycin: 1, tetracycline: 2, chloramphenicol: 20
+    薬剤データを作成して返す関数
+    drugName : 投与する薬剤の名前
+    medium : 培地の番号(0: ,
+                      1: ,
+                      2: ,
+                     )
     """
+    Lambda_0_a = {"Streptmycin": 0.31, "Kanamycin": 0.169, "Tetracycline": 5.24, "Chloramphenicol": 1.83} # 1/h
+    IC50 = {"Streptmycin": [0.41, 0.28, 0.196], "Kanamycin": [0.246, 0.096, 0.065], "Tetracycline": [0.5, 0.6, 1.45], "Chloramphenicol": [2.85, 2.65, 5.7]} # µg/ml
+    IC50_a = {"Streptmycin": 0.189, "Kanamycin": 0.05, "Tetracycline": 0.229, "Chloramphenicol": 2.49} # µg/ml
+    # types = {"Streptmycin": "r30", "Kanamycin": "r30", "Tetracycline": "r30", "Chloramphenicol": "r50"}
 
-    default_data = {"Lambda_0": 1.35, "Lambda_0_a": 0.31, "IC50": 0.41, "IC50_a": 0.189, "K_t": 6.1 * 10 ** -2, "r_min": 19.3}
+    drugData = {"name": drugName,
+                # "target": types[drugName],
+                "dose": .0,
+                "Lambda_0_a": Lambda_0_a[drugName],
+                "IC50": IC50[drugName][medium],
+                "IC50_a": IC50_a[drugName]
+                }
 
-    for variable in default_data.keys():
-        if not dataset.get(variable):
-            dataset[variable] = default_data[variable]
-
-    model = createModel(**dataset)
-
-    result = []
-    for a_ex in np.linspace(step[0], step[1], 201):
-        y0["a_ex"] = a_ex
-        runsim = run_simulation((0, stepInt), solver = "ode", y0 = y0,
-                                return_type = "observer", model = model,
-                                species_list = ["r_u"])
-        r_u = runsim.data()[-1][1]
-        Lambda = (r_u - dataset["r_min"]) * dataset["K_t"]
-        result.append((a_ex, Lambda / dataset["Lambda_0"]))
-
-    return np.array(result)
-
-
-
-def run(a_ex, dataset={}, y0={"a": .0, "r_u": 30.0, "r_b": .0}, step=10):
-    """
-    12/16
-    riboモデルをRunするモジュール
-    a_exも入力するようになっている。
-    ### sim_time: 必要なら入れる ###
-    dataset: riboモデルに入力必須のもの。Lambda_0, Lambda_0_a, IC50, IC50_a。
-    y0: 各変数の初期値{"a": .0, "r_u": 30.0, "r_b": .0}, a_exは振る。
-    step: a_exの振り幅。default = 100
-    # streptmycin, canamycin: 1, tetracycline: 2, chloramphenicol: 20
-    """
-
-    default_data = {"Lambda_0": 1.35, "Lambda_0_a": 0.31, "IC50": 0.41, "IC50_a": 0.189, "K_t": 6.1 * 10 ** -2, "r_min": 19.3}
-
-    #for variable in default_data.keys():
-    #    if not dataset.get(variable):
-    #        dataset[variable] = default_data[variable]
-    default_data.update(dataset)
-
-    model = createModel(**default_data)
-
-    result = {}
-
-    y0["a_ex"] = a_ex
-    runsim = run_simulation(step, solver="ode", y0=y0,
-                            return_type="observer", model=model,
-                            species_list=["a", "a_ex", "r_u", "r_b"])
-
-    data = runsim.data()[-1]
-    r_u = data[3]
-    Lambda = (r_u - default_data["r_min"]) * default_data["K_t"]
-    result["a_ex"] = data[2]
-    result["dataset"] = {"a": data[1], "r_u": r_u, "r_b": data[4]}
-    # result["result"] = (sim_time + data[0], Lambda / dataset["Lambda_0"])
-    result["growth"] = Lambda # Lambdaの結果を返すように
-    return result
-
+    return drugData
 
 if __name__ == "__main__":
     r_min = 19.3
     K_t = 6.1 * 10 ** -2
 
     ## drug data
-    drug = ["streptmycin", "kanamycin", "tetracycline", "chloramphenicol"]
+    drugName = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
     Lambda_0 =  [1.35, 0.85, 0.40] # 1/h (1.35, 0.85, 0.40)
-    Lambda_0_a = {"streptmycin": 0.31, "kanamycin": 0.169, "tetracycline": 5.24, "chloramphenicol": 1.83} # 1/h
-    IC50 = {"streptmycin": [0.41, 0.28, 0.196], "kanamycin": [0.246, 0.096, 0.065], "tetracycline": [0.5, 0.6, 1.45], "chloramphenicol": [2.85, 2.65, 5.7]} # µg/ml
-    IC50_a = {"streptmycin": 0.189, "kanamycin": 0.05, "tetracycline": 0.229, "chloramphenicol": 2.49} # µg/ml
-    A_ex = {"streptmycin": 0.6, "kanamycin": 0.5, "tetracycline":2, "chloramphenicol": 20}
+    A_ex = {"Streptmycin": 0.6, "Kanamycin": 0.5, "Tetracycline":2, "Chloramphenicol": 20}
 
     xlabel = "Extracellular antibiotic concentration $a_{ex}$ ($\mu$M)"
     ylabel = "Normalized Growth Rate $\lambda/\lambda_{0}$"
     legend = ["$Gly$", "$Gly_{CAA}$", "$Gly_{RDM}$"]
     color = ["g", "b", "r"]
 
-
-    for index, name in enumerate(drug):
-        plt.subplot(2, 2, index + 1)
-        # data = pd.read_csv("results/ribo1/csv/{}.csv".format(name))
-
-        # print("{} simulation >>>".format(name))
-        doses = np.linspace(0, A_ex[name], 101)
-        data = pd.DataFrame([doses], index=["dose"]).T
-        for i in range(3):
-            # print("medium {} >>".format(i))
-            dataset = {"Lambda_0": Lambda_0[i],
-                       "Lambda_0_a": Lambda_0_a[name],
-                       "IC50": IC50[name][i],
-                       "IC50_a":IC50_a[name]}
-            data[legend[i]] = sim(doses, dataset) # 保存は出てきてから
-            plt.plot(list(data["dose"]), list(data[legend[i]]), label=legend[i], color=color[i])
-
-        plt.title(name)
-        if name == "streptmycin" or name == "kanamycin":
-            plt.xlabel("Extracellular antibiotic concentration $a_{ex}$ ($\mu$g/ml)")
-        else:
-            plt.xlabel("Extracellular antibiotic concentration $a_{ex}$ ($\mu$M)")
-        plt.ylabel(ylabel)
-        plt.legend(loc="upper right")
-        data.to_csv("results/ribo1/csv/{}.csv".format(name), index=False) # make csv data
-
-    savename = "results/ribo1/images/single_result.png"
-    plt.tight_layout()
-    plt.savefig(savename, dpi=300)
+    doses = np.linspace( 0, A_ex[drugName[0]], 100)
+    drug = makeDrugDatas(drugName[0])
+    result = sim(drug, doses)
+    plt.plot(doses, result)
+    plt.show()
