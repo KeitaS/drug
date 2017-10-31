@@ -65,7 +65,7 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
     with reaction_rules():
         Lambda = (r30_r50 - r_min) * K_t
         SUP = (Lambda * (r_max - Lambda * delta_r * (1 / Lambda_0 - 1 / K_t / delta_r))) * (1 + sub_p)
-
+        print(drugs)
         for index, drug in enumerate(drugs):
             # 薬剤の流入の式を追加
             drug_ex = _eval("drug{}_ex".format(index))
@@ -76,7 +76,7 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
 
         # DrugA(30s)
         # 薬剤流入
-        ~A_ex == A | (P_in * A_ex, P_out)
+        # ~A_ex == A | (P_in * A_ex, P_out)
         # 薬剤希釈
         A > ~A | Lambda * A
         # 薬剤結合
@@ -95,7 +95,7 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
 
         # DrugB(30s)
         # 薬剤流入
-        ~B_ex == B | (P_in * B_ex, P_out)
+        # ~B_ex == B | (P_in * B_ex, P_out)
         # 薬剤希釈
         B > ~B | Lambda * B
         # 薬剤結合
@@ -114,7 +114,7 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
 
         # DrugC(50s)
         # 薬剤流入
-        ~C_ex == C | (P_in * C_ex, P_out)
+        # ~C_ex == C | (P_in * C_ex, P_out)
         # 薬剤希釈
         C > ~C | Lambda * C
         # 薬剤結合
@@ -133,7 +133,7 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
 
         # DrugD(50s)
         # 薬剤流入
-        ~D_ex == D | (P_in * D_ex, P_out)
+        # ~D_ex == D | (P_in * D_ex, P_out)
         # 薬剤希釈
         D > ~D | Lambda * D
         # 薬剤結合
@@ -152,21 +152,21 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
 
         # リボソームの結合パターン
         r30 + r50 == r30_r50 | (sub_k_a, sub_k_d * (r30_r50 - r_min)) # もともとはこれだけ
-        r30 + r50C == r30_r50C | (sub_k_a, sub_k_d * (r30_r50C - r_min)) # r_minいらない？？
-        r30 + r50D == r30_r50D | (sub_k_a, sub_k_d * (r30_r50D - r_min)) # r_minいらない？？
-        r30 + r50CD == r30_r50CD | (sub_k_a, sub_k_d * (r30_r50CD - r_min)) # r_minいらない？？
-        r30A + r50 == r30A_r50 | (sub_k_a, sub_k_d * (r30A_r50 - r_min)) # r_minいらない？？
-        r30A + r50C == r30A_r50C | (sub_k_a, sub_k_d * (r30A_r50C - r_min)) # r_minいらない？？
-        r30A + r50D == r30A_r50D | (sub_k_a, sub_k_d * (r30A_r50D - r_min)) # r_minいらない？？
-        r30A + r50CD == r30A_r50CD | (sub_k_a, sub_k_d * (r30A_r50CD - r_min)) # r_minいらない？？
-        r30B + r50 == r30B_r50 | (sub_k_a, sub_k_d * (r30B_r50 - r_min)) # r_minいらない？？
-        r30B + r50C == r30B_r50C | (sub_k_a, sub_k_d * (r30B_r50C - r_min)) # r_minいらない？？
-        r30B + r50D == r30B_r50D | (sub_k_a, sub_k_d * (r30B_r50D - r_min)) # r_minいらない？？
-        r30B + r50CD == r30B_r50CD | (sub_k_a, sub_k_d * (r30B_r50CD - r_min)) # r_minいらない？？
-        r30AB + r50 == r30AB_r50 | (sub_k_a, sub_k_d * (r30AB_r50 - r_min)) # r_minいらない？？
-        r30AB + r50C == r30AB_r50C | (sub_k_a, sub_k_d * (r30AB_r50C - r_min)) # r_minいらない？？
-        r30AB + r50D == r30AB_r50D | (sub_k_a, sub_k_d * (r30AB_r50D - r_min)) # r_minいらない？？
-        r30AB + r50CD == r30AB_r50CD | (sub_k_a, sub_k_d * (r30AB_r50CD - r_min)) # r_minいらない？？
+        r30 + r50C == r30_r50C | (sub_k_a, sub_k_d)
+        r30 + r50D == r30_r50D | (sub_k_a, sub_k_d)
+        r30 + r50CD == r30_r50CD | (sub_k_a, sub_k_d)
+        r30A + r50 == r30A_r50 | (sub_k_a, sub_k_d)
+        r30A + r50C == r30A_r50C | (sub_k_a, sub_k_d)
+        r30A + r50D == r30A_r50D | (sub_k_a, sub_k_d)
+        r30A + r50CD == r30A_r50CD | (sub_k_a, sub_k_d)
+        r30B + r50 == r30B_r50 | (sub_k_a, sub_k_d)
+        r30B + r50C == r30B_r50C | (sub_k_a, sub_k_d)
+        r30B + r50D == r30B_r50D | (sub_k_a, sub_k_d)
+        r30B + r50CD == r30B_r50CD | (sub_k_a, sub_k_d)
+        r30AB + r50 == r30AB_r50 | (sub_k_a, sub_k_d)
+        r30AB + r50C == r30AB_r50C | (sub_k_a, sub_k_d)
+        r30AB + r50D == r30AB_r50D | (sub_k_a, sub_k_d)
+        r30AB + r50CD == r30AB_r50CD | (sub_k_a, sub_k_d)
 
         # リボソームサブユニットの希釈
         r30 > ~r30 | Lambda * r30
@@ -228,15 +228,8 @@ def calcGrowthRate(r30_r50, Lambda_0=1.35):
 
 if __name__ == "__main__":
     drugNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
-
-    drugs = [createDrugData(drugNames[0])]
-    doses = np.linspace(0, 10, 51)
-    resultList = []
-
-
-    for dose in doses:
-        drugs[0]["dose"] = dose
-        resultList.append(calcGrowthRate(run(drugs)[-1][1]))
-        print(resultList[-1])
-    plt.plot(doses, resultList)
-    plt.show()
+    drugs = []
+    print(calcGrowthRate(run(drugs)[-1][1]))
+    # m = createModel(drugs)
+    # for i, rr in enumerate(m.reaction_rules()):
+    #     print("{:03d} : {}".format(i, rr.as_string()))
