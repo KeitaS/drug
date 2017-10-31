@@ -178,6 +178,9 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
         r50D > ~r50D | Lambda * r50D
         r50CD > ~r50CD | Lambda * r50CD
         r30_r50 > ~r30_r50 | Lambda * r30_r50
+        r30_r50C > ~r30_r50C | Lambda * r30_r50C
+        r30_r50D > ~r30_r50D | Lambda * r30_r50D
+        r30_r50CD > ~r30_r50CD | Lambda * r30_r50CD
         r30A_r50 > ~r30A_r50 | Lambda * r30A_r50
         r30A_r50C > ~r30A_r50C | Lambda * r30A_r50C
         r30A_r50D > ~r30A_r50D | Lambda * r30A_r50D
@@ -234,5 +237,6 @@ if __name__ == "__main__":
     for dose in doses:
         drugs[0]["dose"] = dose
         resultList.append(calcGrowthRate(run(drugs)[-1][1]))
+        print(resultList[-1])
     plt.plot(doses, resultList)
     plt.show()
