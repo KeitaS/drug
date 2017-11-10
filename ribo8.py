@@ -52,25 +52,28 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
     """
     # 定数
     K_t = 6.1 * 10 ** -2 # 固定
-    r_min = 19.3 # 固定
+    r_min = 19.3 # 固定 元論文から定義の変更
     r_max = 65.8 # 固定
     Lambda_0_list = [1.35, 0.85, 0.4]
 
-    delta_r = r_max - r_min
+    delta_r = r_max - (r_min * (1 + p) # 元論文から定義の変更
     K_off = K_on * K_D
     r_u_0 = Lambda_0 / K_t + r_min
     sub_k_a = (sub_k_d / K_t + r_u_0) * Lambda_0 / ((sub_p * r_u_0) ** 2)
 
 
     with reaction_rules():
-        Lambda = (r30_r50 - r_min) * K_t
-        SUP = (Lambda * (r_max - Lambda * delta_r * (1 / Lambda_0 - 1 / K_t / delta_r))) * (1 + sub_p)
-        print(drugs)
+        r30_tot = r30 + r30_r50 + r30_r50C + r30_r50D + r30_r50CD + \
+            r30A + r30A_r50 + r30A_r50C + r30A_r50D + r30A_r50CD + \
+            r30B + r30B_r50 + r30B_r50C + r30B_r50D + r30B_r50CD + \
+            r30AB + r30AB_r50 + r30AB_r50C + r30AB_r50D + r30AB_r50CD
+        Lambda = (r30_tot - r_min) * K_t * r30_r50 / r30_tot
+        SUP = Lambda * r30_tot
         for index, drug in enumerate(drugs):
             # 薬剤の流入の式を追加
             drug_ex = _eval("drug{}_ex".format(index))
             target = _eval(drug["target"])
-            P_in = (r_max - r_min) * drug["Lambda_0_a"] / 2.0 / drug["IC50_a"] # 薬剤の流入
+            P_in = delta_r * drug["Lambda_0_a"] / 2.0 / drug["IC50_a"] # 薬剤の流入
             P_out = (drug["Lambda_0_a"] / 2) ** 2.0 / K_t / K_D # 薬剤の流出
             createVariable(drug_ex, target, P_in, P_out)
 
@@ -217,6 +220,7 @@ def run(drugs=[], step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 3
         species_list = sp_list
     )
     data = runsim.data()
+    print(data[-1])
     return data
 
 def calcGrowthRate(r30_r50, Lambda_0=1.35):
@@ -228,8 +232,14 @@ def calcGrowthRate(r30_r50, Lambda_0=1.35):
 
 if __name__ == "__main__":
     drugNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
-    drugs = []
-    print(calcGrowthRate(run(drugs)[-1][1]))
-    # m = createModel(drugs)
-    # for i, rr in enumerate(m.reaction_rules()):
-    #     print("{:03d} : {}".format(i, rr.as_string()))
+    drugs = [createDrugData("Streptmycin")]
+    doses = np.linspace(0, 10, 101)
+    result = []
+    sp_list = ["r30_r50", "A", "r30", "r30A", "r30A_r50", "r30A_r50D"]
+    inpData = {"K_on": 1.}
+    print(sp_list)
+    for dose in doses:
+        drugs[0]["dose"] = dose
+        result.append(calcGrowthRate(run(drugs, inpData=inpData, sp_list=sp_list)[-1][1]))
+    plt.plot(doses, result)
+    plt.show()
