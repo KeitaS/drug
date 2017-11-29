@@ -56,19 +56,19 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
     r_max = 65.8 # 固定
     Lambda_0_list = [1.35, 0.85, 0.4]
 
-    delta_r = r_max - (r_min * (1 + p) # 元論文から定義の変更
+    delta_r = r_max - (r_min * (1 + sub_p)) # 元論文から定義の変更
     K_off = K_on * K_D
     r_u_0 = Lambda_0 / K_t + r_min
     sub_k_a = (sub_k_d / K_t + r_u_0) * Lambda_0 / ((sub_p * r_u_0) ** 2)
 
 
     with reaction_rules():
-        r30_tot = r30 + r30_r50 + r30_r50C + r30_r50D + r30_r50CD + \
-            r30A + r30A_r50 + r30A_r50C + r30A_r50D + r30A_r50CD + \
-            r30B + r30B_r50 + r30B_r50C + r30B_r50D + r30B_r50CD + \
-            r30AB + r30AB_r50 + r30AB_r50C + r30AB_r50D + r30AB_r50CD
+        r30_tot = (r30 + r30_r50 + r30_r50C + r30_r50D + r30_r50CD +
+            r30A + r30A_r50 + r30A_r50C + r30A_r50D + r30A_r50CD +
+            r30B + r30B_r50 + r30B_r50C + r30B_r50D + r30B_r50CD +
+            r30AB + r30AB_r50 + r30AB_r50C + r30AB_r50D + r30AB_r50CD)
         Lambda = (r30_tot - r_min) * K_t * r30_r50 / r30_tot
-        SUP = Lambda * r30_tot
+        SUP = Lambda * r3s0_tot
         for index, drug in enumerate(drugs):
             # 薬剤の流入の式を追加
             drug_ex = _eval("drug{}_ex".format(index))
@@ -154,22 +154,22 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
         D + r30AB_r50C == r30AB_r50CD | (K_on, K_off)
 
         # リボソームの結合パターン
-        r30 + r50 == r30_r50 | (sub_k_a, sub_k_d * (r30_r50 - r_min)) # もともとはこれだけ
-        r30 + r50C == r30_r50C | (sub_k_a, sub_k_d)
-        r30 + r50D == r30_r50D | (sub_k_a, sub_k_d)
-        r30 + r50CD == r30_r50CD | (sub_k_a, sub_k_d)
-        r30A + r50 == r30A_r50 | (sub_k_a, sub_k_d)
-        r30A + r50C == r30A_r50C | (sub_k_a, sub_k_d)
-        r30A + r50D == r30A_r50D | (sub_k_a, sub_k_d)
-        r30A + r50CD == r30A_r50CD | (sub_k_a, sub_k_d)
-        r30B + r50 == r30B_r50 | (sub_k_a, sub_k_d)
-        r30B + r50C == r30B_r50C | (sub_k_a, sub_k_d)
-        r30B + r50D == r30B_r50D | (sub_k_a, sub_k_d)
-        r30B + r50CD == r30B_r50CD | (sub_k_a, sub_k_d)
-        r30AB + r50 == r30AB_r50 | (sub_k_a, sub_k_d)
-        r30AB + r50C == r30AB_r50C | (sub_k_a, sub_k_d)
-        r30AB + r50D == r30AB_r50D | (sub_k_a, sub_k_d)
-        r30AB + r50CD == r30AB_r50CD | (sub_k_a, sub_k_d)
+        r30 + r50 == r30_r50 | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30_r50 / r30_tot) # もともとはこれだけ
+        r30 + r50C == r30_r50C | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30_r50C / r30_tot)
+        r30 + r50D == r30_r50D | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30_r50D / r30_tot)
+        r30 + r50CD == r30_r50CD | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30_r50CD / r30_tot)
+        r30A + r50 == r30A_r50 | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30A_r50 / r30_tot)
+        r30A + r50C == r30A_r50C | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30A_r50C / r30_tot)
+        r30A + r50D == r30A_r50D | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30A_r50D / r30_tot)
+        r30A + r50CD == r30A_r50CD | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30A_r50CD / r30_tot)
+        r30B + r50 == r30B_r50 | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30B_r50 / r30_tot)
+        r30B + r50C == r30B_r50C | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30B_r50C / r30_tot)
+        r30B + r50D == r30B_r50D | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30B_r50D / r30_tot)
+        r30B + r50CD == r30B_r50CD | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30B_r50CD / r30_tot)
+        r30AB + r50 == r30AB_r50 | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30AB_r50 / r30_tot)
+        r30AB + r50C == r30AB_r50C | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30AB_r50C / r30_tot)
+        r30AB + r50D == r30AB_r50D | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30AB_r50D / r30_tot)
+        r30AB + r50CD == r30AB_r50CD | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30AB_r50CD / r30_tot)
 
         # リボソームサブユニットの希釈
         r30 > ~r30 | Lambda * r30
@@ -211,6 +211,8 @@ def run(drugs=[], step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 3
     for index, drug in enumerate(drugs):
         y0["drug{}_ex".format(index)] = drug["dose"]
 
+    # for i, rr in enumerate(model.reaction_rules()):
+    #     print("{:03d}: {}".format(i, rr.as_string()))
     runsim = run_simulation(
         step,
         solver = "ode",
@@ -220,10 +222,11 @@ def run(drugs=[], step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 3
         species_list = sp_list
     )
     data = runsim.data()
-    print(data[-1])
+    # 返すデータはフルデータをリターンする(species_listは入力しなかった場合はどうやって出す？？)
     return data
 
-def calcGrowthRate(r30_r50, Lambda_0=1.35):
+def calcGrowthRate(r30_r50):
+    Lambda = (r30_tot - r_min) * K_t * r30_r50 / r30_tot
     r_min = 19.3
     K_t = 6.1 * 10 ** -2
     result = (r30_r50 - r_min) * K_t / Lambda_0
@@ -235,11 +238,10 @@ if __name__ == "__main__":
     drugs = [createDrugData("Streptmycin")]
     doses = np.linspace(0, 10, 101)
     result = []
-    sp_list = ["r30_r50", "A", "r30", "r30A", "r30A_r50", "r30A_r50D"]
-    inpData = {"K_on": 1.}
-    print(sp_list)
-    for dose in doses:
-        drugs[0]["dose"] = dose
-        result.append(calcGrowthRate(run(drugs, inpData=inpData, sp_list=sp_list)[-1][1]))
-    plt.plot(doses, result)
-    plt.show()
+    run(drugs)
+    # for dose in doses:
+    #     drugs[0]["dose"] = dose
+    #     print(dose)
+    #     result.append(calcGrowthRate(run(drugs)[-1][1]))
+    # plt.plot(doses, result)
+    # plt.show()
