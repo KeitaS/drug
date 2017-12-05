@@ -76,131 +76,132 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
             target = _eval(drug["target"])
             P_in = delta_r * drug["Lambda_0_a"] / 2.0 / drug["IC50_a"] # 薬剤の流入
             P_out = (drug["Lambda_0_a"] / 2) ** 2.0 / K_t / K_D # 薬剤の流出
-            createVariable(drug_ex, target, P_in, P_out)
+            # createVariable(drug_ex, target, P_in, P_out)
 
         # DrugA(30s)
         # 薬剤流入
         # ~A_ex == A | (P_in * A_ex, P_out)
         # 薬剤希釈
-        A > ~A | Lambda * A
-        # 薬剤結合
-        ## 標的サブユニットへの結合
-        A + r30 == r30A | (K_on, K_off)
-        A + r30B == r30AB | (K_on, K_off)
-        ## 機能性リボソームへの結合
-        A + r30_r50 == r30A_r50 | (K_on, K_off)
-        A + r30_r50C == r30A_r50C | (K_on, K_off)
-        A + r30_r50D == r30A_r50D | (K_on, K_off)
-        A + r30_r50CD == r30A_r50CD | (K_on, K_off)
-        A + r30B_r50 == r30AB_r50 | (K_on, K_off)
-        A + r30B_r50C == r30AB_r50C | (K_on, K_off)
-        A + r30B_r50D == r30AB_r50D | (K_on, K_off)
-        A + r30B_r50CD == r30AB_r50CD | (K_on, K_off)
-
-        # DrugB(30s)
-        # 薬剤流入
-        # ~B_ex == B | (P_in * B_ex, P_out)
-        # 薬剤希釈
-        B > ~B | Lambda * B
-        # 薬剤結合
-        ## 標的サブユニットへの結合
-        B + r30 == r30B | (K_on, K_off)
-        B + r30A == r30AB | (K_on, K_off)
-        ## 機能性リボソームへの結合
-        B + r30_r50 == r30B_r50 | (K_on, K_off)
-        B + r30_r50C == r30B_r50C | (K_on, K_off)
-        B + r30_r50D == r30B_r50D | (K_on, K_off)
-        B + r30_r50CD == r30B_r50CD | (K_on, K_off)
-        B + r30A_r50 == r30AB_r50 | (K_on, K_off)
-        B + r30A_r50C == r30AB_r50C | (K_on, K_off)
-        B + r30A_r50D == r30AB_r50D | (K_on, K_off)
-        B + r30A_r50CD == r30AB_r50CD | (K_on, K_off)
-
-        # DrugC(50s)
-        # 薬剤流入
-        # ~C_ex == C | (P_in * C_ex, P_out)
-        # 薬剤希釈
-        C > ~C | Lambda * C
-        # 薬剤結合
-        ## 標的サブユニットへの結合
-        C + r50 == r50C | (K_on, K_off)
-        C + r50D == r50CD | (K_on, K_off)
-        ## 機能性リボソームへの結合
-        C + r30_r50 == r30_r50C | (K_on, K_off)
-        C + r30_r50D == r30_r50CD | (K_on, K_off)
-        C + r30A_r50 == r30A_r50C | (K_on, K_off)
-        C + r30A_r50D == r30A_r50CD | (K_on, K_off)
-        C + r30B_r50 == r30B_r50C | (K_on, K_off)
-        C + r30B_r50D == r30B_r50CD | (K_on, K_off)
-        C + r30AB_r50 == r30AB_r50C | (K_on, K_off)
-        C + r30AB_r50D == r30AB_r50CD | (K_on, K_off)
-
-        # DrugD(50s)
-        # 薬剤流入
-        # ~D_ex == D | (P_in * D_ex, P_out)
-        # 薬剤希釈
-        D > ~D | Lambda * D
-        # 薬剤結合
-        ## 標的サブユニットへの結合
-        D + r50 == r50D | (K_on, K_off)
-        D + r50C == r50CD | (K_on, K_off)
-        ## 機能性リボソームへの結合
-        D + r30_r50 == r30_r50D | (K_on, K_off)
-        D + r30_r50C == r30_r50CD | (K_on, K_off)
-        D + r30A_r50 == r30A_r50D | (K_on, K_off)
-        D + r30A_r50C == r30A_r50CD | (K_on, K_off)
-        D + r30B_r50 == r30B_r50D | (K_on, K_off)
-        D + r30B_r50C == r30B_r50CD | (K_on, K_off)
-        D + r30AB_r50 == r30AB_r50D | (K_on, K_off)
-        D + r30AB_r50C == r30AB_r50CD | (K_on, K_off)
+        # A > ~A | Lambda * A
+        # # 薬剤結合
+        # ## 標的サブユニットへの結合
+        # A + r30  == r30A  | (K_on, K_off)
+        # A + r30B == r30AB | (K_on, K_off)
+        # ## 機能性リボソームへの結合
+        # A + r30_r50    == r30A_r50    | (K_on, K_off)
+        # A + r30_r50C   == r30A_r50C   | (K_on, K_off)
+        # A + r30_r50D   == r30A_r50D   | (K_on, K_off)
+        # A + r30_r50CD  == r30A_r50CD  | (K_on, K_off)
+        # A + r30B_r50   == r30AB_r50   | (K_on, K_off)
+        # A + r30B_r50C  == r30AB_r50C  | (K_on, K_off)
+        # A + r30B_r50D  == r30AB_r50D  | (K_on, K_off)
+        # A + r30B_r50CD == r30AB_r50CD | (K_on, K_off)
+        #
+        # # DrugB(30s)
+        # # 薬剤流入
+        # # ~B_ex == B | (P_in * B_ex, P_out)
+        # # 薬剤希釈
+        # B > ~B | Lambda * B
+        # # 薬剤結合
+        # ## 標的サブユニットへの結合
+        # B + r30  == r30B  | (K_on, K_off)
+        # B + r30A == r30AB | (K_on, K_off)
+        # ## 機能性リボソームへの結合
+        # B + r30_r50    == r30B_r50    | (K_on, K_off)
+        # B + r30_r50C   == r30B_r50C   | (K_on, K_off)
+        # B + r30_r50D   == r30B_r50D   | (K_on, K_off)
+        # B + r30_r50CD  == r30B_r50CD  | (K_on, K_off)
+        # B + r30A_r50   == r30AB_r50   | (K_on, K_off)
+        # B + r30A_r50C  == r30AB_r50C  | (K_on, K_off)
+        # B + r30A_r50D  == r30AB_r50D  | (K_on, K_off)
+        # B + r30A_r50CD == r30AB_r50CD | (K_on, K_off)
+        #
+        # # DrugC(50s)
+        # # 薬剤流入
+        # # ~C_ex == C | (P_in * C_ex, P_out)
+        # # 薬剤希釈
+        # C > ~C | Lambda * C
+        # # 薬剤結合
+        # ## 標的サブユニットへの結合
+        # C + r50 == r50C | (K_on, K_off)
+        # C + r50D == r50CD | (K_on, K_off)
+        # ## 機能性リボソームへの結合
+        # C + r30_r50 == r30_r50C | (K_on, K_off)
+        # C + r30_r50D == r30_r50CD | (K_on, K_off)
+        # C + r30A_r50 == r30A_r50C | (K_on, K_off)
+        # C + r30A_r50D == r30A_r50CD | (K_on, K_off)
+        # C + r30B_r50 == r30B_r50C | (K_on, K_off)
+        # C + r30B_r50D == r30B_r50CD | (K_on, K_off)
+        # C + r30AB_r50 == r30AB_r50C | (K_on, K_off)
+        # C + r30AB_r50D == r30AB_r50CD | (K_on, K_off)
+        #
+        # # DrugD(50s)
+        # # 薬剤流入
+        # # ~D_ex == D | (P_in * D_ex, P_out)
+        # # 薬剤希釈
+        # D > ~D | Lambda * D
+        # # 薬剤結合
+        # ## 標的サブユニットへの結合
+        # D + r50 == r50D | (K_on, K_off)
+        # D + r50C == r50CD | (K_on, K_off)
+        # ## 機能性リボソームへの結合
+        # D + r30_r50 == r30_r50D | (K_on, K_off)
+        # D + r30_r50C == r30_r50CD | (K_on, K_off)
+        # D + r30A_r50 == r30A_r50D | (K_on, K_off)
+        # D + r30A_r50C == r30A_r50CD | (K_on, K_off)
+        # D + r30B_r50 == r30B_r50D | (K_on, K_off)
+        # D + r30B_r50C == r30B_r50CD | (K_on, K_off)
+        # D + r30AB_r50 == r30AB_r50D | (K_on, K_off)
+        # D + r30AB_r50C == r30AB_r50CD | (K_on, K_off)
 
         # リボソームの結合パターン
-        r30 + r50 == r30_r50 | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30_r50 / r30_tot) # もともとはこれだけ
-        r30 + r50C == r30_r50C | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30_r50C / r30_tot)
-        r30 + r50D == r30_r50D | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30_r50D / r30_tot)
-        r30 + r50CD == r30_r50CD | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30_r50CD / r30_tot)
-        r30A + r50 == r30A_r50 | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30A_r50 / r30_tot)
-        r30A + r50C == r30A_r50C | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30A_r50C / r30_tot)
-        r30A + r50D == r30A_r50D | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30A_r50D / r30_tot)
-        r30A + r50CD == r30A_r50CD | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30A_r50CD / r30_tot)
-        r30B + r50 == r30B_r50 | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30B_r50 / r30_tot)
-        r30B + r50C == r30B_r50C | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30B_r50C / r30_tot)
-        r30B + r50D == r30B_r50D | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30B_r50D / r30_tot)
-        r30B + r50CD == r30B_r50CD | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30B_r50CD / r30_tot)
-        r30AB + r50 == r30AB_r50 | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30AB_r50 / r30_tot)
-        r30AB + r50C == r30AB_r50C | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30AB_r50C / r30_tot)
-        r30AB + r50D == r30AB_r50D | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30AB_r50D / r30_tot)
-        r30AB + r50CD == r30AB_r50CD | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30AB_r50CD / r30_tot)
-
-        # リボソームサブユニットの希釈
-        r30 > ~r30 | Lambda * r30
-        r50 > ~r50 | Lambda * r50
-        r30A > ~r30A | Lambda * r30A
-        r30B > ~r30B | Lambda * r30B
-        r30AB > ~r30AB | Lambda * r30AB
-        r50C > ~r50C | Lambda * r50C
-        r50D > ~r50D | Lambda * r50D
-        r50CD > ~r50CD | Lambda * r50CD
-        r30_r50 > ~r30_r50 | Lambda * r30_r50
-        r30_r50C > ~r30_r50C | Lambda * r30_r50C
-        r30_r50D > ~r30_r50D | Lambda * r30_r50D
-        r30_r50CD > ~r30_r50CD | Lambda * r30_r50CD
-        r30A_r50 > ~r30A_r50 | Lambda * r30A_r50
-        r30A_r50C > ~r30A_r50C | Lambda * r30A_r50C
-        r30A_r50D > ~r30A_r50D | Lambda * r30A_r50D
-        r30A_r50CD > ~r30A_r50CD | Lambda * r30A_r50CD
-        r30B_r50 > ~r30B_r50 | Lambda * r30B_r50
-        r30B_r50C > ~r30B_r50C | Lambda * r30B_r50C
-        r30B_r50D > ~r30B_r50D | Lambda * r30B_r50D
-        r30B_r50CD > ~r30B_r50CD | Lambda * r30B_r50CD
-        r30AB_r50 > ~r30AB_r50 | Lambda * r30AB_r50
-        r30AB_r50C > ~r30AB_r50C | Lambda * r30AB_r50C
-        r30AB_r50D > ~r30AB_r50D | Lambda * r30AB_r50D
-        r30AB_r50CD > ~r30AB_r50CD | Lambda * r30AB_r50CD
+        # r30   + r50   == r30_r50     | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30_r50 / r30_tot) # もともとはこれだけ
+        # r30   + r50C  == r30_r50C    | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30_r50C / r30_tot)
+        # r30   + r50D  == r30_r50D    | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30_r50D / r30_tot)
+        # r30   + r50CD == r30_r50CD   | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30_r50CD / r30_tot)
+        r30A  + r50   == r30A_r50    | (sub_k_a, sub_k_d * r30A_r50 / 60)
+        # r30A  + r50   == r30A_r50    | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30A_r50 / r30_tot)
+        # r30A  + r50C  == r30A_r50C   | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30A_r50C / r30_tot)
+        # r30A  + r50D  == r30A_r50D   | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30A_r50D / r30_tot)
+        # r30A  + r50CD == r30A_r50CD  | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30A_r50CD / r30_tot)
+        # r30B  + r50   == r30B_r50    | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30B_r50 / r30_tot)
+        # r30B  + r50C  == r30B_r50C   | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30B_r50C / r30_tot)
+        # r30B  + r50D  == r30B_r50D   | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30B_r50D / r30_tot)
+        # r30B  + r50CD == r30B_r50CD  | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30B_r50CD / r30_tot)
+        # r30AB + r50   == r30AB_r50   | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30AB_r50 / r30_tot)
+        # r30AB + r50C  == r30AB_r50C  | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30AB_r50C / r30_tot)
+        # r30AB + r50D  == r30AB_r50D  | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30AB_r50D / r30_tot)
+        # r30AB + r50CD == r30AB_r50CD | (sub_k_a, sub_k_d * (r30_tot - r_min) * r30AB_r50CD / r30_tot)
+        #
+        # # リボソームサブユニットの希釈
+        # r30 > ~r30 | Lambda * r30
+        # r50 > ~r50 | Lambda * r50
+        # r30A > ~r30A | Lambda * r30A
+        # r30B > ~r30B | Lambda * r30B
+        # r30AB > ~r30AB | Lambda * r30AB
+        # r50C > ~r50C | Lambda * r50C
+        # r50D > ~r50D | Lambda * r50D
+        # r50CD > ~r50CD | Lambda * r50CD
+        # r30_r50 > ~r30_r50 | Lambda * r30_r50
+        # r30_r50C > ~r30_r50C | Lambda * r30_r50C
+        # r30_r50D > ~r30_r50D | Lambda * r30_r50D
+        # r30_r50CD > ~r30_r50CD | Lambda * r30_r50CD
+        # r30A_r50 > ~r30A_r50 | Lambda * r30A_r50
+        # r30A_r50C > ~r30A_r50C | Lambda * r30A_r50C
+        # r30A_r50D > ~r30A_r50D | Lambda * r30A_r50D
+        # r30A_r50CD > ~r30A_r50CD | Lambda * r30A_r50CD
+        # r30B_r50 > ~r30B_r50 | Lambda * r30B_r50
+        # r30B_r50C > ~r30B_r50C | Lambda * r30B_r50C
+        # r30B_r50D > ~r30B_r50D | Lambda * r30B_r50D
+        # r30B_r50CD > ~r30B_r50CD | Lambda * r30B_r50CD
+        # r30AB_r50 > ~r30AB_r50 | Lambda * r30AB_r50
+        # r30AB_r50C > ~r30AB_r50C | Lambda * r30AB_r50C
+        # r30AB_r50D > ~r30AB_r50D | Lambda * r30AB_r50D
+        # r30AB_r50CD > ~r30AB_r50CD | Lambda * r30AB_r50CD
 
         # リボソームサブユニットの生成
-        ~r30 > r30 | SUP
-        ~r50 > r50 | SUP
+        # ~r30 > r30 | SUP
+        # ~r50 > r50 | SUP
 
     return get_model()
 
@@ -212,8 +213,8 @@ def run(drugs=[], step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 3
     for index, drug in enumerate(drugs):
         y0["drug{}_ex".format(index)] = drug["dose"]
 
-    # for i, rr in enumerate(model.reaction_rules()):
-    #     print("{:03d}: {}".format(i, rr.as_string()))
+    for i, rr in enumerate(model.reaction_rules()):
+        print("{:03d}: {}".format(i, rr.as_string()))
     runsim = run_simulation(
         step,
         solver = "ode",
@@ -247,6 +248,16 @@ def sim(drugs, step=0.5, inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 30.}
     df = pd.DataFrame([result], columns=sp_list)
     return (growth, df)
 
+# def sim(drugs, step=0.5, inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 30.}, Lambda_0=1.35):
+#     # rtot を計算するために sp_listを作成
+#     sp_list = ["r30", "r30_r50", "r30_r50C", "r30_r50D", "r30_r50CD",
+#         "r30A", "r30A_r50", "r30A_r50C", "r30A_r50D", "r30A_r50CD",
+#         "r30B", "r30B_r50", "r30B_r50C", "r30B_r50D", "r30B_r50CD",
+#         "r30AB", "r30AB_r50", "r30AB_r50C", "r30AB_r50D", "r30AB_r50CD"]
+#     data = run(drugs, step, inpData, y0, sp_list=sp_list) # tを除去したリストを作成
+#     result = [sum(i[1:]) for i in data]
+#     return result
+
 if __name__ == "__main__":
     # 薬剤リスト
     drugNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
@@ -259,17 +270,25 @@ if __name__ == "__main__":
         "r30AB", "r30AB_r50", "r30AB_r50C", "r30AB_r50D", "r30AB_r50CD"]
     doses = np.linspace(0, 5, 6)
     result = []
-    drugs[0]["dose"] = 2.
+    # for dose in doses:
+    #     drugs[0]["dose"] = dose
+    #     result = sim(drugs)
+    #     print("{} : {}".format(dose, result))
+
     df = pd.DataFrame()
-    for dose in doses:
-        drugs[0]["dose"] = dose
-        data = sim(drugs)
-        result.append(data[0])
-        df = pd.concat([df, data[1]])
+    # for dose in doses:
+    #     drugs[0]["dose"] = dose
+    #     data = sim(drugs)
+    #     result.append(data[0])
+    #     df = pd.concat([df, data[1]])
+    drugs[0]["dose"] = 3.
+    data = sim(drugs)
+    df = pd.concat([df, data[1]])
     df = df.reset_index(drop=True)
-    drugData = pd.DataFrame([[d] for d in doses], columns=["Streptmycin"])
+    # drugData = pd.DataFrame([[d] for d in doses], columns=["Streptmycin"])
+    drugData = pd.DataFrame([[3.]], columns=["Streptmycin"])
     df = pd.concat([drugData, df], axis=1)
-    df.to_csv("results/ribo8/test/test.csv", index=False)
+    # df.to_csv("results/ribo8/test/test6.csv", index=False)
     print(df)
     # print(result)
     # plt.plot(doses, result)
