@@ -16,6 +16,7 @@ def createVariable(drug_ex, drug, P_in, P_out):
 
 def createDrugData(drugName):
     # 薬剤のプロファイルを作成する関数
+    # すべて，Lambda_0 = 1.35
     datas = {
         "Lambda_0_a": {"Streptmycin": 0.31, "Kanamycin": 0.169, "Tetracycline": 5.24, "Chloramphenicol": 1.83},
         "IC50_a": {"Streptmycin": 0.189, "Kanamycin": 0.05, "Tetracycline": 0.229, "Chloramphenicol": 2.49},
@@ -68,7 +69,7 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
             r30B + r30B_r50 + r30B_r50C + r30B_r50D + r30B_r50CD +
             r30AB + r30AB_r50 + r30AB_r50C + r30AB_r50D + r30AB_r50CD)
         Lambda = (r30_tot - r_min) * K_t * r30_r50 / r30_tot
-        SUP = Lambda * r3s0_tot
+        SUP = Lambda * r30_tot
         for index, drug in enumerate(drugs):
             # 薬剤の流入の式を追加
             drug_ex = _eval("drug{}_ex".format(index))
@@ -221,27 +222,55 @@ def run(drugs=[], step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 3
         model = model,
         species_list = sp_list
     )
+
     data = runsim.data()
     # 返すデータはフルデータをリターンする(species_listは入力しなかった場合はどうやって出す？？)
     return data
 
-def calcGrowthRate(r30_r50):
-    Lambda = (r30_tot - r_min) * K_t * r30_r50 / r30_tot
+def calcGrowthRate(r30_r50, r30_tot, Lambda_0=1.35):
     r_min = 19.3
     K_t = 6.1 * 10 ** -2
-    result = (r30_r50 - r_min) * K_t / Lambda_0
+    Lambda = (r30_tot - r_min) * K_t * r30_r50 / r30_tot
+    growth = Lambda / Lambda_0
     return result
 
+def sim(drugs, step=0.5, inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 30.}, Lambda_0=1.35):
+    # rtot を計算するために sp_listを作成
+    sp_list = ["r30", "r30_r50", "r30_r50C", "r30_r50D", "r30_r50CD",
+        "r30A", "r30A_r50", "r30A_r50C", "r30A_r50D", "r30A_r50CD",
+        "r30B", "r30B_r50", "r30B_r50C", "r30B_r50D", "r30B_r50CD",
+        "r30AB", "r30AB_r50", "r30AB_r50C", "r30AB_r50D", "r30AB_r50CD"]
+    result = run(drugs, step, inpData, y0, sp_list=sp_list)[-1][1:] # tを除去したリストを作成
+    r30_r50 = result[1]
+    r30_tot = sum(result)
+    growth = calcGrowthRate(r30_r50, r30_tot)
+    df = pd.DataFrame([result], columns=sp_list)
+    return (growth, df)
 
 if __name__ == "__main__":
+    # 薬剤リスト
     drugNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
+    # species list(rtotを計算するために必要)
+
     drugs = [createDrugData("Streptmycin")]
-    doses = np.linspace(0, 10, 101)
+    sp_list = ["r30", "r30_r50", "r30_r50C", "r30_r50D", "r30_r50CD",
+        "r30A", "r30A_r50", "r30A_r50C", "r30A_r50D", "r30A_r50CD",
+        "r30B", "r30B_r50", "r30B_r50C", "r30B_r50D", "r30B_r50CD",
+        "r30AB", "r30AB_r50", "r30AB_r50C", "r30AB_r50D", "r30AB_r50CD"]
+    doses = np.linspace(0, 5, 6)
     result = []
-    run(drugs)
-    # for dose in doses:
-    #     drugs[0]["dose"] = dose
-    #     print(dose)
-    #     result.append(calcGrowthRate(run(drugs)[-1][1]))
+    drugs[0]["dose"] = 2.
+    df = pd.DataFrame()
+    for dose in doses:
+        drugs[0]["dose"] = dose
+        data = sim(drugs)
+        result.append(data[0])
+        df = pd.concat([df, data[1]])
+    df = df.reset_index(drop=True)
+    drugData = pd.DataFrame([[d] for d in doses], columns=["Streptmycin"])
+    df = pd.concat([drugData, df], axis=1)
+    df.to_csv("results/ribo8/test/test.csv", index=False)
+    print(df)
+    # print(result)
     # plt.plot(doses, result)
     # plt.show()
