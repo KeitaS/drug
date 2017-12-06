@@ -69,6 +69,9 @@ def run(drug, step=50., legend=["r_u"], inpData={}, y0={"a": .0, "r_u": 30.0, "r
     model = createModel(**dataset)
     y0["a_ex"] = drug["dose"]
 
+    # for i, rr in enumerate(model.reaction_rules()):
+    #     print("{:03d} : {}".format(i, rr.as_string()))
+
     if not legend:
         legend = y0.keys()
     runsim = run_simulation(step, solver="ode", y0=y0,
@@ -115,8 +118,9 @@ if __name__ == "__main__":
     legend = ["$Gly$", "$Gly_{CAA}$", "$Gly_{RDM}$"]
     color = ["g", "b", "r"]
 
-    doses = np.linspace( 0, A_ex[drugName[0]], 100)
+    doses = np.linspace(0, A_ex[drugName[0]], 100)
     drug = makeDrugDatas(drugName[0])
-    result = sim(drug, doses)
-    plt.plot(doses, result)
-    plt.show()
+    # result = sim(drug, doses)
+    # plt.plot(doses, result)
+    # plt.show()
+    print(run(drug)[0][-1])
