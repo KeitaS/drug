@@ -79,8 +79,6 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
             createVariable(drug_ex, target, P_in, P_out)
 
         # DrugA(30s)
-        # 薬剤流入
-        # ~A_ex == A | (P_in * A_ex, P_out)
         # 薬剤希釈
         A > ~A | Lambda * A
         # 薬剤結合
@@ -98,8 +96,6 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
         A + r30B_r50CD == r30AB_r50CD | (K_on, K_off)
 
         # DrugB(30s)
-        # 薬剤流入
-        # ~B_ex == B | (P_in * B_ex, P_out)
         # 薬剤希釈
         B > ~B | Lambda * B
         # 薬剤結合
@@ -117,8 +113,6 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
         B + r30A_r50CD == r30AB_r50CD | (K_on, K_off)
 
         # DrugC(50s)
-        # 薬剤流入
-        # ~C_ex == C | (P_in * C_ex, P_out)
         # 薬剤希釈
         C > ~C | Lambda * C
         # 薬剤結合
@@ -136,8 +130,6 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
         C + r30AB_r50D == r30AB_r50CD | (K_on, K_off)
 
         # DrugD(50s)
-        # 薬剤流入
-        # ~D_ex == D | (P_in * D_ex, P_out)
         # 薬剤希釈
         D > ~D | Lambda * D
         # 薬剤結合
@@ -205,7 +197,14 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
     return get_model()
 
 def run(drugs=[], step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 30.}, sp_list=["r30_r50"]):
-    # シミュレーションを実行する関数
+    """
+        シミュレーションを実行する関数．
+        drugs: 薬剤データがはいったリストを入れる．リストの長さは2まで対応．doseも入れておく．
+        step: シミュレーションステップ数．
+        inpData: 定数を変えるときに使用する．詳しくは，createModelを参照．
+        y0: 特定の値の初期値．デフォルトの値に特に意味はない．
+        sp_list: returnでほしいSpeciesをリスト化して渡すために必要．
+    """
     inpData["drugs"] = drugs
     model = createModel(**inpData)
 
@@ -224,10 +223,13 @@ def run(drugs=[], step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 3
     )
 
     data = runsim.data()
-    # 返すデータはフルデータをリターンする(species_listは入力しなかった場合はどうやって出す？？)
     return data
 
 def calcGrowthRate(r30_r50, r30_tot, Lambda_0=1.35):
+    """
+        r_totとr30_r50を用いてGrowth Rateを計算する関数．
+        r_min，K_tは定数なので，入力しない．
+    """
     r_min = 19.3
     K_t = 6.1 * 10 ** -2
     Lambda = (r30_tot - r_min) * K_t * (r30_r50 / r30_tot)
@@ -235,31 +237,37 @@ def calcGrowthRate(r30_r50, r30_tot, Lambda_0=1.35):
     return growth
 
 def sim(drugs, step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 30.}, Lambda_0=1.35):
+    """
+        Runして，Growth Rateを返す関数.
+        sp_listはr_totを計算できるようにリストを作成している．
+        データに不備がないよう，すべてのデータをDataFrame型で返すようにしている．
+    """
     # rtot を計算するために sp_listを作成
     sp_list = ["r30", "r30_r50", "r30_r50C", "r30_r50D", "r30_r50CD",
         "r30A", "r30A_r50", "r30A_r50C", "r30A_r50D", "r30A_r50CD",
         "r30B", "r30B_r50", "r30B_r50C", "r30B_r50D", "r30B_r50CD",
         "r30AB", "r30AB_r50", "r30AB_r50C", "r30AB_r50D", "r30AB_r50CD"]
-    result = run(drugs, step, inpData, y0, sp_list=sp_list)[-1][1:] # tを除去したリストを作成
+    # runを使って，tを除去したリストを作成
+    result = run(drugs, step, inpData, y0, sp_list=sp_list)[-1][1:]
     r30_r50 = result[1]
     r30_tot = sum(result)
+    # growth rateを計算
     growth = calcGrowthRate(r30_r50, r30_tot)
-    print(growth)
+    # DataFrame型でt以外のすべてのデータを返す
     df = pd.DataFrame([result], columns=sp_list)
     return (growth, df)
 
 if __name__ == "__main__":
     # 薬剤リスト
     drugNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
-    # species list(rtotを計算するために必要)
-
+    # drugs
     drugs = [createDrugData("Streptmycin")]
-    sp_list = ["r30", "r30_r50", "r30_r50C", "r30_r50D", "r30_r50CD",
-        "r30A", "r30A_r50", "r30A_r50C", "r30A_r50D", "r30A_r50CD",
-        "r30B", "r30B_r50", "r30B_r50C", "r30B_r50D", "r30B_r50CD",
-        "r30AB", "r30AB_r50", "r30AB_r50C", "r30AB_r50D", "r30AB_r50CD"]
+    # saveDir
+    savedir = "results/ribo8/single"
+
+
     doses = np.linspace(0, 5, 6)
-    result = []
+    result = [] 
     df = pd.DataFrame()
     for dose in doses:
         drugs[0]["dose"] = dose
