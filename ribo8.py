@@ -250,33 +250,75 @@ def sim(drugs, step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 30.}
     # runを使って，tを除去したリストを作成
     result = run(drugs, step, inpData, y0, sp_list=sp_list)[-1][1:]
     r30_r50 = result[1]
-    r30_tot = sum(result)
+    r_tot = sum(result)
     # growth rateを計算
-    growth = calcGrowthRate(r30_r50, r30_tot)
+    growth = calcGrowthRate(r30_r50, r_tot)
+    # resultにr_totとgrowthを追加
+    result += [r_tot, growth]
+    # columnsにするsp_listにr_totとgrwthを追加
+    sp_list += ["r_tot", "growth"]
     # DataFrame型でt以外のすべてのデータを返す
     df = pd.DataFrame([result], columns=sp_list)
     return (growth, df)
 
+def calcIC(dNames, a_ex, target):
+    """
+    二分法でIC〜〜を計算
+    """
+    calc_result = {}
+    for dName in dNames:
+        print(dName)
+        drugs = [createDrugData(dName)] # 薬剤データの作成
+        dose_max = a_ex[dName] * 3
+        dose_min = .0
+        result = 1.
+        dose = .0
+        count = 0
+        while abs(target - abs(result)) > 0.01 and count <= 10:
+            before_dose = dose
+            dose = (dose_max + dose_min) / 2.
+            if dose == before_dose:
+                count += 1
+            print(dose)
+            print(count)
+            drugs[0]["dose"] = dose
+            result = sim(drugs)[0]
+            if result < target:
+                dose_max = dose
+            else:
+                dose_min = dose
+        calc_result[dName] = dose
+    return calc_result
+
+def makedir(dirname):
+    import os
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    del(os)
+
 if __name__ == "__main__":
     # 薬剤リスト
     drugNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
-    # drugs
-    drugs = [createDrugData("Streptmycin")]
     # saveDir
-    savedir = "results/ribo8/single"
+    csvdir = "results/ribo8/single/csv"
+    makedir(csvdir)
+    imgdir = "results/ribo8/single/image"
+    makedir(imgdir)
+    IC30 = calcIC(drugNames, {drugName: 20 for drugName in drugNames}, .3)
+    print(IC30)
 
-
-    doses = np.linspace(0, 5, 6)
-    result = [] 
-    df = pd.DataFrame()
-    for dose in doses:
-        drugs[0]["dose"] = dose
-        data = sim(drugs)
-        result.append(data[0])
-        df = pd.concat([df, data[1]])
-    df = df.reset_index(drop=True)
-    drugData = pd.DataFrame([[d] for d in doses], columns=["Streptmycin"])
-    df = pd.concat([drugData, df], axis=1)
-    df.to_csv("results/ribo8/test/test6.csv", index=False)
-    plt.plot(doses, result)
-    plt.show()
+    result = []
+    print("start simulation >>")
+    for drugName in drugNames:
+        print("{} >> ".format(drugName))
+        drugs = [createDrugData(drugName)]
+        doses = np.linspace(0, IC30[drugName], 101)
+        df = pd.DataFrame()
+        for dose in doses:
+            drugs[0]["dose"] = dose
+            data = sim(drugs)
+            df = pd.concat([df, data[1]])
+        df = df.reset_index(drop=True)
+        drugData = pd.DataFrame([[d] for d in doses], columns=[drugName])
+        df = pd.concat([drugData, df], axis=1)
+        df.to_csv("{}/{}.csv".format(csvdir, drugName), index=False)
