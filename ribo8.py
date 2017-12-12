@@ -305,20 +305,22 @@ if __name__ == "__main__":
     imgdir = "results/ribo8/single/image"
     makedir(imgdir)
     IC30 = calcIC(drugNames, {drugName: 20 for drugName in drugNames}, .3)
-    print(IC30)
+    with open("w", "IC30.txt") as wf:
+        for key, val in IC30.items():
+            wf.wright("{} : {}".format(key, val))
 
     result = []
     print("start simulation >>")
     for drugName in drugNames:
         print("{} >> ".format(drugName))
         drugs = [createDrugData(drugName)]
-        doses = np.linspace(0, IC30[drugName], 101)
+        doses = np.linspace(0, IC30[drugName] * 2, 101)
         df = pd.DataFrame()
         for dose in doses:
             drugs[0]["dose"] = dose
             data = sim(drugs)
             df = pd.concat([df, data[1]])
         df = df.reset_index(drop=True)
-        drugData = pd.DataFrame([[d] for d in doses], columns=[drugName])
+        drugData = pd.DataFrame([[d] for d in doses], columns=["dose"])
         df = pd.concat([drugData, df], axis=1)
         df.to_csv("{}/{}.csv".format(csvdir, drugName), index=False)
