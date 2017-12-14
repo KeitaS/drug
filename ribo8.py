@@ -302,10 +302,15 @@ if __name__ == "__main__":
     # saveDir
     csvdir = "results/ribo8/single/csv"
     makedir(csvdir)
-    IC30 = calcIC(drugNames, {drugName: 20 for drugName in drugNames}, .3)
-    with open("IC30.txt", "w") as wf:
-        for key, val in IC30.items():
-            wf.write("{} : {}\n".format(key, val))
+
+    IC30_file = "IC30.csv"
+    try:
+        IC30_df = pd.read_csv(IC30_file)
+        IC30 = {i: IC30_df[i][0] for i in IC30_df.columns}
+    except:
+        IC30 = calcIC(drugNames, {drugName: 20 for drugName in drugNames}, .3)
+        IC30_df = pd.DataFrame({i: [IC30[i]] for i in drugNames})
+        IC30_df.to_csv("IC30.csv", index=False)
 
     ## 単剤のシミュレーション
     result = []
@@ -315,7 +320,8 @@ if __name__ == "__main__":
         drugs = [createDrugData(drugName)]
         doses = np.linspace(0, IC30[drugName] * 2, 101)
         df = pd.DataFrame()
-        for dose in doses:
+        for index, dose in enumerate(doses):
+            print("    step: {} >> ".format(index))
             drugs[0]["dose"] = dose
             data = sim(drugs)
             df = pd.concat([df, data[1]])
@@ -335,7 +341,8 @@ if __name__ == "__main__":
         drugs = [createDrugData(drugName[0]), createDrugData(drugName[1])]
         doses = [[x, y] for x in np.linspace(0, IC30[name[0]] * 2, splitNum) for y in np.linspace(0, IC30[name[1]] * 2, splitNum)]
         df = pd.DataFrame()
-        for dose in doses:
+        for index, dose in enumerate(doses):
+            print("    step: {} >> ".format(index))
             drugs[0]["dose"] = dose[0]
             drugs[1]["dose"] = dose[1]
             data = sim(drugs)
