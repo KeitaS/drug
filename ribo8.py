@@ -303,6 +303,7 @@ if __name__ == "__main__":
     csvdir = "results/ribo8/single/csv"
     makedir(csvdir)
 
+    # IC30の計算
     IC30_file = "IC30.csv"
     try:
         IC30_df = pd.read_csv(IC30_file)
@@ -310,7 +311,7 @@ if __name__ == "__main__":
     except:
         IC30 = calcIC(drugNames, {drugName: 20 for drugName in drugNames}, .3)
         IC30_df = pd.DataFrame({i: [IC30[i]] for i in drugNames})
-        IC30_df.to_csv("IC30.csv", index=False)
+        IC30_df.to_csv(IC30_file, index=False)
 
     ## 単剤のシミュレーション
     result = []
@@ -339,7 +340,7 @@ if __name__ == "__main__":
     for drugName in drugNameList:
         print("{} vs {}".format(drugName[0], drugName[1]))
         drugs = [createDrugData(drugName[0]), createDrugData(drugName[1])]
-        doses = [[x, y] for x in np.linspace(0, IC30[name[0]] * 2, splitNum) for y in np.linspace(0, IC30[name[1]] * 2, splitNum)]
+        doses = [[x, y] for x in np.linspace(0, IC30[drugName[0]] * 2, splitNum) for y in np.linspace(0, IC30[drugName[1]] * 2, splitNum)]
         df = pd.DataFrame()
         for index, dose in enumerate(doses):
             print("    step: {} >> ".format(index))
