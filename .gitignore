@@ -7,3 +7,5 @@ nohup.out
 .python-version
 output.txt
 .ipynb_checkpoints
+*.sh.e*
+*.sh.o*
