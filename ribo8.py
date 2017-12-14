@@ -305,7 +305,7 @@ if __name__ == "__main__":
     IC30 = calcIC(drugNames, {drugName: 20 for drugName in drugNames}, .3)
     with open("IC30.txt", "w") as wf:
         for key, val in IC30.items():
-            wf.wright("{} : {}\n".format(key, val))
+            wf.write("{} : {}\n".format(key, val))
 
     ## 単剤のシミュレーション
     result = []
