@@ -20,7 +20,7 @@ def createDrugData(drugName):
     datas = {
         "Lambda_0_a": {"Streptmycin": 0.31, "Kanamycin": 0.169, "Tetracycline": 5.24, "Chloramphenicol": 1.83},
         "IC50_a": {"Streptmycin": 0.189, "Kanamycin": 0.05, "Tetracycline": 0.229, "Chloramphenicol": 2.49},
-        "target": {"Streptmycin": "A", "Kanamycin": "A", "Tetracycline": "B", "Chloramphenicol": "C"}
+        "target": {"Streptmycin": "A", "Kanamycin": "A", "Tetracycline": "A", "Chloramphenicol": "C"}
     }
 
     drugData = {
@@ -302,13 +302,12 @@ if __name__ == "__main__":
     # saveDir
     csvdir = "results/ribo8/single/csv"
     makedir(csvdir)
-    imgdir = "results/ribo8/single/image"
-    makedir(imgdir)
     IC30 = calcIC(drugNames, {drugName: 20 for drugName in drugNames}, .3)
     with open("w", "IC30.txt") as wf:
         for key, val in IC30.items():
             wf.wright("{} : {}".format(key, val))
 
+    ## 単剤のシミュレーション
     result = []
     print("start simulation >>")
     for drugName in drugNames:
@@ -324,3 +323,24 @@ if __name__ == "__main__":
         drugData = pd.DataFrame([[d] for d in doses], columns=["dose"])
         df = pd.concat([drugData, df], axis=1)
         df.to_csv("{}/{}.csv".format(csvdir, drugName), index=False)
+
+    ## 多剤のシミュレーション
+    csvdir = "results/ribo8/double/csv"
+    makedir(csvdir)
+    drugNameList = itr.combinations_with_replacement(drugNames, 2)
+    splitNum = 101
+    print("start combination >> ")
+    for drugName in drugNameList:
+        print("{} vs {}".format(drugName[0], drugName[1]))
+        drugs = [createDrugData(drugName[0]), createDrugData(drugName[1])]
+        doses = [[x, y] for x in np.linspace(0, IC30[name[0]] * 2, splitNum) for y in np.linspace(0, IC30[name[1]] * 2, splitNum)]
+        df = pd.DataFrame()
+        for dose in doses:
+            drugs[0]["dose"] = dose[0]
+            drugs[1]["dose"] = dose[1]
+            data = sim(drugs)
+            df = pd.concat([df, data[1]])
+        df = df.reset_index(drop=True)
+        drugData = pd.DataFrame([[d[0], d[1]] for d in doses], columns=["dose1", "dose2"])
+        df = pd.concat([drugData, df], axis=1)
+        df.to_csv("{}/{}.csv".format(csvdir, "_".join(drugName)))
