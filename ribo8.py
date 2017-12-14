@@ -303,9 +303,9 @@ if __name__ == "__main__":
     csvdir = "results/ribo8/single/csv"
     makedir(csvdir)
     IC30 = calcIC(drugNames, {drugName: 20 for drugName in drugNames}, .3)
-    with open("w", "IC30.txt") as wf:
+    with open("IC30.txt", "w") as wf:
         for key, val in IC30.items():
-            wf.wright("{} : {}".format(key, val))
+            wf.wright("{} : {}\n".format(key, val))
 
     ## 単剤のシミュレーション
     result = []
