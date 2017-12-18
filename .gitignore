@@ -9,3 +9,5 @@ output.txt
 .ipynb_checkpoints
 *.sh.e*
 *.sh.o*
+tmp
+
