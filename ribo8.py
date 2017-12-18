@@ -146,7 +146,7 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
         D + r30AB_r50  == r30AB_r50D  | (K_on, K_off)
         D + r30AB_r50C == r30AB_r50CD | (K_on, K_off)
 
-        リボソームの結合パターン
+        # リボソームの結合パターン
         r30   + r50   == r30_r50     | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30_r50     / r30_tot)) # もともとはこれだけ
         r30   + r50C  == r30_r50C    | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30_r50C    / r30_tot))
         r30   + r50D  == r30_r50D    | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30_r50D    / r30_tot))
@@ -314,22 +314,22 @@ if __name__ == "__main__":
         IC30_df.to_csv(IC30_file, index=False)
 
     ## 単剤のシミュレーション
-    result = []
-    print("start simulation >>")
-    for drugName in drugNames:
-        print("{} >> ".format(drugName))
-        drugs = [createDrugData(drugName)]
-        doses = np.linspace(0, IC30[drugName] * 2, 101)
-        df = pd.DataFrame()
-        for index, dose in enumerate(doses):
-            print("    step: {} >> ".format(index))
-            drugs[0]["dose"] = dose
-            data = sim(drugs)
-            df = pd.concat([df, data[1]])
-        df = df.reset_index(drop=True)
-        drugData = pd.DataFrame([[d] for d in doses], columns=["dose"])
-        df = pd.concat([drugData, df], axis=1)
-        df.to_csv("{}/{}.csv".format(csvdir, drugName), index=False)
+    # result = []
+    # print("start simulation >>")
+    # for drugName in drugNames:
+    #     print("{} >> ".format(drugName))
+    #     drugs = [createDrugData(drugName)]
+    #     doses = np.linspace(0, IC30[drugName] * 2, 101)
+    #     df = pd.DataFrame()
+    #     for index, dose in enumerate(doses):
+    #         print("    step: {} >> ".format(index))
+    #         drugs[0]["dose"] = dose
+    #         data = sim(drugs)
+    #         df = pd.concat([df, data[1]])
+    #     df = df.reset_index(drop=True)
+    #     drugData = pd.DataFrame([[d] for d in doses], columns=["dose"])
+    #     df = pd.concat([drugData, df], axis=1)
+    #     df.to_csv("{}/{}.csv".format(csvdir, drugName), index=False)
 
     ## 多剤のシミュレーション
     csvdir = "results/ribo8/double/csv"
