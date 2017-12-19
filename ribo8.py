@@ -296,6 +296,32 @@ def makedir(dirname):
         os.makedirs(dirname)
     del(os)
 
+def sim_comb(IC30, num, length=101, csvdir="results"):
+    # 多剤シミュレーション．
+    makedir(csvdir)
+    drugNameList = itr.combinations_with_replacement(drugNames, 2)
+    splitNum = 101
+    print("start combination >> ")
+    for drugName in drugNameList:
+        print("{} vs {}".format(drugName[0], drugName[1]))
+        drugs = [createDrugData(drugName[0]), createDrugData(drugName[1])]
+        doses = [[x, y] for x in np.linspace(0, IC30[drugName[0]] * 2, splitNum) for y in np.linspace(0, IC30[drugName[1]] * 2, splitNum)]
+        if (num + 1) * length < doses.length:
+            doses = doses[num * length : (num + 1) * length]
+        else :
+            doses = doses[num * length :]
+        df = pd.DataFrame()
+        for index, dose in enumerate(doses):
+            print("    step: {} >> ".format(index))
+            drugs[0]["dose"] = dose[0]
+            drugs[1]["dose"] = dose[1]
+            data = sim(drugs)
+            df = pd.concat([df, data[1]])
+        df = df.reset_index(drop=True)
+        drugData = pd.DataFrame([[d[0], d[1]] for d in doses], columns=["dose1", "dose2"])
+        df = pd.concat([drugData, df], axis=1)
+        df.to_csv("{}/{}_{}.csv".format(csvdir, "_".join(drugName), num))
+
 if __name__ == "__main__":
     # 薬剤リスト
     drugNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
@@ -331,24 +357,5 @@ if __name__ == "__main__":
     #     df = pd.concat([drugData, df], axis=1)
     #     df.to_csv("{}/{}.csv".format(csvdir, drugName), index=False)
 
-    ## 多剤のシミュレーション
-    csvdir = "results/ribo8/double/csv"
-    makedir(csvdir)
-    drugNameList = itr.combinations_with_replacement(drugNames, 2)
-    splitNum = 101
-    print("start combination >> ")
-    for drugName in drugNameList:
-        print("{} vs {}".format(drugName[0], drugName[1]))
-        drugs = [createDrugData(drugName[0]), createDrugData(drugName[1])]
-        doses = [[x, y] for x in np.linspace(0, IC30[drugName[0]] * 2, splitNum) for y in np.linspace(0, IC30[drugName[1]] * 2, splitNum)]
-        df = pd.DataFrame()
-        for index, dose in enumerate(doses):
-            print("    step: {} >> ".format(index))
-            drugs[0]["dose"] = dose[0]
-            drugs[1]["dose"] = dose[1]
-            data = sim(drugs)
-            df = pd.concat([df, data[1]])
-        df = df.reset_index(drop=True)
-        drugData = pd.DataFrame([[d[0], d[1]] for d in doses], columns=["dose1", "dose2"])
-        df = pd.concat([drugData, df], axis=1)
-        df.to_csv("{}/{}.csv".format(csvdir, "_".join(drugName)))
+    csvdir = "results/ribo8/double"
+    sim_comb(IC30, int(sys.argv[1]), csvdir=csvdir)
