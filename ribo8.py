@@ -359,4 +359,4 @@ if __name__ == "__main__":
     #     df.to_csv("{}/{}.csv".format(csvdir, drugName), index=False)
 
     csvdir = "results/ribo8/double"
-    sim_comb(IC30, int(sys.argv[1]), csvdir=csvdir)
+    sim_comb(IC30, int(sys.argv[-1]), csvdir=csvdir)
