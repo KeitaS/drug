@@ -307,7 +307,7 @@ def sim_comb(IC30, num, length=101, csvdir="results"):
         print("{} vs {}".format(drugName[0], drugName[1]))
         drugs = [createDrugData(drugName[0]), createDrugData(drugName[1])]
         doses = [[x, y] for x in np.linspace(0, IC30[drugName[0]] * 2, splitNum) for y in np.linspace(0, IC30[drugName[1]] * 2, splitNum)]
-        if (num + 1) * length < doses.length:
+        if (num + 1) * length < len(doses):
             doses = doses[num * length : (num + 1) * length]
         else :
             doses = doses[num * length :]
