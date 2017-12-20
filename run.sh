@@ -2,9 +2,7 @@
 
 source ~/.bashrc
 
-s=$(($1 * 10))
-for i in {0..9}
+for i in {0..100}
 do
-    e=$(($s + $i))
-    qsub -l nodes=1:ppn=32 -d $PWD ./sim.sh $e
+    qsub -l nodes=1:ppn=32 -d $PWD -j oe -v ARG1=$i ./sim.sh
 done

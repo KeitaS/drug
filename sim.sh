@@ -2,4 +2,4 @@
 
 source ~/.bashrc
 
-python ribo8.py $1
+python ribo8.py $ARG1
