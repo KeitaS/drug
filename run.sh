@@ -1,7 +1,10 @@
 #!/bin/bash
 
 source ~/.bashrc
-for i in {0..100}
+
+s=$(($1 * 10))
+for i in {0..9}
 do
-    python ribo8.py $i &
+    e=$(($s + $i))
+    qsub -l nodes=1:ppn=32 -d $PWD ./sim.sh $e
 done
