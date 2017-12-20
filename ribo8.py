@@ -359,7 +359,7 @@ if __name__ == "__main__":
     #     df.to_csv("{}/{}.csv".format(csvdir, drugName), index=False)
 
     ## 組合せシミュレーション
-    csvdir = "results/ribo8/double"
+    csvdir = "results/ribo8/double/csv"
     makedir(csvdir)
     drugNameList = itr.combinations_with_replacement(drugNames, 2)
     print("start combination >> ")
