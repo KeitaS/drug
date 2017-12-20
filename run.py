@@ -52,8 +52,8 @@ def createHeatmap(data, drugNames, cbar=False, cmap=False):
 
 
 def setTickLabel(data, ax):
-    a1DoseList = list(set(data["dose1"].tolist()))[::2] # y軸に表示したい数のリスト
-    a2DoseList = list(set(data["dose2"].tolist()))[::2] # x軸に表示したい数のリスト
+    a1DoseList = list(set(data["dose1"].tolist()))[::20] # y軸に表示したい数のリスト
+    a2DoseList = list(set(data["dose2"].tolist()))[::20] # x軸に表示したい数のリスト
 
     # yticksの設定
     dataLenY = len(list(set(data["dose1"].tolist()))) 
