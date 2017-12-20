@@ -368,4 +368,4 @@ if __name__ == "__main__":
         drugs = [createDrugData(drugName[0]), createDrugData(drugName[1])]
         num = int(sys.argv[-1])
         df = sim_comb(drugs, IC30, int(sys.argv[-1]), 10, 100)
-        df.to_csv("{}/{}_{}.csv".format(csvdir, "_".join(drugName), num))
+        df.to_csv("{}/{}_{}.csv".format(csvdir, "_".join(drugName), num), index=False)
