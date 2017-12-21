@@ -8,6 +8,7 @@ import math
 import itertools as itr
 import seaborn as sns
 import pandas as pd
+import sys
 
 @reaction_rules
 def r30_binding_reaction(a_ex, a, r30_b, P_in, P_out, K_on, K_off, Lambda):
@@ -528,6 +529,20 @@ def virtual_h(dNameList, csvdir, imgname):
 
     fig.savefig(imgname, dpi=300)
 
+def sim_comb(drugs, IC30, num, length=101, splitNum=101):
+    doses = [[x, y] for x in np.linspace(0, IC30[drugs[0]["name"]] * 2, splitNum) for y in np.linspace(0, IC30[drugs[1]["name"]] * 2, splitNum)]
+    if (num + 1) * length < len(doses):
+        doses = doses[num * length : (num + 1) * length]
+    else :
+        doses = doses[num * length :]
+
+    resultList = []
+    for index, dose in enumerate(doses):
+        print("    step: {} >> ".format(index))
+        resultList.append([dose[0], dose[1], sim(drug, dose)])
+    data = pd.DataFrame(resultList, columns=["a1", "a2", "growth"])
+    return data
+
 if __name__ == "__main__":
     # 保存用ディレクトリの作成
     csvdir = "./results/ribo4/csv/neweval"
@@ -541,18 +556,34 @@ if __name__ == "__main__":
 
     # IC30 = calcIC(dNames, {name: 100 for name in dNames}, .3) # IC30を計算
     IC30 = {'Kanamycin': 0.6761401891708374, 'Streptmycin': 1.4652013778686523, 'Chloramphenicol': 21.09375, 'Tetracycline': 5.2734375}
-    cmap = makeCmap() # 論文のデータと同じカラーマップ
+    # cmap = makeCmap() # 論文のデータと同じカラーマップ
 
-    # dNameList = [[name, name] for name in dNames] # 同じ薬剤を２剤投与した場合．
-    dNameList = itr.combinations(dNames, 2) # 異なる薬剤を２剤投与した場合．
-    # dNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
-    slopeList = [1./4, 1./2, 1., 2., 4.] # 傾きのリスト
+    # # dNameList = [[name, name] for name in dNames] # 同じ薬剤を２剤投与した場合．
+    # dNameList = itr.combinations(dNames, 2) # 異なる薬剤を２剤投与した場合．
+    # # dNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
+    # slopeList = [1./4, 1./2, 1., 2., 4.] # 傾きのリスト
 
-    imgname = "{}/combination_drug.png".format(imgdir)
-    # fig = neweval(dNameList, IC30, (2, 3), csvdir)
-    fig = neweval_usecsv(dNameList, (2, 3), csvdir, axizFontSize=40, labelSize=30, titleFontSize=30)
-    # fig = test_oldeval_usecsv(dNameList, (1, 3), csvdir, axizFontSize=40, labelSize=30)
-    fig.savefig(imgname, dpi=300)
-    #
-    # fig = neweval_usecsv(dNameList, (1, 3), csvdir, axizFontSize=40, labelSize=30, titleFontSize=40)
+    # imgname = "{}/combination_drug.png".format(imgdir)
+    # # fig = neweval(dNameList, IC30, (2, 3), csvdir)
+    # fig = neweval_usecsv(dNameList, (2, 3), csvdir, axizFontSize=40, labelSize=30, titleFontSize=30)
+    # # fig = test_oldeval_usecsv(dNameList, (1, 3), csvdir, axizFontSize=40, labelSize=30)
     # fig.savefig(imgname, dpi=300)
+    # #
+    # # fig = neweval_usecsv(dNameList, (1, 3), csvdir, axizFontSize=40, labelSize=30, titleFontSize=40)
+    # # fig.savefig(imgname, dpi=300)
+
+    ## double simulation
+    csvdir = "./results/ribo4/csv/sim100"
+    makedir(csvdir)
+
+    drugNameList = itr.combinations_with_replacement(drugNames, 2)
+    print("start combination >> ")
+    for drugName in drugNameList:
+        dirName = "{}/{}".format(csvdir, "_".join(drugName))
+        print("{} vs {}".format(drugName[0], drugName[1]))
+        drugs = [createDrugData(drugName[0]), createDrugData(drugName[1])]
+        num = int(sys.argv[-1])
+        df = sim_comb(drugs, IC30, int(sys.argv[-1]), 101, 101)
+        df.to_csv("{}/{}_{}.csv".format(dirName, "_".join(drugName), num), index=False)
+    
+    
