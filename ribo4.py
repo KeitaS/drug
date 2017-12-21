@@ -539,7 +539,7 @@ def sim_comb(drugs, IC30, num, length=101, splitNum=101):
     resultList = []
     for index, dose in enumerate(doses):
         print("    step: {} >> ".format(index))
-        resultList.append([dose[0], dose[1], sim(drug, dose)])
+        resultList.append([dose[0], dose[1], sim(drugs, dose)])
     data = pd.DataFrame(resultList, columns=["a1", "a2", "growth"])
     return data
 
@@ -576,12 +576,12 @@ if __name__ == "__main__":
     csvdir = "./results/ribo4/csv/sim100"
     makedir(csvdir)
 
-    drugNameList = itr.combinations_with_replacement(drugNames, 2)
+    drugNameList = itr.combinations_with_replacement(dNames, 2)
     print("start combination >> ")
     for drugName in drugNameList:
         dirName = "{}/{}".format(csvdir, "_".join(drugName))
         print("{} vs {}".format(drugName[0], drugName[1]))
-        drugs = [createDrugData(drugName[0]), createDrugData(drugName[1])]
+        drugs = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
         num = int(sys.argv[-1])
         df = sim_comb(drugs, IC30, int(sys.argv[-1]), 101, 101)
         df.to_csv("{}/{}_{}.csv".format(dirName, "_".join(drugName), num), index=False)
