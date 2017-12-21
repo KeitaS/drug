@@ -77,9 +77,9 @@ if __name__ == "__main__":
     ## merge DataFiles
     drugNameList = itr.combinations_with_replacement(drugNames, 2)
     for drugName in drugNameList:
-        fileNameList = ["results/ribo8/double/csv/{}_{}.csv".format("_".join(drugName), num) for num in range(101)]
+        fileNameList = ["results/ribo8/double/normal/{}_{}.csv".format("_".join(drugName), num) for num in range(101)]
         df = mergeResults(fileNameList)
-        df.to_csv("results/ribo8/double/csv/{}_merge.csv".format("_".join(drugName)), index=False)
+        df.to_csv("results/ribo8/double/normal/{}_merge.csv".format("_".join(drugName)), index=False)
 
     ## SameDrug combination
     doubleSaveName = "resutls/ribo8/double/image/sameDrug.png"
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     plt.figure(figsize=(20, 20))
     for index, drugName in enumerate(drugNameList):
         plt.subplot(2, 2, index + 1)
-        data = pd.read_csv("results/ribo8/double/csv/{}_merge.csv".format("_".join(drugName)))
+        data = pd.read_csv("results/ribo8/double/normal/{}_merge.csv".format("_".join(drugName)))
         createHeatmap(data, drugNames)
     plt.tight_layout()
     plt.savefig(doubleSaveName, dpi=300)
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     plt.figure(figsize=(20, 30))
     for index, drugName in enumerate(drugNameList):
         plt.subplot(2, 3, index + 1)
-        data = pd.read_csv("results/ribo8/double/csv/{}_merge.csv".format("_".join(drugName)))
+        data = pd.read_csv("results/ribo8/double/normal/{}_merge.csv".format("_".join(drugName)))
         createHeatmap(data, drugNames)
     plt.tight_layout()
     plt.savefig(doubleSaveName, dpi=300)
