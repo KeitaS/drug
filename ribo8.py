@@ -364,8 +364,9 @@ if __name__ == "__main__":
     drugNameList = itr.combinations_with_replacement(drugNames, 2)
     print("start combination >> ")
     for drugName in drugNameList:
+        dirName = "{}/{}".format(csvdir, "_".join(drugName))
         print("{} vs {}".format(drugName[0], drugName[1]))
         drugs = [createDrugData(drugName[0]), createDrugData(drugName[1])]
         num = int(sys.argv[-1])
         df = sim_comb(drugs, IC30, int(sys.argv[-1]), 101, 101)
-        df.to_csv("{}/{}_{}.csv".format(csvdir, "_".join(drugName), num), index=False)
+        df.to_csv("{}/{}_{}.csv".format(dirName, "_".join(drugName), num), index=False)
