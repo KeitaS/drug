@@ -1,0 +1,93 @@
+# coding: utf-8
+import matplotlib
+matplotlib.use("Agg") # GUIのない環境でのおまじない
+import sys
+import pandas as pd
+import itertools as itr
+import seaborn as sns
+import matplotlib.pylab as plt
+import numpy as np
+
+def mergeResults(fileNameList):
+    """
+        並列計算した結果を１つのファイルにまとめる関数
+        fileNameList : ファイル名をリストにしたもの．
+    """
+    df = pd.DataFrame()
+    for fileName in fileNameList:
+        data = pd.read_csv(fileName)
+        df = pd.concat([df, data])
+    df = df.reset_index(drop=True)
+    return df
+
+def createHeatmap(data, drugNames, cbar=False, cmap=False):
+    if not cmap: cmap = sns.diverging_palette(220, 10, as_cmap=True) # coler map
+    heatmapData = pd.pivot_table(data=data, values="growth", index="a1", columns="a2") # heatmap data
+    ax = sns.heatmap(heatmapData, cbar=cbar, cmap=cmap, square=True) # create Heatmap
+    ax.invert_yaxis()
+
+    setTickLabel(data, ax)
+
+    ax.set_ylabel(drugNames[0], fontsize=16) # create ylabel
+    ax.set_xlabel(drugNames[1], fontsize=16) # create xlabel
+
+    ## virtual drug
+    # if drugNames[0] == "Streptmycin": ax.set_ylabel("Pattern A", fontsize=axizFontSize) # create ylabel
+    # else : ax.set_ylabel("Pattern B", fontsize=axizFontSize) # create ylabe
+    # if drugNames    [1] == "Streptmycin": ax.set_xlabel("Pattern A", fontsize=axizFontSize) # create xlabel
+    # else: ax.set_xlabel("Pattern B", fontsize=axizFontSize) # create xlabel
+
+    ax.tick_params(labelsize=16)
+
+
+def setTickLabel(data, ax):
+    a1DoseList = list(set(data["a1"].tolist()))[::20] # y軸に表示したい数のリスト
+    a2DoseList = list(set(data["a2"].tolist()))[::20] # x軸に表示したい数のリスト
+
+    # yticksの設定
+    dataLenY = len(list(set(data["a1"].tolist()))) 
+    ax.set_yticks(list(np.linspace(0.5, dataLenY - 0.5, len(a1DoseList))))
+    ax.set_yticklabels(list(map(str, a1DoseList)))
+    
+    # xticksの設定
+    dataLenX = len(list(set(data["a2"].tolist()))) 
+    ax.set_xticks(list(np.linspace(0.5, dataLenX - 0.5, len(a2DoseList))))
+    ax.set_xticklabels(list(map(str, a2DoseList)))
+
+if __name__ == "__main__":
+    drugNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
+    drugNameList = itr.combinations_with_replacement(drugNames, 2)
+    csvdir = "results/ribo4/csv/sim100"
+    
+    # merge DataFiles
+    for drugName in drugNameList:
+        dirName = "{}/{}".format(csvdir, "_".join(drugName))
+        fileNameList = ["{}/{}_{}.csv".format(dirName, "_".join(drugName), num) for num in range(101)]
+        df = mergeResults(fileNameList)
+        df.to_csv("{}/{}_merge.csv".format(csvdir, "_".join(drugName)), index=False)
+
+    # SameDrug combination
+    doubleSaveName = "results/ribo4/images/sameDrug_sim100.png"
+    drugNameList = [[name, name] for name in drugNames]
+
+    csvdir = "results/ribo4/csv/sim100"
+    fig = plt.figure(figsize=(20, 20))
+    for index, drugName in enumerate(drugNameList):
+        plt.subplot(2, 2, index + 1)
+        data = pd.read_csv("{}/{}_merge.csv".format(csvdir, "_".join(drugName)))
+        createHeatmap(data, drugNames)
+    plt.tight_layout()
+    plt.savefig(doubleSaveName, dpi=300)
+
+    # differentDrug combination
+    doubleSaveName = "results/ribo4/images/diffDrug_sim100.png"
+    drugNameList = itr.combinations(drugNames, 2)
+    
+    fig = plt.figure(figsize=(20, 30))
+    for index, drugName in enumerate(drugNameList):
+        plt.subplot(2, 3, index + 1)
+        data = pd.read_csv("{}/{}_merge.csv".format(csvdir, "_".join(drugName)))
+        createHeatmap(data, drugNames)
+    plt.tight_layout()
+    plt.savefig(doubleSaveName, dpi=300)
+ 
