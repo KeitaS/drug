@@ -47,8 +47,8 @@ def createHeatmap(data, drugNames, cbar=False, cmap=False):
 
     setTickLabel(data, ax)
 
-    ax.set_ylabel(drugNames[0], fontsize=16) # create ylabel
-    ax.set_xlabel(drugNames[1], fontsize=16) # create xlabel
+    ax.set_ylabel(drugNames[0], fontsize=20) # create ylabel
+    ax.set_xlabel(drugNames[1], fontsize=20) # create xlabel
 
     ## virtual drug
     # if drugNames[0] == "Streptmycin": ax.set_ylabel("Pattern A", fontsize=axizFontSize) # create ylabel
@@ -66,16 +66,18 @@ def setTickLabel(data, ax):
     # yticksの設定
     dataLenY = len(list(set(data["dose1"].tolist()))) 
     ax.set_yticks(list(np.linspace(0.5, dataLenY - 0.5, len(a1DoseList))))
-    ax.set_yticklabels(list(map(str, a1DoseList)))
+    ax.set_yticklabels(list(map(lambda x:"{:.3f}".format(x), a1DoseList)))
     
     # xticksの設定
     dataLenX = len(list(set(data["dose2"].tolist()))) 
     ax.set_xticks(list(np.linspace(0.5, dataLenX - 0.5, len(a2DoseList))))
-    ax.set_xticklabels(list(map(str, a2DoseList)))
+    ax.set_xticklabels(list(map(lambda x:"{:.3f}".format(x), a2DoseList)))
 
 
 if __name__ == "__main__":
     drugNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
+    
+
     
     # single simulation 
     singleDataPath = "results/ribo8/single/csv"
@@ -109,7 +111,6 @@ if __name__ == "__main__":
     ## differentDrug combination
     drugNameList = itr.combinations(drugNames, 2)
     
-    plt.figure(figsize=(20, 30))
     for index, drugName in enumerate(drugNameList):
         plt.subplot(2, 3, index + 1)
         data = pd.read_csv("results/ribo8/double/normal/{}_merge.csv".format("_".join(drugName)))
