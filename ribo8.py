@@ -297,25 +297,40 @@ def makedir(dirname):
         os.makedirs(dirname)
     del(os)
 
-def sim_comb(drugs, IC30, num, length=101, splitNum=101):
+def divideDoses(drugNames, IC30, num, length=101, splitNum=101):
     """
-        多剤シミュレーション．
-        drugs    : createDrugDataで作成した薬剤データのリスト
-        IC30
-        num      : 並列化に使用．何番目のシミュレーションを動かしているか．
-        length   : 何間隔でやっているか．
-        splitNum : 何個ずつシミュレーションするか．
+        doseのリストを分割加工する関数
+        drugNames : 薬剤の名前のリスト
+        IC30      : 
+        num       : 何番目のリストか
+        length    : 何間隔でやっているか
+        splitNum  : 全部で何 * 何のシミュレーションになるか
     """
-    doses = [[x, y] for x in np.linspace(0, IC30[drugs[0]["name"]] * 2, splitNum) for y in np.linspace(0, IC30[drugs[1]["name"]] * 2, splitNum)]
+    doses = [[x, y] 
+             for x in np.linspace(0, IC30[drugNames[0]] * 2, splitNum) 
+             for y in np.linspace(0, IC30[drugNames[1]] * 2, splitNum)]
     if (num + 1) * length < len(doses):
         doses = doses[num * length : (num + 1) * length]
     else :
         doses = doses[num * length :]
+
+    return doses
+
+def sim_comb(drugs, doses, target=None):
+    """
+        多剤シミュレーション．
+        drugs  : createDrugDataで作成した薬剤データのリスト
+        dose   : doseのリスト
+        target : 標的を変える場合，リストとして標的を加える
+    """
     df = pd.DataFrame()
     for index, dose in enumerate(doses):
         print("    step: {} >> ".format(index))
         drugs[0]["dose"] = dose[0]
         drugs[1]["dose"] = dose[1]
+        if target:
+            drugs[0]["target"] = target[0]
+            drugs[1]["target"] = target[1]
         data = sim(drugs)
         df = pd.concat([df, data[1]])
     df = df.reset_index(drop=True)
@@ -359,14 +374,33 @@ if __name__ == "__main__":
     #     df.to_csv("{}/{}.csv".format(csvdir, drugName), index=False)
 
     ## 組合せシミュレーション
-    csvdir = "results/ribo8/double/normal"
+    # csvdir = "results/ribo8/double/normal"
+    # makedir(csvdir)
+    # drugNameList = itr.combinations_with_replacement(drugNames, 2)
+    # num = int(sys.argv[-1])
+    # print("start combination >> ")
+    # for drugName in drugNameList:
+    #     dirName = "{}/{}".format(csvdir, "_".join(drugName))
+    #     print("{} vs {}".format(drugName[0], drugName[1]))
+    #     drugs = [createDrugData(drugName[0]), createDrugData(drugName[1])]
+    #     doses = divideDoses(drugName, IC30, num, 101, 101)
+    #     df = sim_comb(drugs, doses)
+    #     df.to_csv("{}/{}_{}.csv".format(dirName, "_".join(drugName), num), index=False)
+
+    ## 組合せシミュレーション(仮想薬剤)
+    csvdir = "results/ribo8/double/virtual"
     makedir(csvdir)
-    drugNameList = itr.combinations_with_replacement(drugNames, 2)
+    drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
+    targetList = [["A", "A"], ["A", "B"], ["A", "C"]]
+    num = int(sys.argv[-1])
     print("start combination >> ")
     for drugName in drugNameList:
-        dirName = "{}/{}".format(csvdir, "_".join(drugName))
-        print("{} vs {}".format(drugName[0], drugName[1]))
-        drugs = [createDrugData(drugName[0]), createDrugData(drugName[1])]
-        num = int(sys.argv[-1])
-        df = sim_comb(drugs, IC30, int(sys.argv[-1]), 101, 101)
-        df.to_csv("{}/{}_{}.csv".format(dirName, "_".join(drugName), num), index=False)
+        print("  {} vs {} >> ".format(drugName[0], drugName[1]))
+        doses = divideDoses(drugName, IC30, num, 101, 101)
+        for target in targetList:
+            dirName = "{}/{}".format(csvdir, "_".join(["{}{}".format(drugName[i], target[i]) for i in range(len(drugName))]))
+            makedir(dirName)
+            print("    {} vs {} >> ".format(target[0], target[1]))
+            drugs = [createDrugData(drugName[i]) for i in range(len(drugName))]
+            df = sim_comb(drugs, doses, target)
+            df.to_csv("{}/{}.csv".format(dirName, num), index = False)
