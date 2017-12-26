@@ -20,24 +20,37 @@ def mergeResults(fileNameList):
     df = df.reset_index(drop=True)
     return df
 
-def createHeatmap(data, drugNames, cbar=False, cmap=False):
-    if not cmap: cmap = sns.diverging_palette(220, 10, as_cmap=True) # coler map
-    heatmapData = pd.pivot_table(data=data, values="growth", index="a1", columns="a2") # heatmap data
-    ax = sns.heatmap(heatmapData, cbar=cbar, cmap=cmap, square=True) # create Heatmap
-    ax.invert_yaxis()
+def createHeatmap(drugNames, dataLists, subplot, saveName):
+    """
+        drugNames : csvのファイル名で使用している薬剤名のリスト
+        csvdir    : csvが保存されているディレクトリ名
+        subplot   : グラフの数を行列で[横, 縦]
+    """
+    fig = plt.figure(figsize=(subplot[0] * 100 / 9, subplot[1] * 10))
+    cbar_ax = fig.add_axes([.92, .1, .02, .8])
+    cmap = sns.diverging_palette(220, 10, as_cmap=True)
+    for index, drugName in enumerate(drugNames):
+        plt.subplot(subplot[1], subplot[0], index + 1)
+        data = pd.read_csv(dataLists[index])
+        heatmapData = pd.pivot_table(data = data,
+                                     values = "growth",
+                                     index = "a1",
+                                     columns = "a2")
+        ax = sns.heatmap(heatmapData,
+                         cbar = index == 0,
+                         cmap = cmap,
+                         cbar_ax = None if index else cbar_ax,
+                         square = True)
 
-    setTickLabel(data, ax)
+        ax.invert_yaxis() # y軸の上下を変える
+        setTickLabel(data, ax) # 軸の設定
+        ax.set_ylabel(drugName[0], fontsize = 30) # y軸のラベル
+        ax.set_xlabel(drugName[1], fontsize = 30) # x軸のラベル
+        ax.tick_params(labelsize=24)
 
-    ax.set_ylabel(drugNames[0], fontsize=20) # create ylabel
-    ax.set_xlabel(drugNames[1], fontsize=20) # create xlabel
-
-    ## virtual drug
-    # if drugNames[0] == "Streptmycin": ax.set_ylabel("Pattern A", fontsize=axizFontSize) # create ylabel
-    # else : ax.set_ylabel("Pattern B", fontsize=axizFontSize) # create ylabe
-    # if drugNames    [1] == "Streptmycin": ax.set_xlabel("Pattern A", fontsize=axizFontSize) # create xlabel
-    # else: ax.set_xlabel("Pattern B", fontsize=axizFontSize) # create xlabel
-
-    ax.tick_params(labelsize=16)
+    cbar_ax.tick_params(labelsize = 30)
+    fig.tight_layout(rect = [0, 0, .9, 1.])
+    plt.savefig(saveName, dpi=300)
 
 
 def setTickLabel(data, ax):
@@ -67,27 +80,15 @@ if __name__ == "__main__":
         df.to_csv("{}/{}_merge.csv".format(csvdir, "_".join(drugName)), index=False)
 
     # SameDrug combination
-    doubleSaveName = "results/ribo4/images/sameDrug_sim100.png"
     drugNameList = [[name, name] for name in drugNames]
+    dataLists = ["results/ribo4/csv/sim100/{}_merge.csv".format("_".join(i)) for i in drugNameList]
+    doubleSaveName = "results/ribo4/images/sameDrug_sim100.png"
+    createHeatmap(drugNameList, dataLists, [2, 2], doubleSaveName)
 
-    csvdir = "results/ribo4/csv/sim100"
-    fig = plt.figure(figsize=(20, 20))
-    for index, drugName in enumerate(drugNameList):
-        plt.subplot(2, 2, index + 1)
-        data = pd.read_csv("{}/{}_merge.csv".format(csvdir, "_".join(drugName)))
-        createHeatmap(data, drugNames)
-    plt.tight_layout()
-    plt.savefig(doubleSaveName, dpi=300)
 
     # differentDrug combination
+    drugNameList = list(itr.combinations(drugNames, 2))
+    dataLists = ["results/ribo4/csv/sim100/{}_merge.csv".format("_".join(i)) for i in drugNameList]
     doubleSaveName = "results/ribo4/images/diffDrug_sim100.png"
-    drugNameList = itr.combinations(drugNames, 2)
-    
-    fig = plt.figure(figsize=(30, 20))
-    for index, drugName in enumerate(drugNameList):
-        plt.subplot(2, 3, index + 1)
-        data = pd.read_csv("{}/{}_merge.csv".format(csvdir, "_".join(drugName)))
-        createHeatmap(data, drugNames)
-    plt.tight_layout()
-    plt.savefig(doubleSaveName, dpi=300)
- 
+    createHeatmap(drugNameList, dataLists, [3, 2], doubleSaveName)
+
