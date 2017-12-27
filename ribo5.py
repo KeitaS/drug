@@ -657,9 +657,9 @@ if __name__ == "__main__":
     print("start simulation >> ")
     for modif in range(1, 3):
         print("  modif {} >> ".format(modif))
+        inpData = {"modif": modif}
         for drugName in drugNameList:
             print("    {} vs {} >> ".format(drugName[0], drugName[1]))
-            inpData = {"modif": modif}
             dirName = "{}/modif{}/{}".format(csvdir, modif, "_".join(drugName))
             makedir(dirName)
             drugs = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
