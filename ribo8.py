@@ -19,17 +19,17 @@ def createDrugData(drugName):
     # 薬剤のプロファイルを作成する関数
     # すべて，Lambda_0 = 1.35
     datas = {
-        "Lambda_0_a": {"Streptmycin": 0.31, "Kanamycin": 0.169, "Tetracycline": 5.24, "Chloramphenicol": 1.83},
-        "IC50_a": {"Streptmycin": 0.189, "Kanamycin": 0.05, "Tetracycline": 0.229, "Chloramphenicol": 2.49},
-        "target": {"Streptmycin": "A", "Kanamycin": "A", "Tetracycline": "A", "Chloramphenicol": "C"}
+        "Lambda_0_a" : {"Streptmycin": 0.31, "Kanamycin": 0.169, "Tetracycline": 5.24, "Chloramphenicol": 1.83},
+        "IC50_a"     : {"Streptmycin": 0.189, "Kanamycin": 0.05, "Tetracycline": 0.229, "Chloramphenicol": 2.49},
+        "target"     : {"Streptmycin": "A", "Kanamycin": "A", "Tetracycline": "A", "Chloramphenicol": "C"}
     }
 
     drugData = {
-        "name": drugName,
-        "target": datas["target"][drugName],
-        "dose": .0,
-        "Lambda_0_a": datas["Lambda_0_a"][drugName],
-        "IC50_a": datas["IC50_a"][drugName]
+        "name"       : drugName,
+        "target"     : datas["target"][drugName],
+        "dose"       : .0,
+        "Lambda_0_a" : datas["Lambda_0_a"][drugName],
+        "IC50_a"     : datas["IC50_a"][drugName]
     }
     return drugData
 
@@ -346,7 +346,8 @@ if __name__ == "__main__":
     makedir(csvdir)
 
     # IC30の計算
-    IC30_file = "IC30.csv"
+    makedir("IC30")
+    IC30_file = "IC30/ribo8.csv"
     try:
         IC30_df = pd.read_csv(IC30_file)
         IC30 = {i: IC30_df[i][0] for i in IC30_df.columns}
