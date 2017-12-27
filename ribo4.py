@@ -591,7 +591,7 @@ if __name__ == "__main__":
     ## double simulation
     # csvdir = "./results/ribo4/csv/sim100"
     # makedir(csvdir)
-    # drugNameList = itr.combinations_with_replacement(dNames, 2)
+    # drugNameList = List(itr.combinations_with_replacement(dNames, 2))
     # num = int(sys.argv[-1])
     # print("start combination >> ")
     # for drugName in drugNameList:
