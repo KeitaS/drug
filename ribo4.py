@@ -236,11 +236,11 @@ def generate_cmap(colors=["mediumblue", "white", "orangered"]):
     return LinearSegmentedColormap.from_list('custom_cmap', color_list)
 
 
-def checkEpsilon(dName, dose): # nature genesis 2006's evaluation
-    x = sim([makeDrugDatas(dName[0])], [dose[0]])
-    y = sim([makeDrugDatas(dName[1])], [dose[1]])
-    xy = sim([makeDrugDatas(dName[0]), makeDrugDatas(dName[1])], dose)
-    # drugs = [makeDrugDatas(dName[0]), makeDrugDatas(dName[1])]
+def checkEpsilon(drugName, dose): # nature genesis 2006's evaluation
+    x = sim([makeDrugDatas(drugName[0])], [dose[0]])
+    y = sim([makeDrugDatas(drugName[1])], [dose[1]])
+    xy = sim([makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])], dose)
+    # drugs = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
     # drugs[0]["type"] = "30s"
     # drugs[1]["type"] = "50s"
     # xy = sim(drugs, dose)
@@ -270,14 +270,14 @@ def checkLinerType(inp, buff=0.):
         linertype = lower_bound - min_inp
     return linertype
 
-def calcIC(dNames, a_ex, target):
+def calcIC(drugNames, a_ex, target):
     """
     二分法でIC〜〜を計算
     """
     calc_result = {}
-    for dName in dNames:
-        drugs = [makeDrugDatas(dName, 0)] # 薬剤データの作成
-        dose_max = a_ex[dName] * 3
+    for drugName in drugNames:
+        drugs = [makeDrugDatas(drugName, 0)] # 薬剤データの作成
+        dose_max = a_ex[drugName] * 3
         dose_min = .0
         result = 1.
         dose = .0
@@ -290,7 +290,7 @@ def calcIC(dNames, a_ex, target):
                 dose_max = dose
             else:
                 dose_min = dose
-        calc_result[dName] = dose
+        calc_result[drugName] = dose
     return calc_result
 
 def createHeatmap(data, drugNames, cbar=False, cmap=False, axizFontSize=16, labelSize=16):
@@ -319,12 +319,12 @@ def createHeatmap(data, drugNames, cbar=False, cmap=False, axizFontSize=16, labe
 
 
 
-def oldeval(dNameList, IC30, subplot, slopeList=[1./4, 1./2, 1., 2., 4.], titleFontSize=16, axizFontSize=16, labelSize=16, csvdir="."):
+def oldeval(drugNameList, IC30, subplot, slopeList=[1./4, 1./2, 1., 2., 4.], titleFontSize=16, axizFontSize=16, labelSize=16, csvdir="."):
     # 論文の評価関数を使用してヒートマップを作成する関数
     figsize = (subplot[1] * 10, subplot[0] * 10)
     if figsize: fig = plt.figure(figsize=figsize)
     else: fig = plt.figure()
-    for index, name in enumerate(dNameList):
+    for index, name in enumerate(drugNameList):
         midPointList = [x for x in itr.zip_longest(np.linspace(0, IC30[name[0]], 11), np.linspace(0, IC30[name[1]], 11))][1:] # 0, 0を除いた10点．中点なので，IC30でOK．
         doseList = [[[midPoint[0] * (1 + slope), midPoint[1] * (1 + (1 / slope))] for midPoint in midPointList] for slope in slopeList] # doseの組合せを作成．oldevalなので切片だけで良い．
         resultList = []
@@ -340,12 +340,12 @@ def oldeval(dNameList, IC30, subplot, slopeList=[1./4, 1./2, 1., 2., 4.], titleF
     fig.tight_layout()
     return fig
 
-def oldeval_usecsv(dNameList, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16):
+def oldeval_usecsv(drugNameList, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16):
     # 論文の評価関数を使用してヒートマップを作成する関数(作成したデータを使う場合)
     figsize = (subplot[1] * 10, subplot[0] * 10)
     if figsize: fig = plt.figure(figsize=figsize)
     else: fig = plt.figure()
-    for index, name in enumerate(dNameList):
+    for index, name in enumerate(drugNameList):
         plt.subplot(subplot[0], subplot[1], index + 1)
         data = pd.read_csv("{}/{}_{}.csv".format(csvdir, name[0], name[1]))
         ax = createEvalHeatmap(data=data, title="{} vs {}".format(name[0][:3],
@@ -354,9 +354,9 @@ def oldeval_usecsv(dNameList, subplot, csvdir=".", titleFontSize=16, axizFontSiz
     fig.tight_layout()
     return fig
 
-def heatmap(dNameList, IC30, subplot, csvdir=".", axizFontSize=16, labelSize=16, splitNum=11):
+def heatmap(drugNameList, IC30, subplot, csvdir=".", axizFontSize=16, labelSize=16, splitNum=11):
     fig = plt.figure(figsize=(subplot[1] * 10, subplot[0] * 10))
-    for index, name in enumerate(dNameList):
+    for index, name in enumerate(drugNameList):
         plt.subplot(subplot[0], subplot[1], index + 1)
         drug = [makeDrugDatas(name[0]), makeDrugDatas(name[1])]
         doses = [[x, y] for x in np.linspace(0, IC30[name[0]] * 2, splitNum) for y in np.linspace(0, IC30[name[1]] * 2, splitNum)]
@@ -370,9 +370,9 @@ def heatmap(dNameList, IC30, subplot, csvdir=".", axizFontSize=16, labelSize=16,
 
     return fig
 
-def heatmap_usecsv(dNameList, subplot, csvdir=".", axizFontSize=16, labelSize=16):
+def heatmap_usecsv(drugNameList, subplot, csvdir=".", axizFontSize=16, labelSize=16):
     fig = plt.figure(figsize=(subplot[1] * 10, subplot[0] * 10))
-    for index, name in enumerate(dNameList):
+    for index, name in enumerate(drugNameList):
         plt.subplot(subplot[0], subplot[1], index + 1)
         data = pd.read_csv("{}/{}_{}.csv".format(csvdir, name[0], name[1]))
         createHeatmap(data, name, axizFontSize=axizFontSize, labelSize=labelSize)
@@ -380,12 +380,12 @@ def heatmap_usecsv(dNameList, subplot, csvdir=".", axizFontSize=16, labelSize=16
 
     return fig
 
-def test_oldeval(dNameList, IC30, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16, splitNum=11, cbar=False):
+def test_oldeval(drugNameList, IC30, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16, splitNum=11, cbar=False):
     # 論文の評価関数を使用してヒートマップを作成する関数
     figsize = (subplot[1] * 10, subplot[0] * 10)
     if figsize: fig = plt.figure(figsize=figsize)
     else: fig = plt.figure()
-    for index, name in enumerate(dNameList):
+    for index, name in enumerate(drugNameList):
         plt.subplot(subplot[0], subplot[1], index + 1)
         doses = [[x, y] for x in np.linspace(0, IC30[name[0]] * 2, splitNum) for y in np.linspace(0, IC30[name[1]] * 2, splitNum)]
         resultList = []
@@ -410,11 +410,11 @@ def setTickLabel(data, ax):
     ax.set_yticks(list(np.linspace(0.5, 10.5, len(a1DoseList))))
     ax.set_yticklabels(list(map(str, a1DoseList)))
 
-def test_oldeval_usecsv(dNameList, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16, cbar=False):
+def test_oldeval_usecsv(drugNameList, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16, cbar=False):
     figsize = (subplot[1] * 10, subplot[0] * 10)
     if figsize: fig = plt.figure(figsize=figsize)
     else: fig = plt.figure()
-    for index, name in enumerate(dNameList):
+    for index, name in enumerate(drugNameList):
         plt.subplot(subplot[0], subplot[1], index + 1)
         data = pd.read_csv("{}/{}_{}.csv".format(csvdir, name[0], name[1]))
         pattern = ["pattern A" if name[0] == "Streptmycin" else "pattern B", "pattern A" if name[1] == "Streptmycin" else "pattern B"]
@@ -424,25 +424,25 @@ def test_oldeval_usecsv(dNameList, subplot, csvdir=".", titleFontSize=16, axizFo
     fig.tight_layout()
     return fig
 
-def createEvalHeatmap(data, dNames, columns=[], title="", titleFontSize=16, axizFontSize=16, labelSize=16, cbar=True, cmap=makeCmap()):
+def createEvalHeatmap(data, drugNames, columns=[], title="", titleFontSize=16, axizFontSize=16, labelSize=16, cbar=True, cmap=makeCmap()):
     # oldevalに当てたときに，ヒートマップを返す関数
     if not columns: columns = data.columns
     heatmapData = pd.pivot_table(data=data, index=columns[0], columns=columns[1], values=columns[2]) # valueをepsilonに
     ax = sns.heatmap(heatmapData, vmin=-1, vmax=1, cmap=cmap, cbar=cbar, square=True, linewidths=.2)
-    ax.set_ylabel(dNames[0], fontsize=axizFontSize) # y軸
-    ax.set_xlabel(dNames[1], fontsize=axizFontSize) # x軸
+    ax.set_ylabel(drugNames[0], fontsize=axizFontSize) # y軸
+    ax.set_xlabel(drugNames[1], fontsize=axizFontSize) # x軸
     if title: ax.set_title(title, fontsize=titleFontSize)
     ax.tick_params(labelsize=labelSize)
     return ax
 
-def neweval(dNameList, IC30, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16, splitNum=11, cmap=generate_cmap()):
+def neweval(drugNameList, IC30, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16, splitNum=11, cmap=generate_cmap()):
     # 論文の評価関数を使用してヒートマップを作成する関数
     # figsize = (subplot[1] * 10, subplot[0] * 10)
     # fig = plt.figure(figsize=figsize)
     fig, axn = plt.subplots(subplot[0], subplot[1])
     cbar_ax = fig.add_axes([.91, .3, .03, .4])
     slopeList = [1./4., 1./2., 1., 2., 4.]
-    for index, name in enumerate(dNameList):
+    for index, name in enumerate(drugNameList):
         drugs = [makeDrugDatas(name[0]), makeDrugDatas(name[1])]
 
         # drugs[0]["type"] = "30s"
@@ -471,12 +471,12 @@ def neweval(dNameList, IC30, subplot, csvdir=".", titleFontSize=16, axizFontSize
         data.to_csv("{}/{}_{}.csv".format(csvdir, name[0], name[1]), index=False)
     return fig
 
-def neweval_usecsv(dNameList, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16, splitNum=11, cmap=generate_cmap()):
+def neweval_usecsv(drugNameList, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16, splitNum=11, cmap=generate_cmap()):
     # 論文の評価関数を使用してヒートマップを作成する関数
     fig = plt.figure(figsize=(subplot[1] * 10, subplot[0] * 10))
     # fig, axn = plt.subplots(subplot[0], subplot[1])
     # cbar_ax = fig.add_axes([.91, .35, .01, .3])
-    for index, name in enumerate(dNameList):
+    for index, name in enumerate(drugNameList):
         plt.subplot(subplot[0], subplot[1], index + 1)
         data = pd.read_csv("{}/{}_{}.csv".format(csvdir, name[0], name[1]))
         heatmapData = pd.pivot_table(data=data, index="MidPoint", columns="Slope", values="LinerType") # valueをepsilonに
@@ -495,12 +495,12 @@ def neweval_usecsv(dNameList, subplot, csvdir=".", titleFontSize=16, axizFontSiz
     fig.tight_layout()
     return fig
 
-def virtual_h(dNameList, csvdir, imgname):
+def virtual_h(drugNameList, csvdir, imgname):
     fig = plt.figure(figsize=(30, 10))
     # fig, axn = plt.subplots(1, 3)
     # cbar_ax = fig.add_axes([.95, .3, .01, .4])
     cmap = sns.diverging_palette(220, 10, as_cmap=True)
-    for i, name in enumerate(dNameList):
+    for i, name in enumerate(drugNameList):
         plt.subplot(1, 3, i + 1)
         drugs = [makeDrugDatas(name[0]), makeDrugDatas(name[1])]
         drugs[0]["type"] = "30s"
@@ -567,31 +567,40 @@ if __name__ == "__main__":
     makedir(imgdir)
 
     ## drug data
-    dNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
+    drugNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
     # a_ex = {"Streptmycin": 0.6, "Kanamycin": 0.5, "Tetracycline":2, "Chloramphenicol": 20}
 
-    # IC30 = calcIC(dNames, {name: 100 for name in dNames}, .3) # IC30を計算
-    IC30 = {'Kanamycin': 0.6761401891708374, 'Streptmycin': 1.4652013778686523, 'Chloramphenicol': 21.09375, 'Tetracycline': 5.2734375}
+    # IC30の計算
+    makedir("IC30")
+    IC30_file = "IC30/ribo4.csv"
+    try:
+        IC30_df = pd.read_csv(IC30_file)
+        IC30 = {i: IC30_df[i][0] for i in IC30_df.columns}
+    except:
+        IC30 = calcIC(drugNames, {drugName: 100 for drugName in drugNames}, .3)
+        IC30_df = pd.DataFrame({i: [IC30[i]] for i in drugNames})
+        IC30_df.to_csv(IC30_file, index=False)
+
     # cmap = makeCmap() # 論文のデータと同じカラーマップ
 
-    # # dNameList = [[name, name] for name in dNames] # 同じ薬剤を２剤投与した場合．
-    # dNameList = itr.combinations(dNames, 2) # 異なる薬剤を２剤投与した場合．
-    # # dNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
+    # # drugNameList = [[name, name] for name in drugNames] # 同じ薬剤を２剤投与した場合．
+    # drugNameList = itr.combinations(drugNames, 2) # 異なる薬剤を２剤投与した場合．
+    # # drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
     # slopeList = [1./4, 1./2, 1., 2., 4.] # 傾きのリスト
 
     # imgname = "{}/combination_drug.png".format(imgdir)
-    # # fig = neweval(dNameList, IC30, (2, 3), csvdir)
-    # fig = neweval_usecsv(dNameList, (2, 3), csvdir, axizFontSize=40, labelSize=30, titleFontSize=30)
-    # # fig = test_oldeval_usecsv(dNameList, (1, 3), csvdir, axizFontSize=40, labelSize=30)
+    # # fig = neweval(drugNameList, IC30, (2, 3), csvdir)
+    # fig = neweval_usecsv(drugNameList, (2, 3), csvdir, axizFontSize=40, labelSize=30, titleFontSize=30)
+    # # fig = test_oldeval_usecsv(drugNameList, (1, 3), csvdir, axizFontSize=40, labelSize=30)
     # fig.savefig(imgname, dpi=300)
     # #
-    # # fig = neweval_usecsv(dNameList, (1, 3), csvdir, axizFontSize=40, labelSize=30, titleFontSize=40)
+    # # fig = neweval_usecsv(drugNameList, (1, 3), csvdir, axizFontSize=40, labelSize=30, titleFontSize=40)
     # # fig.savefig(imgname, dpi=300)
 
     ## double simulation
     # csvdir = "./results/ribo4/csv/sim100"
     # makedir(csvdir)
-    # drugNameList = list(itr.combinations_with_replacement(dNames, 2))
+    # drugNameList = list(itr.combinations_with_replacement(drugNames, 2))
     # num = int(sys.argv[-1])
     # print("start combination >> ")
     # for drugName in drugNameList:
