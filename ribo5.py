@@ -9,6 +9,7 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pylab as plt
 import itertools as itr
+import sys
 
 @reaction_rules
 def r30_binding_reaction(a_ex, a, r30_b, P_in, P_out, K_on, K_off, Lambda):
@@ -297,12 +298,12 @@ def checkLinerType(inp, buff=0.):
     return linertype
 
 
-def calcIC(dNames, a_ex, target, modif=0):
+def calcIC(drugNames, a_ex, target, modif=0):
     """
     二分法でIC〜〜を計算
     """
     calc_result = {}
-    for dName in dNames:
+    for dName in drugNames:
         drugs = [makeDrugDatas(dName, 0)] # 薬剤データの作成
         dose_max = a_ex[dName] * 3
         dose_min = .0
@@ -321,7 +322,7 @@ def calcIC(dNames, a_ex, target, modif=0):
     return calc_result
 
 
-def calcBufferingPoint(dNames, doses):
+def calcBufferingPoint(drugNames, doses):
     """
     二分法でBufferingPointを計算
     """
@@ -330,8 +331,8 @@ def calcBufferingPoint(dNames, doses):
     b_range = [0, doses[1]]
     b_mid = doses[1]
     result = 1
-    drugA = [makeDrugDatas(dNames[0])]
-    drugB = [makeDrugDatas(dNames[1])]
+    drugA = [makeDrugDatas(drugNames[0])]
+    drugB = [makeDrugDatas(drugNames[1])]
     result_a = 0
     result_b = 0
     while abs(result) > 0.01:
@@ -424,16 +425,16 @@ def createSlopedose(slope, midPointList, divnum=11):
     return_list = [[doseX[i], doseY[i]] for i in range(len(doseX))]
     return [[doseX[i], doseY[i]] for i in range(len(doseX))]
 
-def calcEpsilon(dNames, doses, inpData={"modif": 1}):
+def calcEpsilon(drugNames, doses, inpData={"modif": 1}):
     """
     """
     result_list = []
     for i in range(3):
         if i < 2:
-            drugs = [makeDrugDatas(dNames[i])]
+            drugs = [makeDrugDatas(drugNames[i])]
             result_list.append(doseResponse(drugs, [doses[i]], inpData=inpData))
         else:
-            drugs = [makeDrugDatas(dNames[0]), makeDrugDatas(dNames[1])]
+            drugs = [makeDrugDatas(drugNames[0]), makeDrugDatas(drugNames[1])]
             result_list.append(doseResponse(drugs, doses, inpData=inpData))
 
     return epsilon(result_list[0], result_list[1], result_list[2])
@@ -452,14 +453,14 @@ def sim(drugs, dose, inpData={}):
     return calcGrowthRate(result[-1][1])
 
 
-def neweval(dNameList, IC30, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16, splitNum=11, cmap=generate_cmap(), flag=True, inpData={}):
+def neweval(drugNameList, IC30, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16, splitNum=11, cmap=generate_cmap(), flag=True, inpData={}):
     # 論文の評価関数を使用してヒートマップを作成する関数
     figsize = (subplot[1] * 10, subplot[0] * 10)
     fig = plt.figure(figsize=figsize)
     # fig, axn = plt.subplots(subplot[0], subplot[1])
     # cbar_ax = fig.add_axes([.91, .3, .03, .4])
     slopeList = [1./4., 1./2., 1., 2., 4.]
-    for index, name in enumerate(dNameList):
+    for index, name in enumerate(drugNameList):
         drugs = [makeDrugDatas(name[0]), makeDrugDatas(name[1])]
 
         if flag:
@@ -492,12 +493,12 @@ def neweval(dNameList, IC30, subplot, csvdir=".", titleFontSize=16, axizFontSize
     fig.tight_layout()
     return fig
 
-def neweval_usecsv(dNameList, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16, splitNum=11, cmap=generate_cmap()):
+def neweval_usecsv(drugNameList, subplot, csvdir=".", titleFontSize=16, axizFontSize=16, labelSize=16, splitNum=11, cmap=generate_cmap()):
     # 論文の評価関数を使用してヒートマップを作成する関数
     fig = plt.figure(figsize=(subplot[1] * 10, subplot[0] * 10))
     # fig, axn = plt.subplots(subplot[0], subplot[1])
     # cbar_ax = fig.add_axes([.91, .35, .01, .3])
-    for index, name in enumerate(dNameList):
+    for index, name in enumerate(drugNameList):
         plt.subplot(subplot[0], subplot[1], index + 1)
         data = pd.read_csv("{}/{}_{}.csv".format(csvdir, name[0], name[1]))
         heatmapData = pd.pivot_table(data=data, index="MidPoint", columns="Slope", values="LinerType") # valueをepsilonに
@@ -540,9 +541,9 @@ def createHeatmap(data, drugNames, cbar=False, cmap=False, axizFontSize=16, labe
 
     ax.tick_params(labelsize=labelSize)
 
-def heatmap(dNameList, IC30, subplot, csvdir=".", axizFontSize=16, labelSize=16, splitNum=11, flag=False, inpData={}):
+def heatmap(drugNameList, IC30, subplot, csvdir=".", axizFontSize=16, labelSize=16, splitNum=11, flag=False, inpData={}):
     fig = plt.figure(figsize=(subplot[1] * 10, subplot[0] * 10))
-    for index, name in enumerate(dNameList):
+    for index, name in enumerate(drugNameList):
         plt.subplot(subplot[0], subplot[1], index + 1)
         drug = [makeDrugDatas(name[0]), makeDrugDatas(name[1])]
 
@@ -561,9 +562,9 @@ def heatmap(dNameList, IC30, subplot, csvdir=".", axizFontSize=16, labelSize=16,
 
     return fig
 
-def heatmap_usecsv(dNameList, subplot, csvdir=".", axizFontSize=16, labelSize=16):
+def heatmap_usecsv(drugNameList, subplot, csvdir=".", axizFontSize=16, labelSize=16):
     fig = plt.figure(figsize=(subplot[1] * 10, subplot[0] * 10))
-    for index, name in enumerate(dNameList):
+    for index, name in enumerate(drugNameList):
         plt.subplot(subplot[0], subplot[1], index + 1)
         data = pd.read_csv("{}/{}_{}.csv".format(csvdir, name[0], name[1]))
         createHeatmap(data, name, axizFontSize=axizFontSize, labelSize=labelSize)
@@ -580,22 +581,93 @@ def setTickLabel(data, ax):
     ax.set_yticks(list(np.linspace(0.5, 10.5, len(a1DoseList))))
     ax.set_yticklabels(list(map(str, a1DoseList)))
 
+def divideDoses(drugNames, IC30, num, length=101, splitNum=101):
+    """
+        doseのリストを分割加工する関数
+        drugNames : 薬剤の名前のリスト
+        IC30      : 
+        num       : 何番目のリストか
+        length    : 何間隔でやっているか
+        splitNum  : 全部で何 * 何のシミュレーションになるか
+    """
+    doses = [[x, y] 
+             for x in np.linspace(0, IC30[drugNames[0]] * 2, splitNum) 
+             for y in np.linspace(0, IC30[drugNames[1]] * 2, splitNum)]
+    if (num + 1) * length < len(doses):
+        doses = doses[num * length : (num + 1) * length]
+    else :
+        doses = doses[num * length :]
+
+    return doses
+
+def sim_comb(drugs, doses, inpData={"modif": 0}, target=None):
+    if target:
+        drugs[0]["type"] = target[0]
+        drugs[1]["type"] = target[1]
+    resultList = []
+    for index, dose in enumerate(doses):
+        print("    step: {} >> ".format(index))
+        resultList.append([dose[0], dose[1], sim(drugs, dose, inpData)])
+    data = pd.DataFrame(resultList, columns=["a1", "a2", "growth"])
+    return data
 
 
 if __name__ == "__main__":
 
-    dNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
-    IC30 = calcIC(dNames, {x: 50 for x in dNames}, 0.3, modif=2)
-    print(IC30)
-    # IC30 = {'Streptmycin': 1.4652013778686523, 'Kanamycin': 0.6761401891708374, 'Tetracycline': 5.2734375, 'Chloramphenicol': 21.09375}
+    drugNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
+
+    # IC30の計算
+    makedir("IC30")
+    IC30_file_modif1 = "IC30/ribo5_modif1.csv"
+    IC30 = [] # 0: modif1, 1: modif2
+    try:
+        IC30_df = pd.read_csv(IC30_file_modif1)
+        IC30.append({i: IC30_df[i][0] for i in IC30_df.columns})
+    except:
+        IC30.append(calcIC(drugNames, {drugName: 20 for drugName in drugNames}, .3, modif=1))
+        IC30_df = pd.DataFrame({i: [IC30[0][i]] for i in drugNames})
+        IC30_df.to_csv(IC30_file_modif1, index=False)
+    
+    IC30_file_modif2 = "IC30/ribo5_modif2.csv"
+    try:
+        IC30_df = pd.read_csv(IC30_file_modif2)
+        IC30.append({i: IC30_df[i][0] for i in IC30_df.columns})
+    except:
+        IC30.append(calcIC(drugNames, {drugName: 20 for drugName in drugNames}, .3, modif=2))
+        IC30_df = pd.DataFrame({i: [IC30[1][i]] for i in drugNames})
+        IC30_df.to_csv(IC30_file_modif2, index=False)
+    
     inpData = {"modif": 2}
     csvdir = "results/ribo5/csv/modif2/neweval"
     makedir(csvdir)
     imgdir = "results/ribo5/images"
 
-    # dNameList = [[name, name] for name in dNames] # 同じ薬剤を２剤投与した場合．
-    dNameList = itr.combinations(dNames, 2) # 異なる薬剤を２剤投与した場合．
-    # dNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
+    # drugNameList = [[name, name] for name in drugNames] # 同じ薬剤を２剤投与した場合．
+    drugNameList = list(itr.combinations(drugNames, 2)) # 異なる薬剤を２剤投与した場合．
+    # drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
 
-    fig = neweval(dNameList, IC30, (2,3), csvdir=csvdir, axizFontSize=40, titleFontSize=30, labelSize=30, inpData=inpData)
-    fig.savefig("{}/modif2_neweval_comb.png".format(imgdir), dpi=300)
+    # fig = neweval(drugNameList, IC30, (2,3), csvdir=csvdir, axizFontSize=40, titleFontSize=30, labelSize=30, inpData=inpData)
+    # fig.savefig("{}/modif2_neweval_comb.png".format(imgdir), dpi=300)
+
+    # ヒートマップ用データ作成
+    csvdir = "results/ribo5/csv/sim100"
+    makedir(csvdir)
+    drugNameList = list(itr.combinations_with_replacement(drugNames, 2))
+    num = int(sys.argv[-1])
+    print("start simulation >> ")
+    for modif in range(1, 3):
+        print("  modif {} >> ".format(modif))
+        for drugName in drugNameList:
+            print("    {} vs {} >> ".format(drugName[0], drugName[1]))
+            inpData = {"modif": modif}
+            dirName = "{}/modif{}/{}".format(csvdir, modif, "_".join(drugName))
+            makedir(dirName)
+            drugs = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
+            doses = divideDoses(drugName, IC30[modif - 1], num, 3, 3)
+            df = sim_comb(drugs, doses, inpData)
+            df.to_csv("{}/{}.csv".format(dirName, num), index=False)
+
+    # ヒートマップ用データ作成（仮想薬剤）
+    # csvdir = "results/ribo5/csv/sim100v"
+
+    
