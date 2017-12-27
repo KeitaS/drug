@@ -663,7 +663,7 @@ if __name__ == "__main__":
             dirName = "{}/modif{}/{}".format(csvdir, modif, "_".join(drugName))
             makedir(dirName)
             drugs = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
-            doses = divideDoses(drugName, IC30[modif - 1], num, 3, 3)
+            doses = divideDoses(drugName, IC30[modif - 1], num, 101, 101)
             df = sim_comb(drugs, doses, inpData)
             df.to_csv("{}/{}.csv".format(dirName, num), index=False)
 
