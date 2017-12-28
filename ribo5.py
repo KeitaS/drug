@@ -650,24 +650,43 @@ if __name__ == "__main__":
     # fig.savefig("{}/modif2_neweval_comb.png".format(imgdir), dpi=300)
 
     # ヒートマップ用データ作成
-    csvdir = "results/ribo5/csv/sim100"
+    # csvdir = "results/ribo5/csv/sim100"
+    # makedir(csvdir)
+    # drugNameList = list(itr.combinations_with_replacement(drugNames, 2))
+    # num = int(sys.argv[-1])
+    # print("start simulation >> ")
+    # for modif in range(1, 3):
+    #     print("  modif {} >> ".format(modif))
+    #     for drugName in drugNameList:
+    #         print("    {} vs {} >> ".format(drugName[0], drugName[1]))
+    #         inpData = {"modif": modif}
+    #         dirName = "{}/modif{}/{}".format(csvdir, modif, "_".join(drugName))
+    #         makedir(dirName)
+    #         drugs = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
+    #         doses = divideDoses(drugName, IC30[modif - 1], num, 101, 101)
+    #         df = sim_comb(drugs, doses, inpData)
+    #         df.to_csv("{}/{}.csv".format(dirName, num), index=False)
+
+    # ヒートマップ用データ作成（仮想薬剤）
+    csvdir = "results/ribo5/csv/sim100v"
     makedir(csvdir)
-    drugNameList = list(itr.combinations_with_replacement(drugNames, 2))
+    drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
+    targetList = [["30s", "30s"], ["30s", "50s"]]
     num = int(sys.argv[-1])
-    print("start simulation >> ")
+    print("start combination >> ")
     for modif in range(1, 3):
-        print("  modif {} >> ".format(modif))
+        print("  modif {} >>".format(modif))
         inpData = {"modif": modif}
         for drugName in drugNameList:
             print("    {} vs {} >> ".format(drugName[0], drugName[1]))
-            dirName = "{}/modif{}/{}".format(csvdir, modif, "_".join(drugName))
-            makedir(dirName)
-            drugs = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
             doses = divideDoses(drugName, IC30[modif - 1], num, 101, 101)
-            df = sim_comb(drugs, doses, inpData)
-            df.to_csv("{}/{}.csv".format(dirName, num), index=False)
-
-    # ヒートマップ用データ作成（仮想薬剤）
-    # csvdir = "results/ribo5/csv/sim100v"
+            for target in targetList:
+                dirName = "{}/modif{}/{}".format(csvdir, modif, "_".join(["{}{}".format(drugName[i], target[i]) for i in range(len(drugName))]))
+                makedir(dirName)
+                print("      {} vs {} >> ".format(target[0], target[1]))
+                drugs = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
+                df = sim_comb(drugs, doses, inpData, target)
+                df.to_csv("{}/{}.csv".format(dirName, num), index = False)
+    
 
     
