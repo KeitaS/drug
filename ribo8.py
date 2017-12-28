@@ -386,7 +386,7 @@ if __name__ == "__main__":
     #     drugs = [createDrugData(drugName[0]), createDrugData(drugName[1])]
     #     doses = divideDoses(drugName, IC30, num, 101, 101)
     #     df = sim_comb(drugs, doses)
-    #     df.to_csv("{}/{}_{}.csv".format(dirName, "_".join(drugName), num), index=False)
+    #     df.to_csv("{}/{}.csv".format(dirName, num), index=False)
 
     ## 組合せシミュレーション(仮想薬剤)
     csvdir = "results/ribo8/double/virtual"
@@ -405,3 +405,7 @@ if __name__ == "__main__":
             drugs = [createDrugData(drugName[i]) for i in range(len(drugName))]
             df = sim_comb(drugs, doses, target)
             df.to_csv("{}/{}.csv".format(dirName, num), index = False)
+
+
+
+

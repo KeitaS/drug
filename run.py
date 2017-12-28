@@ -105,21 +105,21 @@ if __name__ == "__main__":
 
     # for drugName in drugNameList:
     #     dirName = "{}/{}".format(csvdir, "_".join(drugName))
-    #     fileNameList = ["{}/{}_{}.csv".format(dirName, "_".join(drugName), num) for num in range(101)]
+    #     fileNameList = ["{}/{}.csv".format(dirName, num) for num in range(101)]
     #     df = mergeResults(fileNameList)
     #     df.to_csv("{}/{}_merge.csv".format(csvdir, "_".join(drugName)), index=False)
 
     ## SameDrug combination
     # drugNameList = [[name, name] for name in drugNames]
     # dataLists = ["results/ribo8/double/normal/{}_merge.csv".format("_".join(i)) for i in drugNameList]
-    # doubleSaveName = "results/ribo8/images/sameDrug.png"
-    # createHeatmap(drugNameList, dataLists, [2, 2], doubleSaveName)
+    # saveName = "results/ribo8/images/sameDrug.png"
+    # createHeatmap(drugNameList, dataLists, [2, 2], saveName)
 
     ## differentDrug combination
     # drugNameList = list(itr.combinations(drugNames, 2))
     # dataLists = ["results/ribo8/double/normal/{}_merge.csv".format("_".join(i)) for i in drugNameList]
-    # doubleSaveName = "results/ribo8/images/diffDrug.png"
-    # createHeatmap(drugNameList, dataLists, [3, 2], doubleSaveName)
+    # saveName = "results/ribo8/images/diffDrug.png"
+    # createHeatmap(drugNameList, dataLists, [3, 2], saveName
 
     # combinatorial simulation(virtual drug)
     ## merge DataFiles
