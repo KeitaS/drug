@@ -668,7 +668,7 @@ if __name__ == "__main__":
     #         df.to_csv("{}/{}.csv".format(dirName, num), index=False)
 
     # ヒートマップ用データ作成（仮想薬剤）
-    csvdir = "results/ribo5/csv/sim100v"
+    csvdir = "results/ribo5/csv/sim100_v"
     makedir(csvdir)
     drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
     targetList = [["30s", "30s"], ["30s", "50s"]]
