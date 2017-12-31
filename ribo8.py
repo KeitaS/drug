@@ -65,12 +65,12 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
 
 
     with reaction_rules():
-        r_tot = (r30   + r30_r50   + r30_r50C   + r30_r50D   + r30_r50CD +
+        r30_tot = (r30   + r30_r50   + r30_r50C   + r30_r50D   + r30_r50CD +
                  r30A  + r30A_r50  + r30A_r50C  + r30A_r50D  + r30A_r50CD +
                  r30B  + r30B_r50  + r30B_r50C  + r30B_r50D  + r30B_r50CD +
                  r30AB + r30AB_r50 + r30AB_r50C + r30AB_r50D + r30AB_r50CD)
-        Lambda = (r_tot - r_min) * K_t * r30_r50 / r_tot
-        SUP = Lambda * r_tot
+        Lambda = (r30_tot - r_min) * K_t * r30_r50 / r30_tot
+        SUP = Lambda * r30_tot
         # SUP = delta_r * ((1 + sub_p) / (K_t * delta_r) - 1 / Lambda_0)
         for index, drug in enumerate(drugs):
             # 薬剤の流入の式を追加
@@ -149,22 +149,22 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
         D + r30AB_r50C == r30AB_r50CD | (K_on, K_off)
 
         # リボソームの結合パターン
-        r30   + r50   == r30_r50     | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30_r50     / r_tot)) # もともとはこれだけ
-        r30   + r50C  == r30_r50C    | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30_r50C    / r_tot))
-        r30   + r50D  == r30_r50D    | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30_r50D    / r_tot))
-        r30   + r50CD == r30_r50CD   | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30_r50CD   / r_tot))
-        r30A  + r50   == r30A_r50    | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30A_r50    / r_tot))
-        r30A  + r50C  == r30A_r50C   | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30A_r50C   / r_tot))
-        r30A  + r50D  == r30A_r50D   | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30A_r50D   / r_tot))
-        r30A  + r50CD == r30A_r50CD  | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30A_r50CD  / r_tot))
-        r30B  + r50   == r30B_r50    | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30B_r50    / r_tot))
-        r30B  + r50C  == r30B_r50C   | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30B_r50C   / r_tot))
-        r30B  + r50D  == r30B_r50D   | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30B_r50D   / r_tot))
-        r30B  + r50CD == r30B_r50CD  | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30B_r50CD  / r_tot))
-        r30AB + r50   == r30AB_r50   | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30AB_r50   / r_tot))
-        r30AB + r50C  == r30AB_r50C  | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30AB_r50C  / r_tot))
-        r30AB + r50D  == r30AB_r50D  | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30AB_r50D  / r_tot))
-        r30AB + r50CD == r30AB_r50CD | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30AB_r50CD / r_tot))
+        r30   + r50   == r30_r50     | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30_r50     / r30_tot)) # もともとはこれだけ
+        r30   + r50C  == r30_r50C    | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30_r50C    / r30_tot))
+        r30   + r50D  == r30_r50D    | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30_r50D    / r30_tot))
+        r30   + r50CD == r30_r50CD   | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30_r50CD   / r30_tot))
+        r30A  + r50   == r30A_r50    | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30A_r50    / r30_tot))
+        r30A  + r50C  == r30A_r50C   | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30A_r50C   / r30_tot))
+        r30A  + r50D  == r30A_r50D   | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30A_r50D   / r30_tot))
+        r30A  + r50CD == r30A_r50CD  | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30A_r50CD  / r30_tot))
+        r30B  + r50   == r30B_r50    | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30B_r50    / r30_tot))
+        r30B  + r50C  == r30B_r50C   | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30B_r50C   / r30_tot))
+        r30B  + r50D  == r30B_r50D   | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30B_r50D   / r30_tot))
+        r30B  + r50CD == r30B_r50CD  | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30B_r50CD  / r30_tot))
+        r30AB + r50   == r30AB_r50   | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30AB_r50   / r30_tot))
+        r30AB + r50C  == r30AB_r50C  | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30AB_r50C  / r30_tot))
+        r30AB + r50D  == r30AB_r50D  | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30AB_r50D  / r30_tot))
+        r30AB + r50CD == r30AB_r50CD | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30AB_r50CD / r30_tot))
 
         # リボソームサブユニットの希釈
         r30         > ~r30         | Lambda * r30
@@ -227,21 +227,21 @@ def run(drugs=[], step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 3
     data = runsim.data()
     return data
 
-def calcGrowthRate(r30_r50, r_tot, Lambda_0=1.35):
+def calcGrowthRate(r30_r50, r30_tot, Lambda_0=1.35):
     """
-        r_totとr30_r50を用いてGrowth Rateを計算する関数．
+        r30_totとr30_r50を用いてGrowth Rateを計算する関数．
         r_min，K_tは定数なので，入力しない．
     """
     r_min = 19.3
     K_t = 6.1 * 10 ** -2
-    Lambda = (r_tot - r_min) * K_t * (r30_r50 / r_tot)
+    Lambda = (r30_tot - r_min) * K_t * (r30_r50 / r30_tot)
     growth = Lambda / Lambda_0
     return growth
 
 def sim(drugs, step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 30.}, Lambda_0=1.35):
     """
         Runして，Growth Rateを返す関数.
-        sp_listはr_totを計算できるようにリストを作成している．
+        sp_listはr30_totを計算できるようにリストを作成している．
         データに不備がないよう，すべてのデータをDataFrame型で返すようにしている．
     """
     # rtot を計算するために sp_listを作成
@@ -252,13 +252,13 @@ def sim(drugs, step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 30.}
     # runを使って，tを除去したリストを作成
     result = run(drugs, step, inpData, y0, sp_list=sp_list)[-1][1:]
     r30_r50 = result[1]
-    r_tot = sum(result)
+    r30_tot = sum(result)
     # growth rateを計算
-    growth = calcGrowthRate(r30_r50, r_tot, Lambda_0)
-    # resultにr_totとgrowthを追加
-    result += [r_tot, growth]
-    # columnsにするsp_listにr_totとgrwthを追加
-    sp_list += ["r_tot", "growth"]
+    growth = calcGrowthRate(r30_r50, r30_tot, Lambda_0)
+    # resultにr30_totとgrowthを追加
+    result += [r30_tot, growth]
+    # columnsにするsp_listにr30_totとgrwthを追加
+    sp_list += ["r30_tot", "growth"]
     # DataFrame型でt以外のすべてのデータを返す
     df = pd.DataFrame([result], columns=sp_list)
     return (growth, df)
