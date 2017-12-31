@@ -65,12 +65,13 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
 
 
     with reaction_rules():
-        r30_tot = (r30 + r30_r50 + r30_r50C + r30_r50D + r30_r50CD +
-            r30A + r30A_r50 + r30A_r50C + r30A_r50D + r30A_r50CD +
-            r30B + r30B_r50 + r30B_r50C + r30B_r50D + r30B_r50CD +
-            r30AB + r30AB_r50 + r30AB_r50C + r30AB_r50D + r30AB_r50CD)
-        Lambda = (r30_tot - r_min) * K_t * r30_r50 / r30_tot
-        SUP = Lambda * r30_tot
+        r_tot = (r30   + r30_r50   + r30_r50C   + r30_r50D   + r30_r50CD +
+                 r30A  + r30A_r50  + r30A_r50C  + r30A_r50D  + r30A_r50CD +
+                 r30B  + r30B_r50  + r30B_r50C  + r30B_r50D  + r30B_r50CD +
+                 r30AB + r30AB_r50 + r30AB_r50C + r30AB_r50D + r30AB_r50CD)
+        Lambda = (r_tot - r_min) * K_t * r30_r50 / r_tot
+        SUP = Lambda * r_tot
+        # SUP = delta_r * ((1 + sub_p) / (K_t * delta_r) - 1 / Lambda_0)
         for index, drug in enumerate(drugs):
             # 薬剤の流入の式を追加
             drug_ex = _eval("drug{}_ex".format(index))
@@ -148,22 +149,22 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35):
         D + r30AB_r50C == r30AB_r50CD | (K_on, K_off)
 
         # リボソームの結合パターン
-        r30   + r50   == r30_r50     | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30_r50     / r30_tot)) # もともとはこれだけ
-        r30   + r50C  == r30_r50C    | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30_r50C    / r30_tot))
-        r30   + r50D  == r30_r50D    | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30_r50D    / r30_tot))
-        r30   + r50CD == r30_r50CD   | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30_r50CD   / r30_tot))
-        r30A  + r50   == r30A_r50    | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30A_r50    / r30_tot))
-        r30A  + r50C  == r30A_r50C   | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30A_r50C   / r30_tot))
-        r30A  + r50D  == r30A_r50D   | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30A_r50D   / r30_tot))
-        r30A  + r50CD == r30A_r50CD  | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30A_r50CD  / r30_tot))
-        r30B  + r50   == r30B_r50    | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30B_r50    / r30_tot))
-        r30B  + r50C  == r30B_r50C   | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30B_r50C   / r30_tot))
-        r30B  + r50D  == r30B_r50D   | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30B_r50D   / r30_tot))
-        r30B  + r50CD == r30B_r50CD  | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30B_r50CD  / r30_tot))
-        r30AB + r50   == r30AB_r50   | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30AB_r50   / r30_tot))
-        r30AB + r50C  == r30AB_r50C  | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30AB_r50C  / r30_tot))
-        r30AB + r50D  == r30AB_r50D  | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30AB_r50D  / r30_tot))
-        r30AB + r50CD == r30AB_r50CD | (sub_k_a, sub_k_d * (r30_tot - r_min) * (r30AB_r50CD / r30_tot))
+        r30   + r50   == r30_r50     | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30_r50     / r_tot)) # もともとはこれだけ
+        r30   + r50C  == r30_r50C    | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30_r50C    / r_tot))
+        r30   + r50D  == r30_r50D    | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30_r50D    / r_tot))
+        r30   + r50CD == r30_r50CD   | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30_r50CD   / r_tot))
+        r30A  + r50   == r30A_r50    | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30A_r50    / r_tot))
+        r30A  + r50C  == r30A_r50C   | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30A_r50C   / r_tot))
+        r30A  + r50D  == r30A_r50D   | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30A_r50D   / r_tot))
+        r30A  + r50CD == r30A_r50CD  | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30A_r50CD  / r_tot))
+        r30B  + r50   == r30B_r50    | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30B_r50    / r_tot))
+        r30B  + r50C  == r30B_r50C   | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30B_r50C   / r_tot))
+        r30B  + r50D  == r30B_r50D   | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30B_r50D   / r_tot))
+        r30B  + r50CD == r30B_r50CD  | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30B_r50CD  / r_tot))
+        r30AB + r50   == r30AB_r50   | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30AB_r50   / r_tot))
+        r30AB + r50C  == r30AB_r50C  | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30AB_r50C  / r_tot))
+        r30AB + r50D  == r30AB_r50D  | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30AB_r50D  / r_tot))
+        r30AB + r50CD == r30AB_r50CD | (sub_k_a, sub_k_d * (r_tot - r_min) * (r30AB_r50CD / r_tot))
 
         # リボソームサブユニットの希釈
         r30         > ~r30         | Lambda * r30
@@ -226,14 +227,14 @@ def run(drugs=[], step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 3
     data = runsim.data()
     return data
 
-def calcGrowthRate(r30_r50, r30_tot, Lambda_0=1.35):
+def calcGrowthRate(r30_r50, r_tot, Lambda_0=1.35):
     """
         r_totとr30_r50を用いてGrowth Rateを計算する関数．
         r_min，K_tは定数なので，入力しない．
     """
     r_min = 19.3
     K_t = 6.1 * 10 ** -2
-    Lambda = (r30_tot - r_min) * K_t * (r30_r50 / r30_tot)
+    Lambda = (r_tot - r_min) * K_t * (r30_r50 / r_tot)
     growth = Lambda / Lambda_0
     return growth
 
@@ -253,7 +254,7 @@ def sim(drugs, step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 30.}
     r30_r50 = result[1]
     r_tot = sum(result)
     # growth rateを計算
-    growth = calcGrowthRate(r30_r50, r_tot)
+    growth = calcGrowthRate(r30_r50, r_tot, Lambda_0)
     # resultにr_totとgrowthを追加
     result += [r_tot, growth]
     # columnsにするsp_listにr_totとgrwthを追加
@@ -373,6 +374,11 @@ if __name__ == "__main__":
     #     drugData = pd.DataFrame([[d] for d in doses], columns=["dose"])
     #     df = pd.concat([drugData, df], axis=1)
     #     df.to_csv("{}/{}.csv".format(csvdir, drugName), index=False)
+    drugName = "Streptmycin"
+    # drugs = [createDrugData(drugName)]
+    # drugs[0]["dose"] = 0
+    data = sim([], step=100.)
+    print(data[1])
 
     ## 組合せシミュレーション
     # csvdir = "results/ribo8/double/normal"
@@ -389,22 +395,22 @@ if __name__ == "__main__":
     #     df.to_csv("{}/{}.csv".format(dirName, num), index=False)
 
     ## 組合せシミュレーション(仮想薬剤)
-    csvdir = "results/ribo8/double/virtual"
-    makedir(csvdir)
-    drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
-    targetList = [["A", "A"], ["A", "B"], ["A", "C"]]
-    num = int(sys.argv[-1])
-    print("start combination >> ")
-    for drugName in drugNameList:
-        print("  {} vs {} >> ".format(drugName[0], drugName[1]))
-        doses = divideDoses(drugName, IC30, num, 101, 101)
-        for target in targetList:
-            dirName = "{}/{}".format(csvdir, "_".join(["{}{}".format(drugName[i], target[i]) for i in range(len(drugName))]))
-            makedir(dirName)
-            print("    {} vs {} >> ".format(target[0], target[1]))
-            drugs = [createDrugData(drugName[i]) for i in range(len(drugName))]
-            df = sim_comb(drugs, doses, target)
-            df.to_csv("{}/{}.csv".format(dirName, num), index = False)
+    # csvdir = "results/ribo8/double/virtual"
+    # makedir(csvdir)
+    # drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
+    # targetList = [["A", "A"], ["A", "B"], ["A", "C"]]
+    # num = int(sys.argv[-1])
+    # print("start combination >> ")
+    # for drugName in drugNameList:
+    #     print("  {} vs {} >> ".format(drugName[0], drugName[1]))
+    #     doses = divideDoses(drugName, IC30, num, 101, 101)
+    #     for target in targetList:
+    #         dirName = "{}/{}".format(csvdir, "_".join(["{}{}".format(drugName[i], target[i]) for i in range(len(drugName))]))
+    #         makedir(dirName)
+    #         print("    {} vs {} >> ".format(target[0], target[1]))
+    #         drugs = [createDrugData(drugName[i]) for i in range(len(drugName))]
+    #         df = sim_comb(drugs, doses, target)
+    #         df.to_csv("{}/{}.csv".format(dirName, num), index = False)
 
 
 
