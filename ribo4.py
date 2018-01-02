@@ -554,7 +554,8 @@ def sim_oldeval(drugName, doses, target=None):
         x = sim(drug1, [dose[0]])
         y = sim(drug2, [dose[1]])
         xy = sim(drug3, dose)
-        Eps = checkEpsilon(x, y, xy)
+        if 0 in dose: Eps = 0
+        else: Eps = checkEpsilon(x, y, xy)
         resultList.append([dose[0], dose[1], x, y, xy, Eps])
     data = pd.DataFrame(resultList, columns=["a1", "a2", "growth1", "growth2", "growth3", "epsilon"])
     return data
@@ -631,18 +632,18 @@ if __name__ == "__main__":
     #         df.to_csv("{}/{}.csv".format(dirName, num), index = False)
 
     ## oldeval simulation
-    # csvdir = "./results/ribo4/csv/old100"
-    # makedir(csvdir)
-    # num = int(sys.argv[-1])
-    # drugNameList = list(itr.combinations_with_replacement(drugNames, 2))
-    # print("start simulation >> ")
-    # for drugName in drugNameList:
-    #     print("  {} vs {}".format(drugName[0], drugName[1]))
-    #     dirName = "{}/{}".format(csvdir, "_".join(drugName))
-    #     makedir(dirName)
-    #     doses = divideDoses(drugName, IC30, num, 101, 101)
-    #     df = sim_oldeval(drugName, doses)
-    #     df.to_csv("{}/{}.csv".format(dirName, num), index=False)
+    csvdir = "./results/ribo4/csv/old100"
+    makedir(csvdir)
+    num = int(sys.argv[-1])
+    drugNameList = list(itr.combinations_with_replacement(drugNames, 2))
+    print("start simulation >> ")
+    for drugName in drugNameList:
+        print("  {} vs {}".format(drugName[0], drugName[1]))
+        dirName = "{}/{}".format(csvdir, "_".join(drugName))
+        makedir(dirName)
+        doses = divideDoses(drugName, IC30, num, 101, 101)
+        df = sim_oldeval(drugName, doses)
+        df.to_csv("{}/{}.csv".format(dirName, num), index=False)
         
     ## oldeval simulation (virtual drug)
     csvdir = "results/ribo4/csv/old100_v"
