@@ -76,12 +76,14 @@ def createNewevalHeatmap(drugNames, dataLists, subplot, saveName):
                                      index = "MidPoint",
                                      columns = "Slope")
         ax = sns.heatmap(heatmapData,
+                         annot = True,
+                         annot_kws={"size": 4},
+                         fmt="1.3f",
                          cbar = index == 0,
                          cmap = cmap,
                          vmax = vmax,
                          vmin = vmin,
-                         cbar_ax = None if index else cbar_ax,
-                         square = True)
+                         cbar_ax = None if index else cbar_ax)
 
         ax.invert_yaxis() # y軸の上下を変える
         ax.set_ylabel("MidPoint", fontsize = 30) # y軸のラベル
