@@ -529,39 +529,39 @@ if __name__ == "__main__":
     #         df.to_csv("{}/{}.csv".format(dirName, num), index = False)
     
     ## neweval simulation
-    csvdir = "results/ribo4/csv/new100"
-    makedir(csvdir)
-    num = int(sys.argv[-1])
-    drugNameList = list(itr.combinations_with_replacement(drugNames, 2))
-    slopeList = [1./4., 1./2., 1., 2., 4.]
-    print("start simulation >> ")
-    for drugName in drugNameList:
-        dirName = "{}/{}".format(csvdir, "_".join(drugName))
-        makedir(dirName)
-        print("  {} vs {} >>".format(drugName[0], drugName[1]))
-        doses = divideDosesNeweval(drugName, IC30, num, 5, 11)
-        drugs = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
-        df = sim_neweval(drugs, slopeList[num], doses)
-        df.to_csv("{}/{}.csv".format(dirName, num), index=False)
-
-    ## neweval simulation (virtual drug)
-    # csvdir = "results/ribo4/csv/new100_v"
+    # csvdir = "results/ribo4/csv/new100"
     # makedir(csvdir)
     # num = int(sys.argv[-1])
-    # drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
-    # targetList = [["30s", "30s"], ["30s", "50s"]]
+    # drugNameList = list(itr.combinations_with_replacement(drugNames, 2))
     # slopeList = [1./4., 1./2., 1., 2., 4.]
-    # print("start combination >> ")
+    # print("start simulation >> ")
     # for drugName in drugNameList:
-    #     print("  {} vs {} >> ".format(drugName[0], drugName[1]))
-    #     doses = divideDoses(drugName, IC30, num)
+    #     dirName = "{}/{}".format(csvdir, "_".join(drugName))
+    #     makedir(dirName)
+    #     print("  {} vs {} >>".format(drugName[0], drugName[1]))
+    #     doses = divideDosesNeweval(drugName, IC30, num, 5, 11)
     #     drugs = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
-    #     for target in targetList:
-    #         print("    {} vs {} >> ".format(target[0], target[1]))
-    #         dirName = "{}/{}".format(csvdir, "_".join(["{}{}".format(drugName[i], target[i]) for i in range(len(drugName))]))
-    #         makedir(dirName)
-    #         df = sim_neweval(drugs, slopeList[num], doses, target)
-    #         df.to_csv("{}/{}.csv".format(dirName, num), index=False)
+    #     df = sim_neweval(drugs, slopeList[num], doses)
+    #     df.to_csv("{}/{}.csv".format(dirName, num), index=False)
+
+    ## neweval simulation (virtual drug)
+    csvdir = "results/ribo4/csv/new100_v"
+    makedir(csvdir)
+    num = int(sys.argv[-1])
+    drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
+    targetList = [["30s", "30s"], ["30s", "50s"]]
+    slopeList = [1./4., 1./2., 1., 2., 4.]
+    print("start combination >> ")
+    for drugName in drugNameList:
+        print("  {} vs {} >> ".format(drugName[0], drugName[1]))
+        doses = divideDosesNeweval(drugName, IC30, num)
+        drugs = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
+        for target in targetList:
+            print("    {} vs {} >> ".format(target[0], target[1]))
+            dirName = "{}/{}".format(csvdir, "_".join(["{}{}".format(drugName[i], target[i]) for i in range(len(drugName))]))
+            makedir(dirName)
+            df = sim_neweval(drugs, slopeList[num], doses, target)
+            df.to_csv("{}/{}.csv".format(dirName, num), index=False)
     
     
 
