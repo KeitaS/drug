@@ -77,7 +77,7 @@ def createNewevalHeatmap(drugNames, dataLists, subplot, saveName):
                                      columns = "Slope")
         ax = sns.heatmap(heatmapData,
                          annot = True,
-                         annot_kws={"size": 4},
+                         annot_kws={"size": 20},
                          fmt="1.3f",
                          cbar = index == 0,
                          cmap = cmap,
@@ -202,12 +202,12 @@ if __name__ == "__main__":
 
     # neweval simulation
     ## merge DataFiles
-    drugNameList = list(itr.combinations_with_replacement(drugNames, 2))
-    csvdir = "results/ribo4/csv/new100"
-    for drugName in drugNameList:
-        fileNameList = ["{}/{}/{}.csv".format(csvdir, "_".join(drugName), num) for num in range(5)]
-        df = mergeResults(fileNameList)
-        df.to_csv("{}/{}_merge.csv".format(csvdir, "_".join(drugName)), index=False)
+    # drugNameList = list(itr.combinations_with_replacement(drugNames, 2))
+    # csvdir = "results/ribo4/csv/new100"
+    # for drugName in drugNameList:
+    #     fileNameList = ["{}/{}/{}.csv".format(csvdir, "_".join(drugName), num) for num in range(5)]
+    #     df = mergeResults(fileNameList)
+    #     df.to_csv("{}/{}_merge.csv".format(csvdir, "_".join(drugName)), index=False)
 
     ## SameDrug Combination
     drugNameList = [[name, name] for name in drugNames]
