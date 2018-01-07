@@ -239,7 +239,7 @@ if __name__ == "__main__":
     drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
     targetList = [["30s", "30s"], ["30s", "50s"]]
     csvdir = "results/ribo4/csv/new100_v"
-    nameList = [["{}{}".format(drugName[0], target[0]), "{}{}".format(drugName[1], target[1])] for drugName in drugNameList for target in targetList]
+    nameList = [["{}{}".format(drugName[0], target[0]), "{}{}".format(drugName[1], target[1])] for target in targetList for drugName in drugNameList]
     dataList = ["{}/{}_merge.csv".format(csvdir, "_".join(i)) for i in nameList]
     saveName = "results/ribo4/images/virtualDrug_new100.png"
     createNewevalHeatmap(nameList, dataList, [3, 2], saveName)
