@@ -116,15 +116,15 @@ if __name__ == "__main__":
 
     # neweval simulation (virtual drug)
     ## merge DataFiles
-    drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
-    targetList = [["r30", "r30"], ["r30", "r50"]]
-    csvdir = "results/ribo7/csv/new100_v"
-    nameList = [["{}{}".format(drugName[0], target[0]), "{}{}".format(drugName[1], target[1])] for drugName in drugNameList for target in targetList]
-    for name in nameList:
-        dirName = "{}/{}".format(csvdir, "_".join(name))
-        fileNameList = ["{}/{}.csv".format(dirName, num) for num in range(5)]
-        df = mergeResults(fileNameList)
-        df.to_csv("{}/{}_merge.csv".format(csvdir, "_".join(name)), index=False)
+    # drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
+    # targetList = [["r30", "r30"], ["r30", "r50"]]
+    # csvdir = "results/ribo7/csv/new100_v"
+    # nameList = [["{}{}".format(drugName[0], target[0]), "{}{}".format(drugName[1], target[1])] for drugName in drugNameList for target in targetList]
+    # for name in nameList:
+    #     dirName = "{}/{}".format(csvdir, "_".join(name))
+    #     fileNameList = ["{}/{}.csv".format(dirName, num) for num in range(5)]
+    #     df = mergeResults(fileNameList)
+    #     df.to_csv("{}/{}_merge.csv".format(csvdir, "_".join(name)), index=False)
 
     ## createImage
     drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
