@@ -27,6 +27,9 @@ def createHeatmap(drugNames, dataLists, subplot, saveName, xy=["a2", "a1"], simT
         drugNames : csvのファイル名で使用している薬剤名のリスト
         csvdir    : csvが保存されているディレクトリ名
         subplot   : グラフの数を行列で[横, 縦]
+        saveName  : 保存するときの名前
+        xy        : 軸にする名前
+        simType   : シミュレーションのタイプ（growth, epsilon, LynerType)
     """
     fig = plt.figure(figsize=(subplot[0] * 100 / 9, subplot[1] * 10))
     cbar_ax = fig.add_axes([.92, .1, .02, .8])
@@ -41,10 +44,10 @@ def createHeatmap(drugNames, dataLists, subplot, saveName, xy=["a2", "a1"], simT
                                      index = xy[1],
                                      columns = xy[0])
         ax = sns.heatmap(heatmapData,
-                         cbar = index == 0,
                          annot = simType == "LinerType",
                          annot_kws={"size": 20},
                          fmt="1.3f",
+                         cbar = index == 0,
                          cmap = cmapStatus[simType]["cmap"],
                          vmax = cmapStatus[simType]["vmax"],
                          vmin = cmapStatus[simType]["vmin"],
@@ -52,13 +55,13 @@ def createHeatmap(drugNames, dataLists, subplot, saveName, xy=["a2", "a1"], simT
                          square = simType != "LinerType")
 
         ax.invert_yaxis() # y軸の上下を変える
-        if simType != "LynerType":
+        if simType != "LinerType":
             ax.set_ylabel(drugName[0], fontsize=30) # y軸のラベル
             ax.set_xlabel(drugName[1], fontsize=30) # x軸のラベル
             setTickLabel(data, ax, xy) # 軸の設定
         else :
-            ax.set_ylabel(xy[1], fontsize=30) # y軸のラベル
-            ax.set_xlabel(xy[2], fontsize=30) # x軸のラベル
+            ax.set_ylabel(xy[1], fontsize=30) 
+            ax.set_xlabel(xy[0], fontsize=30) # x軸のラベル
             ax.set_title("{} vs {}".format(drugName[0], drugName[1]), fontsize=30)
 
         ax.tick_params(labelsize=24)
