@@ -10,8 +10,11 @@ import pandas as pd
 import matplotlib.pylab as plt
 from ecell4 import *
 util.decorator.SEAMLESS_RATELAW_SUPPORT = True
-import itertools
-
+import itertools as itr
+import sys
+from ribo4 import makedir
+from ribo4 import checkEpsilon
+from ribo4 import checkLinerType
 
 # main
 @reaction_rules
@@ -135,6 +138,12 @@ def run(drugs=[], step=50., legend=[], inpData={}, y0={"r30_u_u": 30., "r50_u_u"
     # data = pd.DataFrame(runsim.data(), columns=legend)
     return data, legend
 
+def sim(drugs, dose):
+    # runなどのシミュレーションをして，結果を返す関数
+    for i in range(len(drugs)):
+        drugs[i]["dose"] = dose[i]
+    result, legend = run(drugs, legend=["r_u"])
+    return calcGrowthRate(result[-1][1])
 
 # sub modules
 def makeDrugDatas(drugName, medium=0):
@@ -195,3 +204,203 @@ def calcIC(dNames, a_ex, target):
                 dose_min = dose
         calc_result[dName] = dose
     return calc_result
+
+
+def divideDoses(drugNames, IC30, num, length=101, splitNum=101):
+    """
+        doseのリストを分割加工する関数
+        drugNames : 薬剤の名前のリスト
+        IC30      : 
+        num       : 何番目のリストか
+        length    : 何間隔でやっているか
+        splitNum  : 全部で何 * 何のシミュレーションになるか
+    """
+    doses = [[x, y] 
+             for x in np.linspace(0, IC30[drugNames[0]] * 2, splitNum) 
+             for y in np.linspace(0, IC30[drugNames[1]] * 2, splitNum)]
+    if (num + 1) * length < len(doses):
+        doses = doses[num * length : (num + 1) * length]
+    else :
+        doses = doses[num * length :]
+
+    return doses
+
+def divideDosesNeweval(drugNames, IC30, num, length=5, splitNum=11):
+    """
+        newEvalのdoseリストを分割加工する関数
+        drugNames : 薬剤の名前のリスト
+        IC30      :
+        num       : 何番目のリストか
+        length    : 何間隔でやっているか
+        splitNum  : 何分割でLinerTypeを作成するか
+    """
+    slopeList = [1./4, 1./2., 1., 2., 4.]
+    midPointList = [x for x in itr.zip_longest(np.linspace(0, IC30[drugName[0]], splitNum), np.linspace(0, IC30[drugName[1]], splitNum))][1:] # 0, 0を除いた10点．中点なので，IC30でOK．
+    doseList = [[[x for x in itr.zip_longest(np.linspace(0, midPoint[0] * (1 + slope), splitNum), np.linspace(0, midPoint[1] * (1 + (1 / slope)), splitNum)[::-1])] for midPoint in midPointList] for slope in slopeList]
+    doses = doseList[num]
+
+    return doses
+
+
+def sim_comb(drugs, doses, target=None):
+    if target:
+        drugs[0]["target"] = target[0]
+        drugs[1]["target"] = target[1]
+    resultList = []
+    for index, dose in enumerate(doses):
+        print("    step: {} >> ".format(index))
+        resultList.append([dose[0], dose[1], sim(drugs, dose)])
+    data = pd.DataFrame(resultList, columns=["a1", "a2", "growth"])
+    return data
+
+def sim_oldeval(drugName, doses, target=None):
+    """
+        論文の評価関数を使ったシミュレーション．
+        drugName : 薬剤の名前のリスト
+        doses    :
+        target   : 
+    """
+    drug1 = [makeDrugDatas(drugName[0])]
+    drug2 = [makeDrugDatas(drugName[1])]
+    drug3 = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
+    if target:
+        drug1[0]["target"] = target[0]
+        drug2[0]["target"] = target[1]
+        drug3[0]["target"] = target[0]
+        drug3[1]["target"] = target[1]
+    resultList = []
+    for index, dose in enumerate(doses):
+        print("    step: {} >> ".format(index))
+        x = sim(drug1, [dose[0]])
+        y = sim(drug2, [dose[1]])
+        xy = sim(drug3, dose)
+        if 0 in dose: Eps = 0
+        else: Eps = checkEpsilon(x, y, xy)
+        resultList.append([dose[0], dose[1], x, y, xy, Eps])
+    data = pd.DataFrame(resultList, columns=["a1", "a2", "growth1", "growth2", "growth3", "epsilon"])
+    return data
+
+def sim_neweval(drug, slope, doseList, target=None):
+    if target:
+        for i in range(len(target)):
+            drug[i]["target"] = target[i]
+    resultList = []
+    for index, doses in enumerate(doseList):
+        growthList = [sim(drugs, dose) for dose in doses]
+        resultList.append([(index + 1) * 10, slope, growthList, checkLinerType(growthList)])
+    data = pd.DataFrame(resultList, columns=["MidPoint", "Slope", "resultList", "LinerType"])
+    return data
+
+if __name__ == "__main__":
+    drugNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
+
+    # IC30の計算
+    makedir("IC30")
+    IC30_file = "IC30/ribo7.csv"
+    try:
+        IC30_df = pd.read_csv(IC30_file)
+        IC30 = {i: IC30_df[i][0] for i in IC30_df.columns}
+    except:
+        IC30 = calcIC(drugNames, {drugName: 100 for drugName in drugNames}, .3)
+        IC30_df = pd.DataFrame({i: [IC30[i]] for i in drugNames})
+        IC30_df.to_csv(IC30_file, index=False)
+    
+    ## double simulation
+    # csvdir = "./results/ribo7/csv/sim100"
+    # makedir(csvdir)
+    # drugNameList = list(itr.combinations_with_replacement(drugNames, 2))
+    # num = int(sys.argv[-1])
+    # print("start combination >> ")
+    # for drugName in drugNameList:
+    #     dirName = "{}/{}".format(csvdir, "_".join(drugName))
+    #     makedir(dirName)
+    #     print("{} vs {}".format(drugName[0], drugName[1]))
+    #     drugs = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
+    #     doses = divideDoses(drugName, IC30, num, 101, 101)
+    #     df = sim_comb(drugs, doses)
+    #     df.to_csv("{}/{}_{}.csv".format(dirName, "_".join(drugName), num), index=False)
+    
+    ## double simulation (virtual drugs)
+    # csvdir = "./results/ribo7/csv/sim100_v"
+    # makedir(csvdir)
+    # drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
+    # targetList = [["r30", "r30"], ["r30", "r50"]]
+    # num = int(sys.argv[-1])
+    # print("start combination >> ")
+    # for drugName in drugNameList:
+    #     print("  {} vs {} >> ".format(drugName[0], drugName[1]))
+    #     doses = divideDoses(drugName, IC30, num, 101, 101)
+    #     for target in targetList:
+    #         dirName = "{}/{}".format(csvdir, "_".join(["{}{}".format(drugName[i], target[i]) for i in range(len(drugName))]))
+    #         makedir(dirName)
+    #         print("    {} vs {} >> ".format(target[0], target[1]))
+    #         drugs = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
+    #         df = sim_comb(drugs, doses, target)
+    #         df.to_csv("{}/{}.csv".format(dirName, num), index = False)
+
+    ## oldeval simulation
+    # csvdir = "./results/ribo7/csv/old100"
+    # makedir(csvdir)
+    # num = int(sys.argv[-1])
+    # drugNameList = list(itr.combinations_with_replacement(drugNames, 2))
+    # print("start simulation >> ")
+    # for drugName in drugNameList:
+    #     print("  {} vs {}".format(drugName[0], drugName[1]))
+    #     dirName = "{}/{}".format(csvdir, "_".join(drugName))
+    #     makedir(dirName)
+    #     doses = divideDoses(drugName, IC30, num, 101, 101)
+    #     df = sim_oldeval(drugName, doses)
+    #     df.to_csv("{}/{}.csv".format(dirName, num), index=False)
+        
+    ## oldeval simulation (virtual drug)
+    # csvdir = "results/ribo7/csv/old100_v"
+    # makedir(csvdir)
+    # num = int(sys.argv[-1])
+    # drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
+    # targetList = [["r30", "r30"], ["r30", "r50"]]
+    # print("start combination >> ")
+    # for drugName in drugNameList:
+    #     print("  {} vs {} >> ".format(drugName[0], drugName[1]))
+    #     doses = divideDoses(drugName, IC30, num, 101, 101)
+    #     for target in targetList:
+    #         dirName = "{}/{}".format(csvdir, "_".join(["{}{}".format(drugName[i], target[i]) for i in range(len(drugName))]))
+    #         makedir(dirName)
+    #         print("    {} vs {} >> ".format(target[0], target[1]))
+    #         df = sim_oldeval(drugName, doses, target)
+    #         df.to_csv("{}/{}.csv".format(dirName, num), index = False)
+    
+    ## neweval simulation
+    # csvdir = "results/ribo7/csv/new100"
+    # makedir(csvdir)
+    # num = int(sys.argv[-1])
+    # drugNameList = list(itr.combinations_with_replacement(drugNames, 2))
+    # slopeList = [1./4., 1./2., 1., 2., 4.]
+    # print("start simulation >> ")
+    # for drugName in drugNameList:
+    #     dirName = "{}/{}".format(csvdir, "_".join(drugName))
+    #     makedir(dirName)
+    #     print("  {} vs {} >>".format(drugName[0], drugName[1]))
+    #     doses = divideDosesNeweval(drugName, IC30, num, 5, 11)
+    #     drugs = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
+    #     df = sim_neweval(drugs, slopeList[num], doses)
+    #     df.to_csv("{}/{}.csv".format(dirName, num), index=False)
+
+    ## neweval simulation (virtual drug)
+    csvdir = "results/ribo7/csv/new100_v"
+    makedir(csvdir)
+    num = int(sys.argv[-1])
+    drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
+    targetList = [["r30", "r30"], ["r30", "r50"]]
+    slopeList = [1./4., 1./2., 1., 2., 4.]
+    print("start combination >> ")
+    for drugName in drugNameList:
+        print("  {} vs {} >> ".format(drugName[0], drugName[1]))
+        doses = divideDosesNeweval(drugName, IC30, num)
+        drugs = [makeDrugDatas(drugName[0]), makeDrugDatas(drugName[1])]
+        for target in targetList:
+            print("    {} vs {} >> ".format(target[0], target[1]))
+            dirName = "{}/{}".format(csvdir, "_".join(["{}{}".format(drugName[i], target[i]) for i in range(len(drugName))]))
+            makedir(dirName)
+            df = sim_neweval(drugs, slopeList[num], doses, target)
+            df.to_csv("{}/{}.csv".format(dirName, num), index=False)
+
