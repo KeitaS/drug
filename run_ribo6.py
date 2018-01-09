@@ -23,8 +23,9 @@ Lambda_0 = normal["single"][0]
 plt.plot(np.linspace(0, 100, 101), list(map(lambda x: x / Lambda_0, list(normal["single"]))), label="single")
 plt.plot(np.linspace(0, 100, 101), list(map(lambda x: x / Lambda_0, list(normal["double"]))), label="double")
 plt.legend()
-plt.xlabel("Dose")
-plt.ylabel("Growth Rate")
+plt.xlabel("Dose", fontsize=20)
+plt.ylabel("Growth Rate", fontsize=20)
+plt.tight_layout()
 plt.savefig("{}/liner_pattern0.png".format(imgdir), dpi=300)
 plt.close()
 
@@ -33,8 +34,9 @@ Lambda_0 = change["single"][0]
 plt.plot(np.linspace(0, 100, 101), list(map(lambda x: x / Lambda_0, list(change["single"]))), label="single")
 plt.plot(np.linspace(0, 100, 101), list(map(lambda x: x / Lambda_0, list(change["double"]))), label="double")
 plt.legend()
-plt.xlabel("Dose")
-plt.ylabel("Growth Rate")
+plt.xlabel("Dose", fontsize=20)
+plt.ylabel("Growth Rate", fontsize=20)
+plt.tight_layout()
 plt.savefig("{}/liner_pattern1.png".format(imgdir), dpi=300)
 
 
