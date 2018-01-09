@@ -238,6 +238,16 @@ def calcGrowthRate(r30_r50, r30_tot, Lambda_0=1.35):
     growth = Lambda / Lambda_0
     return growth
 
+def calcGrowth(r30_r50, r30_tot):
+    """
+        r30_totとr30_r50を用いてGrowth Rateを計算する関数．
+        r_min，K_tは定数なので，入力しない．
+    """
+    r_min = 19.3
+    K_t = 6.1 * 10 ** -2
+    Lambda = (r30_tot - r_min) * K_t * (r30_r50 / r30_tot)
+    return Lambda
+
 def sim(drugs, step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 30.}, Lambda_0=1.35):
     """
         Runして，Growth Rateを返す関数.
@@ -253,8 +263,8 @@ def sim(drugs, step=50., inpData={}, y0={"r30": 30., "r50": 30., "r30_r50": 30.}
     result = run(drugs, step, inpData, y0, sp_list=sp_list)[-1][1:]
     r30_r50 = result[1]
     r30_tot = sum(result)
-    # growth rateを計算
-    growth = calcGrowthRate(r30_r50, r30_tot, Lambda_0)
+    # growthを計算(growth rateは後々計算)
+    growth = calcGrowth(r30_r50, r30_tot)
     # resultにr30_totとgrowthを追加
     result += [r30_tot, growth]
     # columnsにするsp_listにr30_totとgrwthを追加
@@ -342,9 +352,6 @@ def sim_comb(drugs, doses, target=None):
 if __name__ == "__main__":
     # 薬剤リスト
     drugNames = ["Streptmycin", "Kanamycin", "Tetracycline", "Chloramphenicol"]
-    # saveDir
-    csvdir = "results/ribo8/single/csv"
-    makedir(csvdir)
 
     # IC30の計算
     makedir("IC30")
@@ -358,30 +365,31 @@ if __name__ == "__main__":
         IC30_df.to_csv(IC30_file, index=False)
 
     ## 単剤のシミュレーション
-    # result = []
-    # print("start simulation >>")
-    # for drugName in drugNames:
-    #     print("{} >> ".format(drugName))
-    #     drugs = [createDrugData(drugName)]
-    #     doses = np.linspace(0, IC30[drugName] * 2, 101)
-    #     df = pd.DataFrame()
-    #     for index, dose in enumerate(doses):
-    #         print("    step: {} >> ".format(index))
-    #         drugs[0]["dose"] = dose
-    #         data = sim(drugs)
-    #         df = pd.concat([df, data[1]])
-    #     df = df.reset_index(drop=True)
-    #     drugData = pd.DataFrame([[d] for d in doses], columns=["dose"])
-    #     df = pd.concat([drugData, df], axis=1)
-    #     df.to_csv("{}/{}.csv".format(csvdir, drugName), index=False)
-    drugName = "Streptmycin"
-    # drugs = [createDrugData(drugName)]
-    # drugs[0]["dose"] = 0
-    data = sim([], step=100.)
-    print(data[1])
+    csvdir = "results/ribo8/csv/single"
+    makedir(csvdir)
+    result = []
+    print("start simulation >>")
+    num = int(sys.argv[-1])
+    Lambda_0 = 0
+    drugName = drugNames[num]
+    print("{} >> ".format(drugName))
+    drugs = [createDrugData(drugName)]
+    doses = np.linspace(0, IC30[drugName] * 2, 101)
+    df = pd.DataFrame()
+    for index, dose in enumerate(doses):
+        print("    step: {} >> ".format(index))
+        drugs[0]["dose"] = dose
+        data = sim(drugs)
+        if index == 0: Lambda_0 = data[0]
+        data[1]["growthRate"] = [data[0] / Lambda_0]
+        df = pd.concat([df, data[1]])
+    df = df.reset_index(drop=True)
+    drugData = pd.DataFrame([[d] for d in doses], columns=["dose"])
+    df = pd.concat([drugData, df], axis=1)
+    df.to_csv("{}/{}.csv".format(csvdir, drugName), index=False)
 
     ## 組合せシミュレーション
-    # csvdir = "results/ribo8/double/normal"
+    # csvdir = "results/ribo8/csv/double/normal"
     # makedir(csvdir)
     # drugNameList = itr.combinations_with_replacement(drugNames, 2)
     # num = int(sys.argv[-1])
@@ -395,7 +403,7 @@ if __name__ == "__main__":
     #     df.to_csv("{}/{}.csv".format(dirName, num), index=False)
 
     ## 組合せシミュレーション(仮想薬剤)
-    # csvdir = "results/ribo8/double/virtual"
+    # csvdir = "results/ribo8/csv/double/virtual"
     # makedir(csvdir)
     # drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
     # targetList = [["A", "A"], ["A", "B"], ["A", "C"]]
@@ -411,7 +419,4 @@ if __name__ == "__main__":
     #         drugs = [createDrugData(drugName[i]) for i in range(len(drugName))]
     #         df = sim_comb(drugs, doses, target)
     #         df.to_csv("{}/{}.csv".format(dirName, num), index = False)
-
-
-
 
