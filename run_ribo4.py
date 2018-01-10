@@ -24,7 +24,7 @@ if __name__ == "__main__":
     ## differentDrug combination
     drugNameList = list(itr.combinations(drugNames, 2))
     dataLists = ["results/ribo4/csv/sim100/{}_merge.csv".format("_".join(i)) for i in drugNameList]
-    doubleSaveName = "results/ribo4/images/diffDrug_sim10.png"
+    doubleSaveName = "results/ribo4/images/diffDrug_sim100.png"
     createHeatmap(drugNameList, dataLists, [3, 2], doubleSaveName)
 
     # combinatorial simulation(virtual drug)
