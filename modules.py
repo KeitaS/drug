@@ -34,6 +34,7 @@ def createHeatmap(drugNames, dataLists, subplot, saveName, xy=["a2", "a1"], simT
     fig = plt.figure(figsize=(subplot[0] * 100 / 9, subplot[1] * 10))
     cbar_ax = fig.add_axes([.92, .1, .02, .8])
     cmapStatus = {"growth" : {"cmap": sns.diverging_palette(220, 10, as_cmap=True), "vmax": 1., "vmin": 0.},
+                  "growthRate" : {"cmap": sns.diverging_palette(220, 10, as_cmap=True), "vmax": 1., "vmin": 0.},
                   "epsilon": {"cmap": makeCmap(), "vmax": 1., "vmin": -1.}, 
                   "LinerType": {"cmap": generate_cmap(), "vmax": .3, "vmin": -.3}}
     for index, drugName in enumerate(drugNames):
@@ -72,8 +73,8 @@ def createHeatmap(drugNames, dataLists, subplot, saveName, xy=["a2", "a1"], simT
 
 
 def setTickLabel(data, ax, xy):
-    a1DoseList = sorted(list(set(data[xy[1]].tolist()))[::20]) # y軸に表示したい数のリスト
-    a2DoseList = sorted(list(set(data[xy[0]].tolist()))[::20]) # x軸に表示したい数のリスト
+    a1DoseList = sorted(list(set(data[xy[1]].tolist())))[::20] # y軸に表示したい数のリスト
+    a2DoseList = sorted(list(set(data[xy[0]].tolist())))[::20] # x軸に表示したい数のリスト
 
     # yticksの設定
     dataLenY = len(list(set(data[xy[1]].tolist()))) 
