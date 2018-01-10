@@ -139,10 +139,10 @@ if __name__ == "__main__":
     #         df.to_csv("{}/{}_merge.csv".format(csvdir, "_".join(["{}{}".format(drugName[i], target[i]) for i in range(len(drugName))])), index=False)
 
     ## create Image
-    drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
-    targetList = [["A", "A"], ["A", "B"], ["A", "C"]]
-    nameList = [["{}{}".format(drugName[0], target[0]), "{}{}".format(drugName[1], target[1])] for drugName in drugNameList for target in targetList]
-    dataLists = ["results/ribo8/double/virtual/{}_merge.csv".format("_".join(name)) for name in nameList]
-    saveName = "results/ribo8/images/virtualDrug.png"
-    createHeatmap(nameList, dataLists, [3, 3], saveName)
+    # drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
+    # targetList = [["A", "A"], ["A", "B"], ["A", "C"]]
+    # nameList = [["{}{}".format(drugName[0], target[0]), "{}{}".format(drugName[1], target[1])] for drugName in drugNameList for target in targetList]
+    # dataLists = ["results/ribo8/double/virtual/{}_merge.csv".format("_".join(name)) for name in nameList]
+    # saveName = "results/ribo8/images/virtualDrug.png"
+    # createHeatmap(nameList, dataLists, [3, 3], saveName)
 

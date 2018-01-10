@@ -327,7 +327,7 @@ def divideDoses(drugNames, IC30, num, length=101, splitNum=101):
 
     return doses
 
-def sim_comb(drugs, doses, target=None):
+def sim_comb(drugs, doses, Lambda_0, target=None):
     """
         多剤シミュレーション．
         drugs  : createDrugDataで作成した薬剤データのリスト
@@ -343,6 +343,7 @@ def sim_comb(drugs, doses, target=None):
             drugs[0]["target"] = target[0]
             drugs[1]["target"] = target[1]
         data = sim(drugs)
+        data[1]["growthRate"] = [data[0] / Lambda_0]
         df = pd.concat([df, data[1]])
     df = df.reset_index(drop=True)
     drugData = pd.DataFrame([[d[0], d[1]] for d in doses], columns=["dose1", "dose2"])
@@ -363,44 +364,44 @@ if __name__ == "__main__":
         IC30 = calcIC(drugNames, {drugName: 20 for drugName in drugNames}, .3)
         IC30_df = pd.DataFrame({i: [IC30[i]] for i in drugNames})
         IC30_df.to_csv(IC30_file, index=False)
+    
+    Lambda_0 = sim([])[0]
 
     ## 単剤のシミュレーション
-    csvdir = "results/ribo8/csv/single"
-    makedir(csvdir)
-    result = []
-    print("start simulation >>")
-    num = int(sys.argv[-1])
-    Lambda_0 = 0
-    drugName = drugNames[num]
-    print("{} >> ".format(drugName))
-    drugs = [createDrugData(drugName)]
-    doses = np.linspace(0, IC30[drugName] * 2, 101)
-    df = pd.DataFrame()
-    for index, dose in enumerate(doses):
-        print("    step: {} >> ".format(index))
-        drugs[0]["dose"] = dose
-        data = sim(drugs)
-        if index == 0: Lambda_0 = data[0]
-        data[1]["growthRate"] = [data[0] / Lambda_0]
-        df = pd.concat([df, data[1]])
-    df = df.reset_index(drop=True)
-    drugData = pd.DataFrame([[d] for d in doses], columns=["dose"])
-    df = pd.concat([drugData, df], axis=1)
-    df.to_csv("{}/{}.csv".format(csvdir, drugName), index=False)
+    # csvdir = "results/ribo8/csv/single"
+    # makedir(csvdir)
+    # result = []
+    # print("start simulation >>")
+    # num = int(sys.argv[-1])
+    # drugName = drugNames[num]
+    # print("{} >> ".format(drugName))
+    # drugs = [createDrugData(drugName)]
+    # doses = np.linspace(0, IC30[drugName] * 2, 101)
+    # df = pd.DataFrame()
+    # for index, dose in enumerate(doses):
+    #     print("    step: {} >> ".format(index))
+    #     drugs[0]["dose"] = dose
+    #     data = sim(drugs)
+    #     data[1]["growthRate"] = [data[0] / Lambda_0]
+    #     df = pd.concat([df, data[1]])
+    # df = df.reset_index(drop=True)
+    # drugData = pd.DataFrame([[d] for d in doses], columns=["dose"])
+    # df = pd.concat([drugData, df], axis=1)
+    # df.to_csv("{}/{}.csv".format(csvdir, drugName), index=False)
 
     ## 組合せシミュレーション
-    # csvdir = "results/ribo8/csv/double/normal"
-    # makedir(csvdir)
-    # drugNameList = itr.combinations_with_replacement(drugNames, 2)
-    # num = int(sys.argv[-1])
-    # print("start combination >> ")
-    # for drugName in drugNameList:
-    #     dirName = "{}/{}".format(csvdir, "_".join(drugName))
-    #     print("{} vs {}".format(drugName[0], drugName[1]))
-    #     drugs = [createDrugData(drugName[0]), createDrugData(drugName[1])]
-    #     doses = divideDoses(drugName, IC30, num, 101, 101)
-    #     df = sim_comb(drugs, doses)
-    #     df.to_csv("{}/{}.csv".format(dirName, num), index=False)
+    csvdir = "results/ribo8/csv/double/normal"
+    makedir(csvdir)
+    drugNameList = itr.combinations_with_replacement(drugNames, 2)
+    num = int(sys.argv[-1])
+    print("start combination >> ")
+    for drugName in drugNameList:
+        dirName = "{}/{}".format(csvdir, "_".join(drugName))
+        print("{} vs {}".format(drugName[0], drugName[1]))
+        drugs = [createDrugData(drugName[0]), createDrugData(drugName[1])]
+        doses = divideDoses(drugName, IC30, num, 101, 101)
+        df = sim_comb(drugs, doses, Lambda_0)
+        df.to_csv("{}/{}.csv".format(dirName, num), index=False)
 
     ## 組合せシミュレーション(仮想薬剤)
     # csvdir = "results/ribo8/csv/double/virtual"
@@ -417,6 +418,6 @@ if __name__ == "__main__":
     #         makedir(dirName)
     #         print("    {} vs {} >> ".format(target[0], target[1]))
     #         drugs = [createDrugData(drugName[i]) for i in range(len(drugName))]
-    #         df = sim_comb(drugs, doses, target)
+    #         df = sim_comb(drugs, doses, Lambda_0, target)
     #         df.to_csv("{}/{}.csv".format(dirName, num), index = False)
 
