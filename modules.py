@@ -72,8 +72,8 @@ def createHeatmap(drugNames, dataLists, subplot, saveName, xy=["a2", "a1"], simT
 
 
 def setTickLabel(data, ax, xy):
-    a1DoseList = list(set(data[xy[1]].tolist()))[::20] # y軸に表示したい数のリスト
-    a2DoseList = list(set(data[xy[0]].tolist()))[::20] # x軸に表示したい数のリスト
+    a1DoseList = sorted(list(set(data[xy[1]].tolist()))[::20]) # y軸に表示したい数のリスト
+    a2DoseList = sorted(list(set(data[xy[0]].tolist()))[::20]) # x軸に表示したい数のリスト
 
     # yticksの設定
     dataLenY = len(list(set(data[xy[1]].tolist()))) 
