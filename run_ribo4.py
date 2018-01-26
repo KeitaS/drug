@@ -15,17 +15,17 @@ if __name__ == "__main__":
     #     df.to_csv("{}/{}_merge.csv".format(csvdir, "_".join(drugName)), index=False)
 
     ## SameDrug combination
-    # drugNameList = [[name, name] for name in drugNames]
-    # dataLists = ["results/ribo4/csv/sim100/{}_merge.csv".format("_".join(i)) for i in drugNameList]
-    # doubleSaveName = "results/ribo4/images/sameDrug_sim100.png"
-    # createHeatmap(drugNameList, dataLists, [2, 2], doubleSaveName)
+    drugNameList = [[name, name] for name in drugNames]
+    dataLists = ["results/ribo4/csv/sim100/{}_merge.csv".format("_".join(i)) for i in drugNameList]
+    doubleSaveName = "results/ribo4/images/sameDrug_sim100.png"
+    createHeatmap(drugNameList, dataLists, [2, 2], doubleSaveName)
 
 
     ## differentDrug combination
-    # drugNameList = list(itr.combinations(drugNames, 2))
-    # dataLists = ["results/ribo4/csv/sim100/{}_merge.csv".format("_".join(i)) for i in drugNameList]
-    # doubleSaveName = "results/ribo4/images/diffDrug_sim100.png"
-    # createHeatmap(drugNameList, dataLists, [3, 2], doubleSaveName)
+    drugNameList = list(itr.combinations(drugNames, 2))
+    dataLists = ["results/ribo4/csv/sim100/{}_merge.csv".format("_".join(i)) for i in drugNameList]
+    doubleSaveName = "results/ribo4/images/diffDrug_sim100.png"
+    createHeatmap(drugNameList, dataLists, [3, 2], doubleSaveName)
 
     # combinatorial simulation(virtual drug)
     ## merge DataFiles
@@ -40,22 +40,22 @@ if __name__ == "__main__":
     #         df.to_csv("{}/{}_merge.csv".format(csvdir, "_".join(["{}{}".format(drugName[i], target[i]) for i in range(len(drugName))])), index=False)
             
     ## create Image
-    # drugNames = ["Streptmycin", "Chloramphenicol"]
-    # nameList = [["Streptmycin30s", "Streptmycin30s"], ["Streptmycin30s", "Streptmycin50s"], ["Chloramphenicol30s", "Chloramphenicol50s"]]
-    # csvdir = "results/ribo4/csv/sim100_v"
-    # saveName = "results/ribo4/images/virtualDrug_specific3_sim.png"
-    # dataNameList = ["{}/{}_merge.csv".format(csvdir, "_".join(name)) for name in nameList]
-    # labelList = [["S_30s", "S_30s"], ["S_30s", "S_50s"], ["G_30s", "G_50s"]]
-    # createHeatmap(labelList, dataNameList, [3, 1], saveName, ["a2", "a1"])    
-    # 
-    # drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
-    # targetList = [["30s", "30s"], ["30s", "50s"]]
-    # nameList = [["{}{}".format(drugName[0], target[0]), "{}{}".format(drugName[1], target[1])] for target in targetList for drugName in drugNameList]
-    # dataLists = ["{}/{}_merge.csv".format(csvdir, "_".join(name)) for name in nameList]
-    # saveName = "results/ribo4/images/virtualDrug_sim100.png"
-    # labelNameList = [["S","S"], ["S", "G"], ["G", "G"]]
-    # labelList = [["{}{}".format(name[0], target[0]), "{}{}".format(name[1], target[1])] for target in targetList for name in labelNameList]
-    # createHeatmap(labelList, dataLists, [3, 2], saveName)
+    drugNames = ["Streptmycin", "Chloramphenicol"]
+    nameList = [["Streptmycin30s", "Streptmycin30s"], ["Streptmycin30s", "Streptmycin50s"], ["Chloramphenicol30s", "Chloramphenicol50s"]]
+    csvdir = "results/ribo4/csv/sim100_v"
+    saveName = "results/ribo4/images/virtualDrug_specific3.png"
+    dataNameList = ["{}/{}_merge.csv".format(csvdir, "_".join(name)) for name in nameList]
+    labelList = [["S_30s", "S_30s"], ["S_30s", "S_50s"], ["G_30s", "G_50s"]]
+    createHeatmap(labelList, dataNameList, [3, 1], saveName, ["a2", "a1"])    
+    
+    drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
+    targetList = [["30s", "30s"], ["30s", "50s"]]
+    nameList = [["{}{}".format(drugName[0], target[0]), "{}{}".format(drugName[1], target[1])] for target in targetList for drugName in drugNameList]
+    dataLists = ["{}/{}_merge.csv".format(csvdir, "_".join(name)) for name in nameList]
+    saveName = "results/ribo4/images/virtualDrug_sim100.png"
+    labelNameList = [["S","S"], ["S", "G"], ["G", "G"]]
+    labelList = [["{}{}".format(name[0], target[0]), "{}{}".format(name[1], target[1])] for target in targetList for name in labelNameList]
+    createHeatmap(labelList, dataLists, [3, 2], saveName)
 
     # oldeval simulation
     ## merge DataFiles
@@ -93,22 +93,13 @@ if __name__ == "__main__":
     #     df.to_csv("{}/{}_merge.csv".format(csvdir, "_".join(name)), index=False)
 
     ## create Image
-    drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
-    targetList = [["30s", "30s"], ["30s", "50s"]]
-    csvdir = "results/ribo4/csv/old100_v"
-    nameList = [["{}{}".format(drugName[0], target[0]), "{}{}".format(drugName[1], target[1])] for target in targetList for drugName in drugNameList]
-    dataList = ["{}/{}_merge.csv".format(csvdir, "_".join(name)) for name in nameList]
-    saveName = "results/ribo4/images/virtualDrug_old100.png"
-    labelNameList = [["S","S"], ["S", "G"], ["G", "G"]]
-    labelList = [["{}{}".format(name[0], target[0]), "{}{}".format(name[1], target[1])] for target in targetList for name in labelNameList]
-    createHeatmap(labelList, dataList, [3, 2], saveName, ["a2", "a1"], "epsilon")
-
-    drugNames = ["Streptmycin", "Chloramphenicol"]
-    nameList = [["Streptmycin30s", "Streptmycin30s"], ["Streptmycin30s", "Streptmycin50s"], ["Chloramphenicol30s", "Chloramphenicol50s"]]
-    saveName = "results/ribo4/images/virtualDrug_specific3_oldeval.png"
-    dataList = ["{}/{}_merge.csv".format(csvdir, "_".join(name)) for name in nameList]
-    labelList = [["S_30s", "S_30s"], ["S_30s", "S_50s"], ["G_30s", "G_50s"]]
-    createHeatmap(labelList, dataList, [3, 1], saveName, ["a2", "a1"], "epsilon")    
+    # drugNameList = [["Streptmycin", "Streptmycin"], ["Streptmycin", "Chloramphenicol"], ["Chloramphenicol", "Chloramphenicol"]]
+    # targetList = [["30s", "30s"], ["30s", "50s"]]
+    # csvdir = "results/ribo4/csv/old100_v"
+    # nameList = [["{}{}".format(drugName[0], target[0]), "{}{}".format(drugName[1], target[1])] for target in targetList for drugName in drugNameList]
+    # dataList = ["{}/{}_merge.csv".format(csvdir, "_".join(name)) for name in nameList]
+    # saveName = "results/ribo4/images/virtualDrug_old100.png"
+    # createHeatmap(nameList, dataList, [3, 2], saveName, ["a2", "a1"], "epsilon")
 
     # neweval simulation
     ## merge DataFiles
