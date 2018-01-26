@@ -57,8 +57,8 @@ def createHeatmap(drugNames, dataLists, subplot, saveName, xy=["a2", "a1"], simT
 
         ax.invert_yaxis() # y軸の上下を変える
         if simType != "LinerType":
-            ax.set_ylabel(drugName[0], fontsize=30) # y軸のラベル
-            ax.set_xlabel(drugName[1], fontsize=30) # x軸のラベル
+            ax.set_ylabel(drugName[0], fontsize=35) # y軸のラベル
+            ax.set_xlabel(drugName[1], fontsize=35) # x軸のラベル
             setTickLabel(data, ax, xy) # 軸の設定
         else :
             ax.set_ylabel(xy[1], fontsize=30) 
