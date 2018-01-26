@@ -28,7 +28,7 @@ def createHeatmap(drugNames, dataLists, subplot, saveName, xy=["a2", "a1"], simT
         csvdir    : csvが保存されているディレクトリ名
         subplot   : グラフの数を行列で[横, 縦]
         saveName  : 保存するときの名前
-        xy        : 軸にする名前
+        xy        : 軸にするDataFrameのcolumnsの名前（x軸，y軸の順)
         simType   : シミュレーションのタイプ（growth, epsilon, LynerType)
     """
     fig = plt.figure(figsize=(subplot[0] * 100 / 9, subplot[1] * 10))
