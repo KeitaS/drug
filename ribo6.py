@@ -395,7 +395,7 @@ if __name__ == "__main__":
         IC30_df.to_csv(IC30_file, index=False)
 
     ## make linechart
-    ### norlam
+    ### normal
     drugName = "Chloramphenicol"
     print(IC30)
     csvdir = "results/ribo6/csv/liner"
@@ -430,5 +430,40 @@ if __name__ == "__main__":
     df = pd.DataFrame(result, columns=["dose1", "dose2", "single", "double"])
     df.to_csv("{}/{}_1.csv".format(csvdir, drugName), index=False)
     
+    ## make linechart
+    ### normal(Streptmycin)
+    drugName = "Streptmycin"
+    print(IC30)
+    csvdir = "results/ribo6/csv/liner"
+    makedir(csvdir)
+    drug1 = [makeDrugDatas(drugName)]
+    drug2 = [makeDrugDatas(drugName), makeDrugDatas(drugName)]
+    drug2[1]["type"] = "50s" # 片方だけ標的を変更
+    doses1 = np.linspace(0, IC30[0][drugName] * 2, 101)
+    doses2 = np.linspace(0, IC30[0][drugName], 101)
+    result = []
+    lambda_0 = 0
+    for i in range(len(doses1)):
+        result.append([doses1[i],
+                       doses2[i],
+                       sim(drug1, [doses1[i]]), 
+                       sim(drug2, [doses2[i], doses2[i]])]
+                     )
+    df = pd.DataFrame(result, columns=["dose1", "dose2", "single", "double"])
+    df.to_csv("{}/{}_0.csv".format(csvdir, drugName), index=False)
+
+    ### change version
+    doses1 = np.linspace(0, IC30[1][drugName] * 2, 101)
+    doses2 = np.linspace(0, IC30[1][drugName], 101)
+    result = []
+    inpData = {"pattern": 1}
+    for i in range(len(doses1)):
+        result.append([doses1[i],
+                       doses2[i],
+                       sim(drug1, [doses1[i]], inpData=inpData), 
+                       sim(drug2, [doses2[i], doses2[i]], inpData=inpData)]
+                     )
+    df = pd.DataFrame(result, columns=["dose1", "dose2", "single", "double"])
+    df.to_csv("{}/{}_1.csv".format(csvdir, drugName), index=False)
     
 
