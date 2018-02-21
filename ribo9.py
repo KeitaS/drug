@@ -74,12 +74,47 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35, pat
             if drug["target"] == "A":
                 # 遊離サブユニットに結合 A + r30 > r30A
                 combination_drug(mol, _eval("r30"), _eval("r30A{}".format(index)))
+                dilution(_eval("r30A{}".format(index)))
+                r30_tot += _eval("r30_A{}".format(index))
                 if drugs[index - 1]["target"] == "A" and pattern == 0:
                     combination_drug(mol, _eval("r30A{}".format(abs(index - 1)), _eval("r30A0A1"))
-            if drug["target"] == "B":
+                    if index == 0:
+                        r30_tot += _eval("r30A0A1")
+                        dilution(_eval("r30A0A1"))
+            elif drug["target"] == "B":
                 # 複合体リボソームに結合
                 combination_drug(mol, _eval("r30_r50"), _eval("r30B{}_r50".format(index)))
+                dilution(_eval("r30B{}_r50".format(index)))
+                r30_tot += _eval("r30B{}_r50".format(index))
                 if drugs[index - 1]["target"] == "B" and pattern == 0:
-                    combination_drug(mol, _eval("r30B{}_r50".format(abs(index - 1)), _eval("r30B1B2_r50"))
+                    combination_drug(mol, _eval("r30B{}_r50".format(abs(index - 1)), _eval("r30B0B1_r50"))
+                    if index == 0:
+                        r30_tot += _eval("r30B0B1_r50")
+                        dilution(_eval("r30B0B1_r50"))
                 elif drugs[index - 1]["target"] == "D":
-                    combination_drug(mol, _eval("r30_r50D{}".format(len(drugs) - 1)), _eval("r30B{}_r50D{}".format(index, len(drugs) - index)))
+                    combination_drug(mol, _eval("r30_r50D{}".format(abs(index - 1)), _eval("r30B{}_r50D{}".format(index, abs(index - 1))))
+                    if index == 0:
+                        r30_tot += _eval("r30B0_r50D1")
+                        dilution(_eval("r30B0_r50D1"))
+            elif drug["target"] == "C":
+                # 遊離サブユニットに結合 C + r50 > r30C
+                combination_drug(mol, _eval("r50"), _eval("r50C{}".format(index)))
+                dilution(_eval("r50C{}".format(index)))
+                if drugs[index - 1]["target"] == "C" and pattern == 0:
+                    combination_drug(mol, _eval("r50C{}".format(abs(index - 1)), _eval("r50C0C1"))
+                    dilution(_eval("r50C0C1"))
+            elif drug["target"] == "D":
+                # 複合体リボソームに結合
+                combination_drug(mol, _eval("r30_r50"), _eval("r30_r50D{}".format(index)))
+                dilution(_eval("r30_r50D{}".format(index)))
+                r30_tot += _eval("r30_r50D{}".format(index))
+                if drugs[index - 1]["target"] == "D" and pattern == 0:
+                    combination_drug(mol, _eval("r30_r50D{}".format(abs(index - 1)), _eval("r30_r50D0D1"))
+                    if index == 0:
+                        r30_tot += _eval("r30_r50D0D1")
+                        dilution(_eval("r30_r50D0D1"))
+                elif drugs[index - 1]["target"] == "B":
+                    combination_drug(mol, _eval("r30B{}_r50".format(abs(index - 1)), _eval("r30B{}_r50D{}".format(abs(index - 1), index)))
+                    if index == 0:
+                        r30_tot += _eval("r30B1_r50D0")
+                        dilution(_eval("r30B1_r50D0"))
