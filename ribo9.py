@@ -14,20 +14,20 @@ util.decorator.SEAMLESS_RATELAW_SUPPORT = True
 @reaction_rules
 def transport(drug_ex, drug, P_in, P_out):
     # 薬剤の取り込み
-    ~drug_ex == drug | (P_in * drug_ex, P_out, drug)
+    ~drug_ex == drug | (P_in * drug_ex, P_out * drug)
 
 @reaction_rules
-def dilution(mol):
+def dilution(mol, Lambda):
     # 希釈
     mol > ~mol | Lambda * mol
 
 @reaction_rules
-def bondingR2R(riboA, riboB, riboA_riboB):
+def bondingR2R(riboA, riboB, riboA_riboB, sub_k_a, sub_k_d, r30_tot, r_min):
     # リボソームの結合
     riboA + riboB == riboA_riboB | (sub_k_a, sub_k_d * (r30_tot - r_min) * (riboA_riboB / r30_tot))
 
 @reaction_rules
-def bondingD2R(drug, ribo, ribo_drug):
+def bondingD2R(drug, ribo, ribo_drug, K_on, K_off):
     # 薬剤とリボソームの結合
     drug + ribo == ribo_drug | (K_on, K_off)
 
@@ -103,14 +103,15 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35, pat
     with reaction_rules():
         bondingDrugList = [] # 薬剤がリボソームに結合する経路のリスト
         bondingRiboList = [] # リボソームのサブユニット同士の結合経路のリスト
+        dilutionList = [] # 希釈のリスト
         r30_tot = (r30 + r30_r50) # 登場するr30
         for index, drug in enumerate(drugs):
             drug_ex = _eval("drug{}_ex".format(index))
-            mol = _eval("{}{}".format(drug["target"], index))
-            P_in = delta_r * drug["Lambda_0_a"] / 2.0 / drug["IC50_a"] # 薬剤の流入
-            P_out = (drug["Lambda_0_a"] / 2) ** 2.0 / K_t / K_D # 薬剤の流出
-            transport(drug_ex, mol, P_in, P_out)
-            dilution(mol)
+            mol = _eval("{}{}".format(drug["type"], index))
+            P_in = delta_r * drug["Lambda_0_a"] / 2.0 / drug["IC50_a"] # 薬剤の流入速度
+            P_out = (drug["Lambda_0_a"] / 2) ** 2.0 / K_t / K_D # 薬剤の流出速度
+            transport(drug_ex, mol, P_in, P_out) # 薬剤の流入経路の追加
+            dilutionList.append(mol)
             if drug["type"] == "A":
                 # 遊離サブユニットに結合 A + r > rA
                 bondingDrugList.append([
@@ -118,22 +119,23 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35, pat
                     _eval(drug["target"]),
                     _eval("{}A{}".format(drug["target"], index))
                 ])
-                dilution(_eval("{}A{}".format(drug["target"], index)))
+                dilutionList.append(_eval("{}A{}".format(drug["target"], index)))
                 if drug["target"] == "r30":
                     # 標的が30sサブユニットのときだけ，作成したものをr30_totに追加
                     r30_tot += _eval("r30A{}".format(index))
-                if drugs[(index + 1) % len(drugs)]["target"] == drug["target"] and drugs[(index + 1) % len(drugs)]["type"] == "A":
-                    # 2剤がどちらも同じ標的の遊離リボソームサブユニットに結合する型だったとき
-                    bondingDrugList.append([
-                        mol,
-                        _eval("{}A{}".format(drug["target"], (index + 1) % len(drugs)),
-                        _eval("{}A0A1".format(drug["target"]))
-                    ])
-                    if index == 0:
-                        dilution(_eval("{}A0A1".format(drug["target"])))
-                        if drug["target"] == "r30":
-                            # 標的が30sサブユニットのときだけ，作成したものをr30_totに追加
-                            r30_tot += _eval("r30A0A1")
+                if len(drugs) > 1:
+                    if drugs[(index + 1) % len(drugs)]["target"] == drug["target"] and drugs[(index + 1) % len(drugs)]["type"] == "A":
+                        # 2剤がどちらも同じ標的の遊離リボソームサブユニットに結合する型だったとき
+                        bondingDrugList.append([
+                            mol,
+                            _eval("{}A{}".format(drug["target"], (index + 1) % len(drugs))),
+                            _eval("{}A0A1".format(drug["target"]))
+                        ])
+                        if index == 0:
+                            dilutionList.append(_eval("{}A0A1".format(drug["target"])))
+                            if drug["target"] == "r30":
+                                # 標的が30sサブユニットのときだけ，作成したものをr30_totに追加
+                                r30_tot += _eval("r30A0A1")
 
             elif drug["type"] == "B":
                 # 複合体リボソームに結合 B + r30_r50 = r30B_r50
@@ -144,55 +146,91 @@ def createModel(drugs, K_D=1., K_on=3., sub_k_d=1., sub_p=1., Lambda_0=1.35, pat
                         _eval("r30_r50"),
                         _eval("r30B{}_r50".format(index))
                     ])
-                    dilution(_eval("r30B{}_r50".format(index)))
+                    dilutionList.append(_eval("r30B{}_r50".format(index)))
                     r30_tot += _eval("r30B{}_r50".format(index))
-                    if drugs[(index + 1) % len(drugs)]["type"] == drug["type"]:
-                        if drugs[(index + 1) % len(drugs)]["target"] == drug["target"]:
-                            # 標的が同じ
-                            bondingDrugList.append([
-                                mol,
-                                _eval("r30B{}_r50".format((index + 1) % len(drugs))),
-                                _eval("r30B0B1_r50")
-                            ])
-                            if index == 0:
-                                r30_tot += _eval("r30B0B1_r50")
-                                dilution(_eval("r30B0B1_r50"))
-                        else :
-                            # 標的が異なる
-                            bondingDrugList.append([
-                                mol,
-                                _eval("r30_r50B{}".format((index + 1) % len(drugs))),
-                                _eval("r30B{}_r50B{}".format(index, (index + 1) % len(drugs)))
-                            ])
-                            if index == 0:
-                                r30_tot += _eval("r30B{}_r50B{}".format(index, (index + 1) % len(drugs)))
-                                dilution(_eval("r30B{}_r50B{}".format(index, (index + 1) % len(drugs)))
+                    if len(drugs) > 1:
+                        if drugs[(index + 1) % len(drugs)]["type"] == drug["type"]:
+                            if drugs[(index + 1) % len(drugs)]["target"] == drug["target"]:
+                                # 標的が同じ
+                                bondingDrugList.append([
+                                    mol,
+                                    _eval("r30B{}_r50".format((index + 1) % len(drugs))),
+                                    _eval("r30B0B1_r50")
+                                ])
+                                if index == 0:
+                                    r30_tot += _eval("r30B0B1_r50")
+                                    dilutionList.append(_eval("r30B0B1_r50"))
+                            else :
+                                # 標的が異なる
+                                bondingDrugList.append([
+                                    mol,
+                                    _eval("r30_r50B{}".format((index + 1) % len(drugs))),
+                                    _eval("r30B{}_r50B{}".format(index, (index + 1) % len(drugs)))
+                                ])
+                                if index == 0:
+                                    r30_tot += _eval("r30B{}_r50B{}".format(index, (index + 1) % len(drugs)))
+                                    dilutionList.append(_eval("r30B{}_r50B{}".format(index, (index + 1) % len(drugs))))
                 else:
                     bondingDrugList.append([
                         mol,
                         _eval("r30_r50"),
                         _eval("r30_r50B{}".format(index))
                     ])
-                    dilution(_eval("r30_r50B{}".format(index)))
+                    dilutionList.append(_eval("r30_r50B{}".format(index)))
                     r30_tot += _eval("r30_r50B{}".format(index))
-                    if drugs[(index + 1) % len(drugs)]["type"] == drug["type"]:
-                        if drugs[(index + 1) % len(drugs)]["target"] == drug["target"]:
-                            # 標的が同じ
-                            bondingDrugList.append([
-                                mol,
-                                _eval("r30_r50B{}".format((index + 1) % len(drugs))),
-                                _eval("r30_r50B0B1")
-                            ])
-                            if index == 0:
-                                r30_tot += _eval("r30_r50B0B1")
-                                dilution(_eval("r30_r50B0B1"))
-                        else :
-                            # 標的が異なる
-                            bondingDrugList.append([
-                                mol,
-                                _eval("r30B{}_r50".format((index + 1) % len(drugs))),
-                                _eval("r30B{}_r50B{}".format((index + 1) % len(drugs)), index)
-                            ])
-                            if index == 0:
-                                r30_tot += _eval("r30B{}_r50B{}".format((index + 1) % len(drugs)), index)
-                                dilution(_eval("r30B{}_r50B{}".format((index + 1) % len(drugs)), index)
+                    if len(drugs) > 1:
+                        if drugs[(index + 1) % len(drugs)]["type"] == drug["type"]:
+                            if drugs[(index + 1) % len(drugs)]["target"] == drug["target"]:
+                                # 標的が同じ
+                                bondingDrugList.append([
+                                    mol,
+                                    _eval("r30_r50B{}".format((index + 1) % len(drugs))),
+                                    _eval("r30_r50B0B1")
+                                ])
+                                if index == 0:
+                                    r30_tot += _eval("r30_r50B0B1")
+                                    dilutionList.append(_eval("r30_r50B0B1"))
+                            else :
+                                # 標的が異なる
+                                bondingDrugList.append([
+                                    mol,
+                                    _eval("r30B{}_r50".format((index + 1) % len(drugs))),
+                                    _eval("r30B{}_r50B{}".format((index + 1) % len(drugs)), index)
+                                ])
+                                if index == 0:
+                                    r30_tot += _eval("r30B{}_r50B{}".format((index + 1) % len(drugs)), index)
+                                    dilutionList.append(_eval("r30B{}_r50B{}".format((index + 1) % len(drugs)), index))
+
+        print(r30_tot)
+        # r30_totを使って計算して，経路を作成
+        Lambda = (r30_tot - r_min) * K_t * r30_r50 / r30_tot
+        SUP = Lambda * r30_tot
+
+        # リボソームサブユニットの生成
+        ~r30 > r30 | SUP
+        ~r50 > r50 | SUP
+
+        # リボソームサブユニットの結合
+        bondingRiboList.append([r30, r50, r30_r50])
+        for riboReaction in bondingRiboList:
+            bondingR2R(riboReaction[0], riboReaction[1], riboReaction[2], sub_k_a, sub_k_d, r30_tot, r_min)
+
+        # 希釈
+        dilutionList.extend([r30, r50, r30_r50])
+        for dilutionMol in dilutionList:
+            print(dilutionMol)
+            dilution(dilutionMol, Lambda)
+
+        # 薬剤のリボソームへの結合
+        for drugReaction in bondingDrugList:
+            bondingD2R(drugReaction[0], drugReaction[1], drugReaction[2], K_on, K_off)
+
+
+    return get_model()
+
+
+if __name__ == "__main__":
+    drugs = [createDrugData("Streptmycin"), createDrugData("Streptmycin")]
+    model = createModel(drugs=drugs)
+    for i, rr in enumerate(model.reaction_rules()):
+        print("{:03d}: {}".format(i, rr.as_string()))
